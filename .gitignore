@@ -1,0 +1,14 @@
+# Rust
+/target
+app/target
+**/*.rs.bk
+
+# Frontend build output (produced by `trunk build`)
+app/dist
+
+# Tauri generated schemas (produced by `tauri build`/`tauri dev`)
+src-tauri/gen
+
+# Secrets
+.env
+*.key

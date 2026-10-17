@@ -1,0 +1,15 @@
+[package]
+name = "er-fill-models"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Domain types and Thai/Buddhist-era formatting for ER-Fill - no sqlx, no I/O, wasm-compatible"
+
+[dependencies]
+chrono.workspace = true   # NaiveDate/NaiveTime/NaiveDateTime in domain types
+serde.workspace = true    # serialization across the Tauri IPC boundary
+thiserror.workspace = true # structured errors in library crates
+
+[dev-dependencies]
+serde_json.workspace = true # round-trip tests of the "HH:MM" wire format

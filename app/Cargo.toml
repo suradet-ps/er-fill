@@ -1,0 +1,56 @@
+# Separate workspace on purpose (AGENTS-RUST.md section 14 override): this crate
+# compiles for wasm32-unknown-unknown and must not share the native graph.
+[workspace]
+
+[package]
+name = "er-fill-app"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+
+[lib]
+name = "er_fill_app"
+path = "src/lib.rs"
+
+[[bin]]
+name = "er-fill-app"
+path = "src/main.rs"
+
+[dependencies]
+leptos = { version = "0.8", features = ["csr"] }
+er-fill-core = { path = "../crates/core" }     # window algorithm + report builder (wasm-compatible)
+er-fill-models = { path = "../crates/models" } # domain types + Thai/BE formatting
+chrono = "0.4"                 # dates/times in UI state + the print timestamp
+js-sys = "0.3"                 # Promise handle returned by the Tauri IPC bridge
+serde = { version = "1.0", features = ["derive"] }  # DeserializeOwned bound on command results
+serde_json = "1.0"             # portable settings export/import files
+serde-wasm-bindgen = "0.6"     # serde <-> JsValue for invoke args/results
+wasm-bindgen = "0.2"           # __TAURI_INTERNALS__.invoke binding
+wasm-bindgen-futures = "0.4"   # Promise -> Rust Future
+web-sys = { version = "0.3", features = [
+    "Blob",              # settings export download
+    "Document",          # find the download anchor host
+    "Element",           # create/remove the download anchor
+    "Event",
+    "File",              # imported settings file
+    "FileList",          # picker output
+    "HtmlAnchorElement", # download anchor
+    "HtmlElement",       # window.print() + anchor click
+    "HtmlInputElement",  # hidden file input
+    "MouseEvent",
+    "Node",              # append/remove the anchor
+    "SubmitEvent",
+    "Url",               # object URL for the blob download
+    "Window",
+] }                            # window.print() + export/import DOM plumbing
+
+[dev-dependencies]
+wasm-bindgen-test = "0.3"      # wasm test harness (IPC contract + component smoke tests)
+web-sys = { version = "0.3", features = [
+    "Document",
+    "Element",
+    "HtmlElement",
+    "HtmlInputElement",
+    "Node",
+    "Window",
+] }                            # DOM querying in wasm tests

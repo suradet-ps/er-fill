@@ -1,0 +1,17 @@
+[package]
+name = "er-fill-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Window algorithm, catalog operations, and the requisition report builder for ER-Fill - repository trait + mock, no sqlx, wasm-compatible"
+
+[dependencies]
+async-trait.workspace = true # async repository trait
+chrono.workspace = true      # date arithmetic for the window algorithm
+serde.workspace = true       # serialize the repository contract types
+thiserror.workspace = true   # structured errors in library crates
+er-fill-models = { path = "../models" }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] } # #[tokio::test] for the mock repository
