@@ -5,7 +5,7 @@
 //! (AGENTS.md sections 3 and 13).
 
 use async_trait::async_trait;
-use er_fill_models::{DrugItem, RequisitionWindow, UsageRow};
+use er_fill_models::{DrugItem, OfficerAccount, RequisitionWindow, UsageRow};
 
 /// Errors crossing the repository boundary. English and dev-facing - the
 /// Thai user-facing translation happens only in `src-tauri/commands.rs`.
@@ -35,6 +35,17 @@ pub trait HosxRepository: Send + Sync {
     ///
     /// [`RepositoryError::Connection`] when the database is unreachable.
     async fn ping(&self) -> Result<(), RepositoryError>;
+
+    /// Reads one `officer` account by login name for local password
+    /// verification. The password hash stays in the backend.
+    ///
+    /// # Errors
+    ///
+    /// [`RepositoryError::Connection`] / [`RepositoryError::Query`].
+    async fn fetch_officer(
+        &self,
+        login_name: &str,
+    ) -> Result<Option<OfficerAccount>, RepositoryError>;
 
     /// Contains-match search over `drugitems` by icode or name, at most 50
     /// hits, ordered by name.

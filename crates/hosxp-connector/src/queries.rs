@@ -26,6 +26,24 @@ WHERE icode LIKE '1%'
 ORDER BY name
 LIMIT 50";
 
+/// Reads one local HOSxP officer for password verification.
+///
+/// Only `officer` is used: `opduser` is blacklisted by the gateway and
+/// `officer_login_password` (the plaintext column) is never selected.
+/// Verified against the live Sra Bos instance on 2026-10-21; the hash
+/// algorithm itself still needs a one-account pilot check (docs/auth.md).
+pub const FETCH_OFFICER_SQL: &str = "\
+SELECT CAST(o.officer_id AS SIGNED) AS officer_id,
+       o.officer_login_name AS login_name,
+       COALESCE(o.officer_login_password_md5, '') AS password_md5,
+       COALESCE(o.officer_active, 'N') AS active,
+       CAST(COALESCE(o.officer_authentication_type_id, 1) AS SIGNED) AS auth_type_id,
+       NULLIF(o.officer_doctor_code, '') AS doctor_code,
+       TRIM(CONCAT(COALESCE(o.officer_pname, ''), COALESCE(o.officer_fname, ''), ' ', COALESCE(o.officer_lname, ''))) AS display_name
+FROM officer o
+WHERE o.officer_login_name = ?
+LIMIT 1";
+
 /// Head of the usage query; the `IN` list is `?` repeated by
 /// [`usage_in_window_sql`].
 ///
@@ -93,7 +111,7 @@ mod tests {
 
     #[test]
     fn every_constant_passes_the_read_only_guard() {
-        for sql in [PING_SQL, SEARCH_DRUGS_SQL] {
+        for sql in [PING_SQL, SEARCH_DRUGS_SQL, FETCH_OFFICER_SQL] {
             assert!(assert_read_only(sql).is_ok(), "guard must accept: {sql}");
         }
         for count in [1_usize, 2, 7, 69] {
@@ -152,5 +170,15 @@ mod tests {
         assert!(SEARCH_DRUGS_SQL.contains("icode LIKE '1%'"));
         assert!(SEARCH_DRUGS_SQL.contains("LIMIT 50"));
         assert!(!SEARCH_DRUGS_SQL.contains(';'));
+    }
+
+    #[test]
+    fn officer_query_uses_only_the_safe_columns() {
+        assert!(FETCH_OFFICER_SQL.contains("FROM officer o"));
+        assert!(FETCH_OFFICER_SQL.contains("officer_login_password_md5"));
+        assert!(!FETCH_OFFICER_SQL.contains("officer_login_password "));
+        assert!(!FETCH_OFFICER_SQL.contains("opduser"));
+        assert!(FETCH_OFFICER_SQL.contains("LIMIT 1"));
+        assert!(!FETCH_OFFICER_SQL.contains(';'));
     }
 }

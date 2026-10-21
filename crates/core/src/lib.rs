@@ -2,6 +2,7 @@
 //! database and without a GUI (AGENTS.md section 3).
 //!
 //! Module map:
+//! - `auth`: [`verify_password`], HOSxP officer MD5 verification.
 //! - `schedule`: [`window_for`], the out-of-hours requisition window.
 //! - `catalog_ops`: add/rename/remove/reorder catalog entries.
 //! - `requisition`: [`build_report`], join catalog + usage into sections.
@@ -12,6 +13,7 @@
 //! The frontend (`app/`) links this crate directly, so it must compile for
 //! `wasm32-unknown-unknown` - keep tokio/sqlx out of the dependency path.
 
+mod auth;
 mod catalog_ops;
 mod error;
 mod mock;
@@ -20,6 +22,7 @@ mod repository;
 mod requisition;
 mod schedule;
 
+pub use auth::{md5_hex, verify_password};
 pub use catalog_ops::{
     add_category, add_drug, move_drug, remove_category, remove_drug, rename_category, update_drug,
 };

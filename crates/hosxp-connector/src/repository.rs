@@ -2,12 +2,12 @@
 
 use chrono::NaiveDateTime;
 use er_fill_core::{HosxRepository, RepositoryError};
-use er_fill_models::{DrugItem, RequisitionWindow, UsageRow};
+use er_fill_models::{DrugItem, OfficerAccount, RequisitionWindow, UsageRow};
 use sqlx::Row;
 use sqlx::mysql::MySqlPool;
 
 use crate::error::Error;
-use crate::queries::{PING_SQL, SEARCH_DRUGS_SQL, usage_in_window_sql};
+use crate::queries::{FETCH_OFFICER_SQL, PING_SQL, SEARCH_DRUGS_SQL, usage_in_window_sql};
 use crate::readonly_guard::assert_read_only;
 
 /// Read-only HOSxP access through the connector.
@@ -65,6 +65,31 @@ impl HosxRepository for ConnectorRepository {
             .await
             .map(|_| ())
             .map_err(|e| Error::Database(e).into())
+    }
+
+    async fn fetch_officer(
+        &self,
+        login_name: &str,
+    ) -> Result<Option<OfficerAccount>, RepositoryError> {
+        Self::guard(FETCH_OFFICER_SQL)?;
+        let row = sqlx::query(FETCH_OFFICER_SQL)
+            .bind(login_name)
+            .fetch_optional(&self.pool)
+            .await
+            .map_err(Error::Database)?;
+        row.map(|row| -> Result<OfficerAccount, Error> {
+            Ok(OfficerAccount {
+                officer_id: row.try_get("officer_id").map_err(Error::Database)?,
+                login_name: row.try_get("login_name").map_err(Error::Database)?,
+                password_md5: row.try_get("password_md5").map_err(Error::Database)?,
+                active: row.try_get("active").map_err(Error::Database)?,
+                auth_type_id: row.try_get("auth_type_id").map_err(Error::Database)?,
+                doctor_code: row.try_get("doctor_code").map_err(Error::Database)?,
+                display_name: row.try_get("display_name").map_err(Error::Database)?,
+            })
+        })
+        .transpose()
+        .map_err(Into::into)
     }
 
     async fn search_drugs(&self, term: &str) -> Result<Vec<DrugItem>, RepositoryError> {

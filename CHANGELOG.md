@@ -17,6 +17,12 @@ All notable changes to ER-Fill are documented here. The format follows
 - Redrew the UI icon set as a custom monoline family (1.8px stroke) with new
   pencil, refresh, printer, calendar, clipboard, file, trash, and database
   glyphs.
+- Added a login gate: verify the HOSxP connection, then sign in with an
+  `officer` account (MD5 check, active/auth-type checks). Sessions are
+  in-memory; sensitive commands require a session; the top bar shows the
+  signed-in user and a logout action.
+- Added `docs/auth.md` with the read-only officer survey, hash-assumption
+  caveat, and the deliberately uncreated `app_*` tables.
 
 - Requisition window now ends at the run day's opening time (weekdays
   08:30, weekends 08:00) instead of a configurable cutoff.

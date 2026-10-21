@@ -12,7 +12,8 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 
 use er_fill_models::{
-    AppSettings, BusinessSchedule, Catalog, DrugItem, ReportMeta, RequisitionWindow, UsageRow,
+    AppSettings, BusinessSchedule, Catalog, ConnectionSummary, DrugItem, ReportMeta,
+    RequisitionWindow, SessionUser, UsageRow,
 };
 use js_sys::{Object, Reflect};
 use serde_wasm_bindgen::{from_value, to_value};
@@ -76,6 +77,7 @@ pub enum ApiErrorKind {
     Guard,
     Query,
     Validation,
+    Auth,
     Storage,
 }
 
@@ -115,6 +117,17 @@ pub struct ConnectionInput {
 pub struct ConnectionTestResult {
     /// Round-trip latency in milliseconds.
     pub latency_ms: u64,
+}
+
+/// Login credentials sent to the backend. The password lives in the webview
+/// heap while the operator types; the backend never stores it.
+#[derive(Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LoginInput {
+    /// HOSxP login name.
+    pub username: String,
+    /// HOSxP password.
+    pub password: String,
 }
 
 /// Builds the generic "request failed" error used for local IPC problems.
@@ -207,6 +220,46 @@ pub async fn configure_connection(input: &ConnectionInput) -> Result<(), ApiErro
 pub async fn test_connection(input: &ConnectionInput) -> Result<u64, ApiError> {
     let result: ConnectionTestResult = call_struct_arg("test_connection", "input", input).await?;
     Ok(result.latency_ms)
+}
+
+/// Non-secret saved connection fields for the login screen.
+pub async fn connection_summary() -> Result<Option<ConnectionSummary>, ApiError> {
+    call_empty("connection_summary").await
+}
+
+/// Tests typed connection settings, saves them on success, and keeps the pool.
+pub async fn connect(input: &ConnectionInput) -> Result<u64, ApiError> {
+    let result: ConnectionTestResult = call_struct_arg("connect", "input", input).await?;
+    Ok(result.latency_ms)
+}
+
+/// Re-tests the saved connection.
+pub async fn reconnect() -> Result<u64, ApiError> {
+    let result: ConnectionTestResult = call_empty("reconnect").await?;
+    Ok(result.latency_ms)
+}
+
+/// Verifies an officer against HOSxP and starts a backend session.
+pub async fn login(username: &str, password: &str) -> Result<SessionUser, ApiError> {
+    call_struct_arg(
+        "login",
+        "input",
+        &LoginInput {
+            username: username.to_string(),
+            password: password.to_string(),
+        },
+    )
+    .await
+}
+
+/// Clears the backend session.
+pub async fn logout() -> Result<(), ApiError> {
+    call_empty("logout").await
+}
+
+/// Current backend session, if any.
+pub async fn current_session() -> Result<Option<SessionUser>, ApiError> {
+    call_empty("current_session").await
 }
 
 /// Schedule + catalog + report header.

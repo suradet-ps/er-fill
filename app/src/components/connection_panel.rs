@@ -74,6 +74,19 @@ pub fn ConnectionPanel(state: AppState) -> impl IntoView {
                 match api::configure_connection(&input).await {
                     Ok(()) => {
                         state.configured.set(true);
+                        state
+                            .health
+                            .set(crate::state::ConnectionHealth::Disconnected);
+                        state.connection_error.set(None);
+                        state.clear_session();
+                        state
+                            .connection_summary
+                            .set(Some(er_fill_models::ConnectionSummary {
+                                host: input.host.clone(),
+                                port: input.port,
+                                database: input.database.clone(),
+                                user: input.user.clone(),
+                            }));
                         status.set(Some(StatusMessage::ok("บันทึกการตั้งค่าการเชื่อมต่อแล้ว")));
                     }
                     Err(err) => status.set(Some(StatusMessage::error(err.message))),

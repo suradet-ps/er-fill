@@ -4,7 +4,7 @@ This file gives coding agents (and future contributors) the context needed to wo
 
 ## 1. What this project is
 
-ER-Fill ("ยาห้องฉุกเฉิน") is a desktop app for the pharmacy department of a community hospital. It generates the **daily emergency-room drug requisition form** (ใบเบิกยาประจำห้องฉุกเฉินรายวัน): it sums how much of each configured ER drug was used in HOSxP during the **out-of-hours window** since the last requisition, then prints the form for the ER to sign and the pharmacy to fill.
+ER-Fill ("ยาห้องฉุกเฉิน") is a desktop app for the pharmacy department of a community hospital. It generates the **daily emergency-room drug requisition form** (ใบเบิกยาประจำห้องฉุกเฉินรายวัน): it sums how much of each configured ER drug was used in HOSxP during the **out-of-hours window** since the last requisition, then prints the form for the ER to sign and the pharmacy to fill. Operators sign in with their HOSxP **`officer`** account after the database connection is verified; the session is in-memory only.
 
 **Design goals:** simple, no unnecessary features; read-only against HOSxP (hospital MySQL/MariaDB); the requisition window is computed for the operator but always overridable; the printed A4 sheet must look like the hospital's real paper form.
 
@@ -22,6 +22,7 @@ ER-Fill ("ยาห้องฉุกเฉิน") is a desktop app for the pha
 3. **Parameterized queries only.** Never build SQL by string concatenation. Dynamic `IN (?, ?, ...)` placeholder lists are built by repeating `?` only - values are always bound.
 4. **No schema guessing without a flag.** HOSxP table/column names are best-effort until verified against the real instance. Query constants touching unverified tables/columns must carry a `// SCHEMA-UNVERIFIED:` comment until confirmed by the DBA (see section 6 - this includes the `opitemrece` naming question).
 5. **Thai belongs to the edges.** Thai UI strings live in `app/` (frontend) and `src-tauri/commands.rs` (user-facing error messages). Crate code, comments, and docs stay in English.
+6. **Login reads `officer` only.** Never query `opduser` (gateway-blacklisted), never select `officer_login_password` (plaintext), never log usernames/passwords, and never persist a login log or token to HOSxP. The session lives only in the Tauri process; the MD5 assumption is documented in `docs/auth.md`.
 
 ## 3. Workspace layout (ports-lite)
 
@@ -47,6 +48,7 @@ Dependency direction: `app` → `er-fill-core` → `er-fill-models`, and `er-fil
 - `UsageRow { icode, qty }` - one grouped usage result from HOSxP.
 - `ReportSection { category_id, category_name, rows: Vec<ReportRow> }`, `ReportRow { icode, name, strength_text, stock_text, usage, requested, max_requested }` - the printable table. `requested` starts as `ceil(usage / units-per-pack)`, capped at the stock pack count (`max_requested`); it is editable in whole packs before printing. A stock label without a slash falls back to whole usage with no cap.
 - `ReportMeta { hospital_name, document_title, department_name }` - the printed header block; defaults for Sra Bos Hospital.
+- `OfficerAccount` (backend-only) - one `officer` row: login name, MD5 hash, active flag, auth type, doctor code, display name. `SessionUser` - the sanitized login result (id, login name, display name, doctor code, role) sent over IPC. `ConnectionSummary` - host/port/database/user used to prefill the connection editor; never the password and never displayed on the login summary.
 
 Thai/Buddhist-era formatting (`be_year`, `format_thai_date*`, `format_qty`) lives in `models::thai` so the UI and the print sheet share one implementation.
 
@@ -92,6 +94,12 @@ Same layered approach as the sibling AllerX project:
 - Confirm drug-type filter for the picker (`icode LIKE '1%'` vs `drugitems.istype`).
 - Existing indexes on `opitemrece(icode, vstdate)` - daily window queries should stay < 300 ms.
 
+### 6.4 Authentication (`officer`)
+- Read one row by `officer_login_name`; check `officer_active = 'Y'`, `IFNULL(officer_authentication_type_id, 1) = 1`, and `MD5(password) = officer_login_password_md5` (case-insensitive).
+- Never select `officer_login_password`; never read `opduser`; never write a session or audit row to HOSxP.
+- `officer_group*` is empty, so the app assigns `role = "STAFF"`; app-specific roles are a later milestone.
+- The MD5 assumption is **not** source-confirmed; test one real account before the pilot. Full design and caveats: `docs/auth.md`.
+
 ## 7. Requisition window algorithm
 
 Out-of-hours only. The window for a morning run on day `D` is
@@ -124,9 +132,10 @@ Document-first UI (DESIGN.md "Structure"): the command bar holds the run
 controls; the stage shows the A4 sheet, which is one DOM/stylesheet shared
 by screen and print.
 
-1. Operator opens the app (default: today): the window is computed, and -
-   the morning ritual - usage **auto-fetches once** when the connection and
-   catalog are ready (the command bar can refetch any time).
+1. Operator opens the app: the login gate connects to HOSxP, then verifies
+   the `officer` username/password. After sign-in the window is computed, and
+   - the morning ritual - usage **auto-fetches once** when the catalog is
+   ready (the command bar can refetch any time).
 2. "ดึงข้อมูล" reads usage for **all configured icodes at once** (one grouped
    query) for the window.
 3. `er-fill-core::build_report` joins catalog + usage into category sections;
@@ -159,7 +168,13 @@ by screen and print.
   JS heap while typing, and sqlx's internal pool copy (needed for reconnects).
 - The plain settings file (`er-fill.settings.json`) holds the schedule, catalog,
   and report header only - never credentials.
+- Login passwords are sent to the Rust backend, moved into a `SecretString`
+  for the MD5 check, and dropped; they are never stored or logged. The
+  backend session is memory-only and cleared on logout, restart, or a
+  connection change.
 - The frontend never touches the database; it only calls Tauri commands.
+  `fetch_usage`, `search_drugs`, and settings writes require a backend
+  session; login/connection commands do not.
 - No patient data is ever displayed or stored - only aggregated quantities.
 
 ## 11. Milestones
@@ -184,8 +199,9 @@ by screen and print.
 ## 13. Testing expectations
 
 - `er-fill-core` + `er-fill-models`: the default suite (`cargo test` at root) -
-  window algorithm (all four example days + custom hours + invalid input),
-  catalog operations, report building, Thai formatting. No DB required.
+  window algorithm (all seven example days + custom hours + invalid input),
+  catalog operations, report building, Thai formatting, MD5 verification.
+  No DB required.
 - `er-fill-hosxp-connector`: unit tests for the guard and encrypted config run in
   the default suite; live-DB checks are gated behind
   `--features integration-tests` (never production).

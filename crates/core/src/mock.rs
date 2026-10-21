@@ -4,7 +4,7 @@
 use std::collections::HashMap;
 
 use async_trait::async_trait;
-use er_fill_models::{DrugItem, RequisitionWindow, UsageRow};
+use er_fill_models::{DrugItem, OfficerAccount, RequisitionWindow, UsageRow};
 
 use crate::repository::{HosxRepository, RepositoryError};
 
@@ -17,6 +17,9 @@ pub struct MockRepository {
     pub drugs: Vec<DrugItem>,
     /// Usage by icode returned by [`HosxRepository::fetch_usage`].
     pub usage: HashMap<String, f64>,
+    /// Officer accounts by login name returned by
+    /// [`HosxRepository::fetch_officer`].
+    pub officers: HashMap<String, OfficerAccount>,
     /// When set, every call fails with this error.
     pub fail: Option<RepositoryError>,
 }
@@ -34,6 +37,14 @@ impl MockRepository {
 impl HosxRepository for MockRepository {
     async fn ping(&self) -> Result<(), RepositoryError> {
         self.check_fail()
+    }
+
+    async fn fetch_officer(
+        &self,
+        login_name: &str,
+    ) -> Result<Option<OfficerAccount>, RepositoryError> {
+        self.check_fail()?;
+        Ok(self.officers.get(login_name).cloned())
     }
 
     async fn search_drugs(&self, term: &str) -> Result<Vec<DrugItem>, RepositoryError> {
@@ -99,6 +110,7 @@ mod tests {
                 },
             ],
             usage,
+            officers: HashMap::new(),
             fail: None,
         }
     }
@@ -128,12 +140,32 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn fetch_officer_returns_the_scripted_account() -> Result<(), Box<dyn std::error::Error>>
+    {
+        let mut repo = sample();
+        let account = OfficerAccount {
+            officer_id: 7,
+            login_name: "pharm".into(),
+            password_md5: "5f4dcc3b5aa765d61d8327deb882cf99".into(),
+            active: "Y".into(),
+            auth_type_id: 1,
+            doctor_code: None,
+            display_name: "Pharmacist".into(),
+        };
+        repo.officers.insert("pharm".into(), account.clone());
+        assert_eq!(repo.fetch_officer("pharm").await?, Some(account));
+        assert_eq!(repo.fetch_officer("missing").await?, None);
+        Ok(())
+    }
+
+    #[tokio::test]
     async fn forced_failure_propagates() -> Result<(), Box<dyn std::error::Error>> {
         let repo = MockRepository {
             fail: Some(RepositoryError::Connection),
             ..MockRepository::default()
         };
         assert_eq!(repo.ping().await, Err(RepositoryError::Connection));
+        assert!(repo.fetch_officer("x").await.is_err());
         assert!(repo.search_drugs("x").await.is_err());
         assert!(repo.fetch_usage(&[], &window()?).await.is_err());
         Ok(())

@@ -9,6 +9,7 @@ description = "Window algorithm, catalog operations, and the requisition report 
 [dependencies]
 async-trait.workspace = true # async repository trait
 chrono.workspace = true      # date arithmetic for the window algorithm
+md-5.workspace = true        # HOSxP officer password verification (read-only)
 serde.workspace = true       # serialize the repository contract types
 thiserror.workspace = true   # structured errors in library crates
 er-fill-models = { path = "../models" }

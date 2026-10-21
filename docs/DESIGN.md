@@ -21,9 +21,9 @@ desk is the only control surface, and it states the window compactly
 
 **Key characteristics:**
 
-- **Atmospheric gradient hero bands, used once**: the first-run screen (no
-  HOSxP connection configured) gets the sky-gradient hero; that is the only
-  marketing-grade surface in the app. Working surfaces are flat and dense.
+- **Atmospheric gradient hero bands, used once**: the login gate gets the
+  sky-gradient brand panel; that is the only marketing-grade surface in the
+  app. Working surfaces are flat and dense.
 - **Signature mint green** ({colors.brand-green}) reserved for accent CTAs,
   the auto window chip, active states, and feature confirmations - never body
   text or large surfaces.
@@ -47,16 +47,16 @@ desk is the only control surface, and it states the window compactly
 |---|---|---|
 | Mintlify mint `#00D4A4`-family | `{colors.brand-green}` `#00A87E` ("เขียวตราประทับ" seal green) | Same role; deepened one step so it holds WCAG AA on white for accent text and reads as ink-stamp green, not neon. |
 | Inter + Geist Mono only | Inter + **IBM Plex Sans Thai** + IBM Plex Mono | The app is Thai-first; Inter has no Thai glyphs. Plex Thai pairs with Plex Mono and matches the sibling AllerX system. |
-| Marketing scale (16px body, 72px hero) | Tool scale (15px body, 28px display) | This is a once-a-day work tool, not a landing page; density wins. Hero scale still exists **only** on the first-run band (36px at desktop). |
+| Marketing scale (16px body, 72px hero) | Tool scale (15px body, 28px display) | This is a once-a-day work tool, not a landing page; density wins. The display scale exists **only** on the login brand headline (34px at desktop). |
 | Testimonial orange | **Dropped** | No testimonial/marketing surfaces exist. The warm slot is filled by amber, which carries clinical meaning (attention), not emotion. |
-| `rgba(0,212,164,.08) 0 8px 24px` featured glow | Kept, retinted | The mint glow marks exactly one thing: the single accent CTA on the first-run hero. |
-| Photography/clouds/rockets | None | No illustrations. The only gradient art is the sky band. |
+| `rgba(0,212,164,.08) 0 8px 24px` featured glow | Kept, retinted | The mint glow marks exactly one thing: the single accent CTA on an empty state. |
+| Photography/clouds/rockets | None | No illustrations. The only gradient art is the login brand panel. |
 
 ## Colors
 
 ### Brand & Accent
 
-- **Seal Mint** ({colors.brand-green}): `#00A87E` - accent CTA on the hero,
+- **Seal Mint** ({colors.brand-green}): `#00A87E` - brand seal and accent CTAs,
   auto window chip border, green checkmarks in confirmation lists, active
   tab underline, sidebar active indicator. Never for body text.
 - **Deep Mint** ({colors.brand-green-deep}): `#00795B` - pressed/active variant;
@@ -64,7 +64,7 @@ desk is the only control surface, and it states the window compactly
 - **Soft Mint** ({colors.brand-green-soft}): `#E4F7F0` - success tint, auto
   auto window chip background, the sheet window sentence tint.
 - **Seal Glow** ({colors.brand-glow}): `rgba(0, 168, 126, 0.08)` - the single
-  featured shadow, used only for the hero accent CTA.
+  featured shadow, reserved for one brand accent; not used in the current UI.
 
 ### Semantic
 
@@ -96,7 +96,7 @@ desk is the only control surface, and it states the window compactly
 ### Hero Atmospheric
 
 - **Hero Sky From / To** ({colors.hero-sky-from} `#EAF4FF` → {colors.hero-sky-to}
-  `#FFFBF2`): the first-run hero gradient, 180° top-to-bottom.
+  `#FFFBF2`): the login brand-panel gradient, 180° top-to-bottom.
 - **Hero Dark From / To** ({colors.hero-dark-from} `#0E3D33` → {colors.hero-dark-to}
   `#12B58A`): reserved for the About/upgrade band if one ever ships; not used
   in v1 (documented so the token set is complete).
@@ -133,7 +133,7 @@ desk is the only control surface, and it states the window compactly
 
 | Token | Size | Weight | Line Height | Letter Spacing | Use |
 |---|---|---|---|---|---|
-| `{typography.display}` | 28px | 600 | 1.20 | -0.5px | First-run hero headline only |
+| `{typography.display}` | 28px | 600 | 1.20 | -0.5px | Login brand headline only |
 | `{typography.heading-1}` | 22px | 600 | 1.25 | 0 | Screen titles ("ใบเบิกยาประจำห้องฉุกเฉินรายวัน") |
 | `{typography.heading-2}` | 18px | 600 | 1.30 | 0 | Category section headers |
 | `{typography.heading-3}` | 16px | 600 | 1.35 | 0 | Card/section titles, modal titles |
@@ -154,7 +154,7 @@ desk is the only control surface, and it states the window compactly
   render Latin codes in Plex Thai (assign fonts by *content role*, not by
   luck of the fallback chain).
 - **Weight carries emphasis**, not size: 400 reading, 500 emphasis, 600
-  headings/buttons/labels. Only the first-run display goes above 22px.
+  headings/buttons/labels. Only the login brand display goes above 22px.
 - **Line height 1.40-1.50 on everything** - the person reading this is under
   time pressure in imperfect hospital lighting.
 - **Numbers in tables are mono** with `tabular-nums` so columns of quantities
@@ -171,9 +171,14 @@ desk is the only control surface, and it states the window compactly
   (48px) · `{spacing.section}` (64px).
 - Working surfaces use `{spacing.xxl}` between sections; table rows pack to
   `{spacing.xs}`-`{spacing.sm}` vertical rhythm. `{spacing.section}` exists
-  only for the first-run hero band.
+  only for the login brand panel.
 
 ### Structure - Command Bar + Paper Stage (document-first)
+
+Before the document exists, the full-height `login-gate` replaces the shell
+until the HOSxP connection is verified and an `officer` signs in. After
+sign-in the shell below is revealed; the top bar adds the signed-in user and
+the logout action beside the connection status.
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
@@ -229,9 +234,9 @@ re-scoped):
 | 1 (subtle) | `rgba(0,0,0,0.04) 0 1px 2px` | Drug-picker result rows, small popovers |
 | 2 (card) | `rgba(0,0,0,0.08) 0 4px 12px` | Toasts, elevated menu surfaces |
 | 3 (sheet) | `rgba(0,0,0,0.12) 0 24px 48px -8px` | The A4 sheet on the desk - the paper look - and the settings modal |
-| 4 (brand-tinted) | `{colors.brand-glow} 0 8px 24px` | The hero accent CTA only |
+| 4 (brand-tinted) | `{colors.brand-glow} 0 8px 24px` | Reserved for one brand accent; not used in the current UI |
 
-The first-run hero band needs no shadow - the gradient does the work. The
+The login brand panel needs no shadow - the gradient does the work. The
 sheet's shadow is what makes it read as paper on a desk; it disappears in
 print.
 
@@ -242,8 +247,8 @@ print.
 | `{rounded.xs}` | 4px | Inline code chips (`icode`), the จำนวนเบิก input |
 | `{rounded.sm}` | 6px | Category nav items, badges, status chips |
 | `{rounded.md}` | 8px | Inputs, search pill, picker cards |
-| `{rounded.lg}` | 12px | Settings modal, hero panel |
-| `{rounded.xl}` | 16px | First-run hero frame |
+| `{rounded.lg}` | 12px | Settings modal, login card |
+| `{rounded.xl}` | 16px | Reserved for oversized framed surfaces |
 | `{rounded.full}` | 9999px | **All** buttons and pills, badges, status dot halo |
 
 The scale is disciplined: no 10px corners; nothing between `{rounded.md}` and
@@ -264,11 +269,11 @@ sheet is paper and takes no radius at all.
 - Pressed: background `{colors.charcoal}`. Disabled: background
   `{colors.hairline}`, text `{colors.muted}`, no pointer events.
 
-**`button-accent-mint`** - Seal-mint pill, used **once per viewport** (hero
-"เริ่มตั้งค่าการเชื่อมต่อ"; possibly "บันทึก" inside the settings modal).
+**`button-accent-mint`** - Seal-mint pill, used **once per viewport** on an
+empty-state or catalog CTA.
 - Background `{colors.brand-green}`, text `#072A21`, typography
   `{typography.button}`, padding `10px 20px`, rounded `{rounded.full}`, plus
-  the `{elevation.4}` glow on the hero.
+  an optional `{elevation.4}` glow.
 
 **`button-secondary`** - Outlined pill: transparent background, text
 `{colors.ink}`, border `1px solid {colors.hairline}`, padding `10px 20px`.
@@ -348,15 +353,16 @@ reason this card exists; the requisition never hides the window it covers.
 
 ### Signature Components
 
-**`hero-band-sky`** - First-run empty state (no connection configured), the
-only atmospheric surface:
-- Background `linear-gradient(180deg, {colors.hero-sky-from} 0%,
-  {colors.hero-sky-to} 100%)`, padding `{spacing.section} {spacing.xxl}`,
-  rounded `{rounded.xl}` on the stage.
-- Headline in `{typography.display}` `{colors.ink}`, subtitle
-  `{typography.body-md}` `{colors.slate}`, one `button-accent-mint` CTA, and a
-  framed product preview (`{rounded.lg}` white card, hairline,
-  `{elevation.3}`) showing a miniature of the requisition table.
+**`login-gate`** - Full-height split surface before the document exists:
+- Left brand panel: the sky hero gradient, seal mark, the promise
+  headline, and three quiet proof points (read-only, HOSxP account, no
+  stored password).
+- Right panel: a single `rounded.lg` card with a two-step indicator
+  (`01 การเชื่อมต่อ` / `02 เข้าสู่ระบบ`). The connection block collapses to a
+  quiet confirmation once connected; host/database/user are not shown on the
+  login screen. The login block stays muted until the connection is live.
+- The connection password is a DB credential; the login password is never
+  persisted. Both use the standard field and button components.
 
 **`command-bar`** - The only control surface, two rows tall when editing:
 - Row 1: a labelled date input · a `run-window` card (heading + badge over
@@ -457,7 +463,7 @@ e.g. "500 mg"), which is saved into the drug's `strengthText` when added.
   red.
 - Don't use amber for "error" or red for "attention" - they are different
   signals and the pharmacist must distinguish them instantly.
-- Don't add gradients anywhere except the first-run hero band - the desk and
+- Don't add gradients anywhere except the login brand panel - the desk and
   the sheet stay flat.
 - Don't build a second layout for printing: the stage sheet IS the print
   output (same DOM, same stylesheet); a separate hidden sheet is a bug
@@ -508,6 +514,6 @@ This is a mouse-class desktop app; there is no mobile layout.
 
 - Dark mode is out of scope (no dark values defined; token names support it).
 - The animated cloud/rocket aesthetic of the reference is deliberately not
-  ported - only its gradient treatment survives, once, on the first-run band.
+  ported - only its gradient treatment survives, once, on the login brand panel.
 - Print-color fidelity is assumed (mint/amber bands print as ink-saving text
   only; the sheet is black-on-white by design).

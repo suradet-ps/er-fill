@@ -4,6 +4,7 @@ use std::sync::Arc;
 
 use er_fill_hosxp_connector::MySqlPool;
 use er_fill_hosxp_connector::config::CONFIG_FILE_NAME;
+use er_fill_models::SessionUser;
 use serde::Serialize;
 use tokio::sync::Mutex;
 
@@ -41,6 +42,9 @@ pub struct AppState {
     pub health: Arc<Mutex<ConnectionHealth>>,
     /// Schedule + catalog + report header, mirrored from the settings file.
     pub settings: Arc<Mutex<AppSettings>>,
+    /// Signed-in HOSxP officer for this app process. Memory only - a restart
+    /// requires signing in again.
+    pub session: Arc<Mutex<Option<SessionUser>>>,
 }
 
 impl AppState {
@@ -51,6 +55,7 @@ impl AppState {
             pool: Arc::new(Mutex::new(None)),
             health: Arc::new(Mutex::new(ConnectionHealth::Unconfigured)),
             settings: Arc::new(Mutex::new(settings)),
+            session: Arc::new(Mutex::new(None)),
         }
     }
 

@@ -27,6 +27,8 @@ pub enum CommandErrorKind {
     Query,
     /// The operator's input was rejected before any I/O.
     Validation,
+    /// The operator is not signed in, or the credentials were rejected.
+    Auth,
     /// Reading/writing local files (settings, encrypted config) failed.
     Storage,
 }
@@ -61,6 +63,16 @@ impl CommandError {
             CommandErrorKind::Validation,
             format!("ข้อมูลไม่ถูกต้อง: {}", message.into()),
         )
+    }
+
+    /// "กรุณาเข้าสู่ระบบก่อนใช้งาน".
+    pub fn unauthorized() -> Self {
+        Self::new(CommandErrorKind::Auth, "กรุณาเข้าสู่ระบบก่อนใช้งาน")
+    }
+
+    /// An authentication failure with its Thai message.
+    pub fn auth(message: impl Into<String>) -> Self {
+        Self::new(CommandErrorKind::Auth, message)
     }
 
     /// "บันทึกหรืออ่านการตั้งค่าไม่สำเร็จ".
@@ -177,5 +189,12 @@ mod tests {
         let mapped = CommandError::validation("ช่วงเวลาไม่ถูกต้อง");
         assert_eq!(mapped.kind, CommandErrorKind::Validation);
         assert!(mapped.message.starts_with("ข้อมูลไม่ถูกต้อง:"));
+    }
+
+    #[test]
+    fn unauthenticated_has_its_own_kind() {
+        let mapped = CommandError::unauthorized();
+        assert_eq!(mapped.kind, CommandErrorKind::Auth);
+        assert!(mapped.message.contains("เข้าสู่ระบบ"));
     }
 }

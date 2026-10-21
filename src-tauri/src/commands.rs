@@ -6,13 +6,14 @@
 
 use std::time::{Duration, Instant};
 
-use er_fill_core::{HosxRepository, RepositoryError};
+use er_fill_core::{HosxRepository, RepositoryError, verify_password};
 use er_fill_hosxp_connector::config::{HosxConfig, load_vault};
-use er_fill_hosxp_connector::{ConnectorRepository, MySqlPool, connect};
+use er_fill_hosxp_connector::{ConnectorRepository, MySqlPool, connect as connect_hosxp};
 use er_fill_models::{
-    BusinessSchedule, Catalog, DrugItem, ReportMeta, RequisitionWindow, UsageRow,
+    BusinessSchedule, Catalog, ConnectionSummary, DrugItem, ReportMeta, RequisitionWindow,
+    SessionUser, UsageRow,
 };
-use secrecy::SecretBox;
+use secrecy::{ExposeSecret, SecretBox, SecretString};
 use serde::{Deserialize, Serialize};
 use tauri::State;
 
@@ -90,6 +91,17 @@ pub struct ConnectionTestResult {
     pub latency_ms: u64,
 }
 
+/// Username/password submitted from the login screen. Deliberately does not
+/// derive `Debug` - the password must never be formatted into a log line.
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LoginInput {
+    /// HOSxP `officer.officer_login_name`.
+    pub username: String,
+    /// Plaintext password, verified in memory against the stored MD5.
+    pub password: String,
+}
+
 /// Whether encrypted HOSxP connection settings already exist on this
 /// machine.
 #[tauri::command]
@@ -112,6 +124,7 @@ pub async fn configure_connection(
     input: ConnectionInput,
     state: State<'_, AppState>,
 ) -> Result<(), CommandError> {
+    require_session(&state).await?;
     input.validate()?;
     let config = input.into_config();
 
@@ -121,6 +134,7 @@ pub async fn configure_connection(
         .map_err(CommandError::from)?;
 
     *state.pool.lock().await = None;
+    *state.session.lock().await = None;
     let probe_state = state.inner().clone();
     tauri::async_runtime::spawn(async move {
         let health = probe_health(&probe_state).await;
@@ -129,37 +143,169 @@ pub async fn configure_connection(
     Ok(())
 }
 
-/// Runs the `SELECT 1` smoke test with the **typed** settings (not the saved
-/// ones); keeps the pool on success.
+/// Returns the non-secret connection fields for the login screen, if a
+/// config is stored.
 #[tauri::command]
-pub async fn test_connection(
+pub async fn connection_summary(
+    state: State<'_, AppState>,
+) -> Result<Option<ConnectionSummary>, CommandError> {
+    if !state.config_path().exists() {
+        return Ok(None);
+    }
+    let vault = load_vault().map_err(CommandError::from)?;
+    let config = er_fill_hosxp_connector::config::load(&state.config_path(), &vault)
+        .await
+        .map_err(CommandError::from)?
+        .ok_or_else(CommandError::not_configured)?;
+    Ok(Some(ConnectionSummary {
+        host: config.host,
+        port: config.port,
+        database: config.database,
+        user: config.user,
+    }))
+}
+
+/// Tests typed connection settings, saves them only after a successful
+/// `SELECT 1`, and keeps the resulting pool. Used by the login screen's
+/// connection step.
+#[tauri::command]
+pub async fn connect(
     input: ConnectionInput,
     state: State<'_, AppState>,
 ) -> Result<ConnectionTestResult, CommandError> {
     input.validate()?;
     let config = input.into_config();
     let started = Instant::now();
-
-    let pool = match connect(&config).await {
+    let pool = match connect_hosxp(&config).await {
         Ok(pool) => pool,
         Err(err) => {
             *state.health.lock().await = ConnectionHealth::Disconnected;
             return Err(err.into());
         }
     };
-    match ConnectorRepository::new(pool.clone()).ping().await {
-        Ok(()) => {
-            *state.pool.lock().await = Some(pool);
-            *state.health.lock().await = ConnectionHealth::Connected;
-            Ok(ConnectionTestResult {
-                latency_ms: started.elapsed().as_millis() as u64,
-            })
-        }
-        Err(err) => {
-            note_query_outcome(&state, &err).await;
-            Err(err.into())
-        }
+    if let Err(err) = ConnectorRepository::new(pool.clone()).ping().await {
+        *state.pool.lock().await = None;
+        *state.health.lock().await = ConnectionHealth::Disconnected;
+        return Err(err.into());
     }
+
+    let vault = load_vault().map_err(CommandError::from)?;
+    er_fill_hosxp_connector::config::save_encrypted(&state.config_path(), &vault, &config)
+        .await
+        .map_err(CommandError::from)?;
+    *state.pool.lock().await = Some(pool);
+    *state.health.lock().await = ConnectionHealth::Connected;
+    *state.session.lock().await = None;
+    Ok(ConnectionTestResult {
+        latency_ms: started.elapsed().as_millis() as u64,
+    })
+}
+
+/// Re-tests the saved connection (encrypted config) and keeps the pool.
+#[tauri::command]
+pub async fn reconnect(state: State<'_, AppState>) -> Result<ConnectionTestResult, CommandError> {
+    let started = Instant::now();
+    let repository = acquire_repository(&state).await?;
+    if let Err(err) = repository.ping().await {
+        *state.pool.lock().await = None;
+        *state.health.lock().await = ConnectionHealth::Disconnected;
+        return Err(err.into());
+    }
+    *state.health.lock().await = ConnectionHealth::Connected;
+    Ok(ConnectionTestResult {
+        latency_ms: started.elapsed().as_millis() as u64,
+    })
+}
+
+/// Verifies a HOSxP officer password and starts an in-memory session.
+///
+/// The plaintext password is moved into a [`SecretString`] for the
+/// verification window; the stored hash never leaves this process.
+#[tauri::command]
+pub async fn login(
+    input: LoginInput,
+    state: State<'_, AppState>,
+) -> Result<SessionUser, CommandError> {
+    let username = input.username.trim();
+    if username.is_empty() {
+        return Err(CommandError::validation("กรุณากรอกชื่อผู้ใช้"));
+    }
+    if username.chars().count() > 100 {
+        return Err(CommandError::validation("ชื่อผู้ใช้ยาวเกินไป"));
+    }
+    let password = SecretString::from(input.password);
+    if password.expose_secret().is_empty() {
+        return Err(CommandError::validation("กรุณากรอกรหัสผ่าน"));
+    }
+    if password.expose_secret().chars().count() > 200 {
+        return Err(CommandError::validation("รหัสผ่านยาวเกินไป"));
+    }
+
+    *state.session.lock().await = None;
+    let repository = acquire_repository(&state).await?;
+    let account = repository.fetch_officer(username).await?;
+    let Some(account) = account else {
+        return Err(CommandError::auth("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง"));
+    };
+    if account.auth_type_id != 1 {
+        return Err(CommandError::auth(
+            "บัญชีนี้ใช้การยืนยันตัวตนแบบ LDAP ซึ่งยังไม่เปิดใช้งาน",
+        ));
+    }
+    if !account.active.eq_ignore_ascii_case("Y") {
+        return Err(CommandError::auth("บัญชีนี้ถูกปิดใช้งาน กรุณาติดต่อผู้ดูแลระบบ"));
+    }
+    if !verify_password(password.expose_secret(), &account.password_md5) {
+        return Err(CommandError::auth("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง"));
+    }
+
+    let display_name = if account.display_name.trim().is_empty() {
+        account.login_name.clone()
+    } else {
+        account.display_name
+    };
+    let user = SessionUser {
+        officer_id: account.officer_id,
+        login_name: account.login_name,
+        display_name,
+        doctor_code: account.doctor_code,
+        role: "STAFF".to_string(),
+    };
+    *state.session.lock().await = Some(user.clone());
+    Ok(user)
+}
+
+/// Clears the in-memory session.
+#[tauri::command]
+pub async fn logout(state: State<'_, AppState>) -> Result<(), CommandError> {
+    *state.session.lock().await = None;
+    Ok(())
+}
+
+/// Returns the current session, if any (memory only).
+#[tauri::command]
+pub async fn current_session(
+    state: State<'_, AppState>,
+) -> Result<Option<SessionUser>, CommandError> {
+    Ok(state.session.lock().await.clone())
+}
+
+/// Runs the `SELECT 1` smoke test with the **typed** settings (not the saved
+/// ones). The probe pool is dropped afterwards; only `connect`/`reconnect`
+/// may replace the app's active pool.
+#[tauri::command]
+pub async fn test_connection(input: ConnectionInput) -> Result<ConnectionTestResult, CommandError> {
+    input.validate()?;
+    let config = input.into_config();
+    let started = Instant::now();
+    let pool = connect_hosxp(&config).await.map_err(CommandError::from)?;
+    ConnectorRepository::new(pool)
+        .ping()
+        .await
+        .map_err(CommandError::from)?;
+    Ok(ConnectionTestResult {
+        latency_ms: started.elapsed().as_millis() as u64,
+    })
 }
 
 /// Returns the schedule + catalog + report header.
@@ -174,6 +320,7 @@ pub async fn save_schedule(
     schedule: BusinessSchedule,
     state: State<'_, AppState>,
 ) -> Result<(), CommandError> {
+    require_session(&state).await?;
     validate_schedule(&schedule)?;
     update_settings(&state, |settings| settings.schedule = schedule).await
 }
@@ -184,6 +331,7 @@ pub async fn save_catalog(
     catalog: Catalog,
     state: State<'_, AppState>,
 ) -> Result<(), CommandError> {
+    require_session(&state).await?;
     update_settings(&state, |settings| settings.catalog = catalog).await
 }
 
@@ -193,6 +341,7 @@ pub async fn save_report(
     report: ReportMeta,
     state: State<'_, AppState>,
 ) -> Result<(), CommandError> {
+    require_session(&state).await?;
     if report.hospital_name.trim().is_empty() {
         return Err(CommandError::validation("กรุณากรอกชื่อโรงพยาบาล"));
     }
@@ -208,6 +357,7 @@ pub async fn search_drugs(
     term: String,
     state: State<'_, AppState>,
 ) -> Result<Vec<DrugItem>, CommandError> {
+    require_session(&state).await?;
     let term = term.trim();
     let char_count = term.chars().count();
     if char_count < SEARCH_TERM_MIN_CHARS {
@@ -233,6 +383,7 @@ pub async fn fetch_usage(
     window: RequisitionWindow,
     state: State<'_, AppState>,
 ) -> Result<Vec<UsageRow>, CommandError> {
+    require_session(&state).await?;
     validate_window(&window)?;
     let icodes = state.settings.lock().await.catalog.icodes();
     if icodes.is_empty() {
@@ -297,9 +448,19 @@ async fn ensure_pool(
     if let Some(pool) = guard.as_ref() {
         return Ok(pool.clone());
     }
-    let pool = connect(config).await?;
+    let pool = connect_hosxp(config).await?;
     *guard = Some(pool.clone());
     Ok(pool)
+}
+
+/// Rejects a command that requires a signed-in operator.
+async fn require_session(state: &AppState) -> Result<SessionUser, CommandError> {
+    state
+        .session
+        .lock()
+        .await
+        .clone()
+        .ok_or_else(CommandError::unauthorized)
 }
 
 /// Builds a repository for a command, or fails with the right Thai error.
@@ -367,6 +528,7 @@ fn validate_window(window: &RequisitionWindow) -> Result<(), CommandError> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::error::CommandErrorKind;
 
     fn input(host: &str, port: u16, database: &str, user: &str) -> ConnectionInput {
         ConnectionInput {
@@ -415,6 +577,24 @@ mod tests {
 
         assert!(validate_schedule(&BusinessSchedule::default()).is_ok());
         Ok(())
+    }
+
+    #[tokio::test]
+    async fn require_session_rejects_without_a_session() {
+        let dir = tempfile::tempdir().expect("tempdir in test");
+        let state = AppState::new(dir.path().to_path_buf(), AppSettings::default());
+        let error = require_session(&state).await.expect_err("must reject");
+        assert_eq!(error.kind, CommandErrorKind::Auth);
+
+        let user = SessionUser {
+            officer_id: 7,
+            login_name: "pharm".into(),
+            display_name: "Pharmacist".into(),
+            doctor_code: None,
+            role: "STAFF".into(),
+        };
+        *state.session.lock().await = Some(user.clone());
+        assert_eq!(require_session(&state).await.expect("session"), user);
     }
 
     #[test]

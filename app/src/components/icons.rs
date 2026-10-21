@@ -158,6 +158,43 @@ icon!(
 );
 
 icon!(
+    /// User - staff identity.
+    IconUser,
+    <circle cx="12" cy="8" r="3.5" />
+    <path d="M5 20a7 7 0 0 1 14 0" />
+);
+
+icon!(
+    /// Lock - password field and read-only guarantees.
+    IconLock,
+    <rect x="4" y="10" width="16" height="11" rx="3" />
+    <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+    <path d="M12 14v3" />
+);
+
+icon!(
+    /// Shield check - read-only / protected data.
+    IconShieldCheck,
+    <path d="M12 3 5 6v5c0 4.6 2.9 8.1 7 10 4.1-1.9 7-5.4 7-10V6Z" />
+    <path d="m9 12 2 2 4-4" />
+);
+
+icon!(
+    /// Arrow right - advance to the next step.
+    IconArrowRight,
+    <path d="M4 12h15" />
+    <path d="m14 7 5 5-5 5" />
+);
+
+icon!(
+    /// Log out - end the session.
+    IconLogOut,
+    <path d="M10 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h5" />
+    <path d="m14 8 4 4-4 4" />
+    <path d="M18 12H9" />
+);
+
+icon!(
     /// Pencil - edit actions.
     IconPencil,
     <path d="M4 20l4.4-1.1L19.7 7.6a2.1 2.1 0 0 0-3-3L5.4 15.9 4 20Z" />

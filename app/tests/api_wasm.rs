@@ -34,6 +34,15 @@ fn install_default_mock() {
         "connection_status" => js_ok(JsValue::from_bool(true)),
         "connection_health" => js_ok(JsValue::from_str("Connected")),
         "load_settings" => js_ok(to_js(&AppSettings::default())),
+        "current_session" => js_ok(JsValue::NULL),
+        "login" => js_ok(to_js(&er_fill_models::SessionUser {
+            officer_id: 7,
+            login_name: "pharm".into(),
+            display_name: "Pharmacist".into(),
+            doctor_code: None,
+            role: "STAFF".into(),
+        })),
+        "logout" => js_ok(JsValue::UNDEFINED),
         "fetch_usage" => js_ok(to_js(&[er_fill_models::UsageRow {
             icode: "1001".into(),
             qty: 6.0,
@@ -99,5 +108,35 @@ async fn non_api_rejection_becomes_generic_query_error() {
     api::install_mock_invoke(|_cmd, _args| js_sys::Promise::reject(&JsValue::from_str("boom")));
     let error = api::connection_health().await.expect_err("mock rejects");
     assert_eq!(error.kind, api::ApiErrorKind::Query);
+    api::clear_mock_invoke();
+}
+
+#[wasm_bindgen_test]
+async fn login_returns_the_session_user() {
+    install_default_mock();
+    let user = api::login("pharm", "secret")
+        .await
+        .expect("mock resolves the login");
+    assert_eq!(user.login_name, "pharm");
+    assert_eq!(user.display_name, "Pharmacist");
+    api::clear_mock_invoke();
+}
+
+#[wasm_bindgen_test]
+async fn current_session_is_none_before_login() {
+    install_default_mock();
+    assert!(
+        api::current_session()
+            .await
+            .expect("mock resolves")
+            .is_none()
+    );
+    api::clear_mock_invoke();
+}
+
+#[wasm_bindgen_test]
+async fn logout_resolves() {
+    install_default_mock();
+    api::logout().await.expect("mock resolves logout");
     api::clear_mock_invoke();
 }

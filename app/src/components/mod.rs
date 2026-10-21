@@ -6,6 +6,7 @@ pub mod connection_panel;
 pub mod document_sheet;
 pub mod empty_state;
 pub mod icons;
+pub mod login_screen;
 pub mod report_panel;
 pub mod schedule_panel;
 pub mod settings_modal;

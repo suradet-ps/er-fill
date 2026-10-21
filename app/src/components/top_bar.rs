@@ -3,7 +3,8 @@
 
 use leptos::prelude::*;
 
-use crate::components::icons::IconSettings;
+use crate::api;
+use crate::components::icons::{IconLogOut, IconSettings};
 use crate::state::AppState;
 
 /// The 44px header across the top of the window.
@@ -13,6 +14,16 @@ pub fn TopBar(state: AppState) -> impl IntoView {
     let open_settings = {
         let state = state.clone();
         move |_| state.settings_open.set(true)
+    };
+    let logout = {
+        let state = state.clone();
+        move |_| {
+            let state = state.clone();
+            leptos::task::spawn_local(async move {
+                let _ = api::logout().await;
+                state.clear_session();
+            });
+        }
     };
 
     view! {
@@ -32,6 +43,33 @@ pub fn TopBar(state: AppState) -> impl IntoView {
                     <span class="status-dot__dot" aria-hidden="true"></span>
                     <span class="status-dot__label">{move || health.get().label_th()}</span>
                 </span>
+                {move || {
+                    state
+                        .session
+                        .get()
+                        .map(|user| {
+                            let initial = user
+                                .display_name
+                                .chars()
+                                .next()
+                                .or_else(|| user.login_name.chars().next())
+                                .map(|c| c.to_string())
+                                .unwrap_or_default();
+                            view! {
+                                <span class="user-chip" title=user.login_name.clone()>
+                                    <span class="user-chip__avatar">{initial}</span>
+                                    <span class="user-chip__text">
+                                        <span class="user-chip__name">{user.display_name}</span>
+                                        <span class="user-chip__role">"เจ้าหน้าที่"</span>
+                                    </span>
+                                </span>
+                            }
+                        })
+                }}
+                <button class="button-ghost" title="ออกจากระบบ" on:click=logout>
+                    <IconLogOut class="icon" />
+                    "ออกจากระบบ"
+                </button>
                 <button class="button-ghost" title="ตั้งค่า" on:click=open_settings>
                     <IconSettings class="icon" />
                     "ตั้งค่า"
@@ -43,7 +81,7 @@ pub fn TopBar(state: AppState) -> impl IntoView {
 
 /// The seal mark: rounded square, capsule, cross - matching `icon-master.svg`.
 #[component]
-fn BrandMark() -> impl IntoView {
+pub fn BrandMark() -> impl IntoView {
     view! {
         <svg class="brand-mark" viewBox="0 0 48 48" width="28" height="28" aria-hidden="true">
             <defs>

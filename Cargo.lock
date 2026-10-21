@@ -1182,6 +1182,7 @@ dependencies = [
  "async-trait",
  "chrono",
  "er-fill-models",
+ "md-5",
  "serde",
  "thiserror 2.0.21",
  "tokio",

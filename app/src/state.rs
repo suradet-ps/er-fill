@@ -6,7 +6,9 @@
 //! graph, not the values themselves.
 
 use chrono::{Local, NaiveDate, NaiveDateTime};
-use er_fill_models::{AppSettings, ReportSection, RequisitionWindow};
+use er_fill_models::{
+    AppSettings, ConnectionSummary, ReportSection, RequisitionWindow, SessionUser,
+};
 use leptos::prelude::*;
 
 /// Live reachability of HOSxP, mirrored from the backend's
@@ -107,6 +109,14 @@ pub struct AppState {
     pub settings: RwSignal<Option<AppSettings>>,
     /// Whether encrypted connection settings exist on this machine.
     pub configured: RwSignal<bool>,
+    /// Non-secret connection fields for the login screen.
+    pub connection_summary: RwSignal<Option<ConnectionSummary>>,
+    /// Last connection failure to show on the login screen.
+    pub connection_error: RwSignal<Option<String>>,
+    /// Signed-in HOSxP officer, mirrored from the backend session.
+    pub session: RwSignal<Option<SessionUser>>,
+    /// True once the startup probe (settings, connection, session) finished.
+    pub auth_checked: RwSignal<bool>,
     /// Status-dot source, polled every 30 s.
     pub health: RwSignal<ConnectionHealth>,
     /// Settings modal visibility.
@@ -144,6 +154,10 @@ impl AppState {
         Self {
             settings: RwSignal::new(None),
             configured: RwSignal::new(false),
+            connection_summary: RwSignal::new(None),
+            connection_error: RwSignal::new(None),
+            session: RwSignal::new(None),
+            auth_checked: RwSignal::new(false),
             health: RwSignal::new(ConnectionHealth::Unconfigured),
             settings_open: RwSignal::new(false),
             settings_tab: RwSignal::new(SettingsTab::Connection),
@@ -171,6 +185,25 @@ impl AppState {
         };
         self.window.set(Some(window));
         self.window_custom.set(false);
+    }
+
+    /// Completes a successful login: stores the session, recomputes the
+    /// window, and performs the morning fetch when the catalog is ready.
+    pub fn finish_login(&self, user: SessionUser) {
+        self.session.set(Some(user));
+        self.recompute_window();
+        if !self.catalog_is_empty() {
+            self.fetch_usage_action();
+        }
+    }
+
+    /// Clears the session UI (backend logout is performed by the caller).
+    pub fn clear_session(&self) {
+        self.session.set(None);
+        self.sections.set(None);
+        self.banner.set(None);
+        self.settings_open.set(false);
+        self.window_edit_open.set(false);
     }
 
     /// True when the catalog exists but has no drugs configured.
@@ -242,11 +275,31 @@ mod tests {
         let state = AppState::new();
         assert_eq!(state.health.get_untracked(), ConnectionHealth::Unconfigured);
         assert!(!state.configured.get_untracked());
+        assert!(state.session.get_untracked().is_none());
+        assert!(!state.auth_checked.get_untracked());
         assert!(state.window.get_untracked().is_none());
         assert_eq!(
             state.selected_date.get_untracked(),
             Local::now().date_naive()
         );
+    }
+
+    #[test]
+    fn clear_session_resets_login_gated_ui() {
+        let state = AppState::new();
+        state.session.set(Some(SessionUser {
+            officer_id: 7,
+            login_name: "pharm".into(),
+            display_name: "Pharmacist".into(),
+            doctor_code: None,
+            role: "STAFF".into(),
+        }));
+        state.settings_open.set(true);
+        state.window_edit_open.set(true);
+        state.clear_session();
+        assert!(state.session.get_untracked().is_none());
+        assert!(!state.settings_open.get_untracked());
+        assert!(!state.window_edit_open.get_untracked());
     }
 
     #[test]

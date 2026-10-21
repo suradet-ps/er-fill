@@ -6,6 +6,7 @@
 //! its default-free feature set).
 //!
 //! Module map:
+//! - `auth`: [`OfficerAccount`], [`SessionUser`], [`ConnectionSummary`].
 //! - `thai`: Thai / Buddhist-era date, time, and quantity formatting.
 //! - `schedule`: [`BusinessSchedule`], [`TimeRange`], [`ScheduleError`].
 //! - `window`: [`RequisitionWindow`] (half-open `[start, end)`).
@@ -14,6 +15,7 @@
 //!   [`ReportMeta`].
 //! - `settings`: [`AppSettings`] (schedule + catalog + report header).
 
+mod auth;
 mod catalog;
 mod report;
 mod schedule;
@@ -21,6 +23,7 @@ mod settings;
 mod thai;
 mod window;
 
+pub use auth::{ConnectionSummary, OfficerAccount, SessionUser};
 pub use catalog::{Catalog, DrugCategory, ErDrug, PackStock};
 pub use report::{DrugItem, ReportMeta, ReportRow, ReportSection, UsageRow};
 pub use schedule::{BusinessSchedule, ScheduleError, TimeRange};

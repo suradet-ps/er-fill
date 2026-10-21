@@ -13,8 +13,10 @@
 ## ◆ PULSE
 
 The ER cupboard empties at night; the requisition must be ready by morning.
-ER-Fill reads the hospital's [HOSxP](https://hosxp.org/) record, strictly
-read-only, and sums how much of the configured emergency drug list was used
+Operators sign in with their HOSxP **`officer`** account after the database
+connection is verified. ER-Fill then reads the hospital's
+[HOSxP](https://hosxp.org/) record, strictly read-only, and sums how much of
+the configured emergency drug list was used
 **outside business hours** - Sunday 16:00 to Monday 08:30 for a Monday run -
 then prints the Thai requisition sheet (ใบเบิกยาประจำห้องฉุกเฉินรายวัน) for
 the ผู้เบิก / ผู้จ่าย signatures. The window is computed for the operator,
@@ -101,6 +103,10 @@ Four crates, one hard law: HOSxP is read-only, without exceptions.
   `secrecy::SecretString` end to end, zeroized on drop, `Debug`-redacted.
   The rest of the settings - schedule, catalog, report header - live in a
   plain JSON file and leave the machine only when the operator exports them.
+- **Signs in** - the login gate verifies the encrypted HOSxP connection,
+  reads one `officer` row, checks active/auth type, and compares
+  `MD5(password)` with `officer_login_password_md5`. The plaintext hash
+  column is never read; the session is memory-only (see `docs/auth.md`).
 - **Labels** - Thai/Buddhist-era formatting lives in `er-fill-models`
   (`วันอาทิตย์ที่ 18 ตุลาคม 2569 เวลา 16:00 น.`), one implementation shared by
   the screen and the paper.
@@ -111,7 +117,8 @@ Four crates, one hard law: HOSxP is read-only, without exceptions.
 
 **The core ceremony** - the morning requisition:
 
-1. Open the app on the run morning: the window is computed and the usage
+1. Open the app on the run morning: verify the HOSxP connection, sign in
+   with the `officer` account, then the window is computed and the usage
    fetches itself - Sunday 16:00 → Monday 08:30 for a Monday, with the
    "อัตโนมัติ" chip on the window.
 2. The sheet is already staged: one grouped read returned every configured

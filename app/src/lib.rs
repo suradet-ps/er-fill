@@ -22,7 +22,8 @@ use leptos::prelude::*;
 
 use components::command_bar::CommandBar;
 use components::document_sheet::{DocumentSheet, SheetBanner};
-use components::empty_state::{CatalogEmpty, FirstRunHero, NoDataHint};
+use components::empty_state::{CatalogEmpty, NoDataHint};
+use components::login_screen::{LoginScreen, StartupSplash};
 use components::settings_modal::SettingsModal;
 use components::top_bar::TopBar;
 use state::{AppState, Banner};
@@ -79,35 +80,50 @@ fn App() -> impl IntoView {
     let stage_state = state.clone();
     view! {
         <div class="app">
-            <TopBar state=state.clone() />
-            <CommandBar state=state.clone() />
-            <main class="stage">
-                <SheetBanner state=state.clone() />
-                {move || {
-                    if !stage_state.configured.get() {
-                        view! { <FirstRunHero state=stage_state.clone() /> }.into_any()
-                    } else if stage_state.catalog_is_empty() {
-                        view! { <CatalogEmpty state=stage_state.clone() /> }.into_any()
-                    } else {
-                        match stage_state.sections.get() {
-                            Some(sections) => {
-                                view! {
-                                    <DocumentSheet state=stage_state.clone() sections=sections />
+            {move || {
+                if !state.auth_checked.get() {
+                    view! { <StartupSplash /> }.into_any()
+                } else if state.session.get().is_none() {
+                    view! { <LoginScreen state=state.clone() /> }.into_any()
+                } else {
+                    let stage = stage_state.clone();
+                    view! {
+                        <TopBar state=state.clone() />
+                        <CommandBar state=state.clone() />
+                        <main class="stage">
+                            <SheetBanner state=stage.clone() />
+                            {move || {
+                                if stage.catalog_is_empty() {
+                                    view! { <CatalogEmpty state=stage.clone() /> }.into_any()
+                                } else {
+                                    match stage.sections.get() {
+                                        Some(sections) => {
+                                            view! {
+                                                <DocumentSheet
+                                                    state=stage.clone()
+                                                    sections=sections
+                                                />
+                                            }
+                                                .into_any()
+                                        }
+                                        None => {
+                                            view! { <NoDataHint state=stage.clone() /> }.into_any()
+                                        }
+                                    }
                                 }
-                                    .into_any()
-                            }
-                            None => view! { <NoDataHint state=stage_state.clone() /> }.into_any(),
-                        }
+                            }}
+                        </main>
+                        <SettingsModal state=state.clone() />
                     }
-                }}
-            </main>
-            <SettingsModal state=state.clone() />
+                        .into_any()
+                }
+            }}
         </div>
     }
 }
 
-/// First load: status, settings, window, health - then the automatic first
-/// fetch when the app is ready to produce a requisition.
+/// First load: status, settings, connection probe, and session. After this
+/// resolves the UI shows either the login gate or the main document.
 async fn load_initial_state(state: AppState) {
     let configured = api::connection_status().await;
     state.configured.set(configured);
@@ -119,20 +135,32 @@ async fn load_initial_state(state: AppState) {
             state.banner.set(Some(Banner::error(err.message)));
         }
     }
+
+    if configured {
+        match api::connection_summary().await {
+            Ok(summary) => state.connection_summary.set(summary),
+            Err(err) => state.connection_error.set(Some(err.message)),
+        }
+        match api::reconnect().await {
+            Ok(_) => {
+                state.health.set(state::ConnectionHealth::Connected);
+                state.connection_error.set(None);
+            }
+            Err(err) => {
+                state.health.set(state::ConnectionHealth::Disconnected);
+                state.connection_error.set(Some(err.message));
+            }
+        }
+    } else {
+        state.connection_summary.set(None);
+        state.connection_error.set(None);
+        state.health.set(state::ConnectionHealth::Unconfigured);
+    }
+
     state.recompute_window();
 
-    if let Ok(health) = api::connection_health().await {
-        state.health.set(health);
+    if let Ok(Some(user)) = api::current_session().await {
+        state.finish_login(user);
     }
-
-    // Opening the app IS the morning request: fetch once automatically when
-    // the connection and catalog are ready (the command bar can refetch).
-    let ready = configured
-        && state
-            .settings
-            .get_untracked()
-            .is_some_and(|settings| !settings.catalog.is_empty());
-    if ready {
-        state.fetch_usage_action();
-    }
+    state.auth_checked.set(true);
 }

@@ -1,66 +1,9 @@
-//! Canvas empty states: the first-run hero (the only atmospheric surface,
-//! DESIGN.md "hero-band-sky") and the quieter informational cards.
+//! Canvas empty states: the quieter informational cards shown after sign-in.
 
 use leptos::prelude::*;
 
 use crate::components::icons::IconClipboardList;
 use crate::state::{AppState, SettingsTab};
-
-/// First run: no HOSxP connection configured yet - the one place the sky
-/// gradient and the mint accent CTA live.
-#[component]
-pub fn FirstRunHero(state: AppState) -> impl IntoView {
-    let open_connection_settings = {
-        let state = state.clone();
-        move |_| {
-            state.settings_tab.set(SettingsTab::Connection);
-            state.settings_open.set(true);
-        }
-    };
-    view! {
-        <div class="empty-hero">
-            <div class="empty-hero__content">
-                <h1 class="empty-hero__headline">"พิมพ์ใบเบิกยาห้องฉุกเฉินได้ในคลิกเดียว"</h1>
-                <p class="empty-hero__subtitle">
-                    "ระบบดึงยอดใช้ยานอกเวลาราชการจาก HOSxP ตั้งแต่เวลาเลิกทำการของวันก่อนหน้า ถึงเวลาเบิกตอนเช้าของวันนี้ แล้วพิมพ์ใบเบิกให้ห้องยาเตรียมยาให้ห้องฉุกเฉิน"
-                </p>
-                <button class="button-accent-mint" on:click=open_connection_settings>
-                    "เริ่มตั้งค่าการเชื่อมต่อ"
-                </button>
-            </div>
-            <div class="empty-hero__mock" aria-hidden="true">
-                <div class="mock-table">
-                    <div class="mock-table__head">
-                        <span>"ลำดับ"</span>
-                        <span>"ชื่อยา"</span>
-                        <span>"จำนวนใช้"</span>
-                        <span>"จำนวนเบิก"</span>
-                    </div>
-                    <div class="mock-table__band">"ยาเม็ด"</div>
-                    <div class="mock-table__row">
-                        <span>"1"</span>
-                        <span>"Paracetamol 500 mg"</span>
-                        <span>"6"</span>
-                        <span>"6"</span>
-                    </div>
-                    <div class="mock-table__row">
-                        <span>"2"</span>
-                        <span>"CPM 4 mg"</span>
-                        <span>"0"</span>
-                        <span>"0"</span>
-                    </div>
-                    <div class="mock-table__band">"ยาฉีด"</div>
-                    <div class="mock-table__row">
-                        <span>"1"</span>
-                        <span>"Ceftriaxone 1 g"</span>
-                        <span>"2"</span>
-                        <span>"2"</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    }
-}
 
 /// Catalog exists but has no drugs configured yet.
 #[component]
