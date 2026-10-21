@@ -84,7 +84,7 @@ desk is the only control surface, and it states the window compactly
 - **Canvas** ({colors.canvas}): `#FFFFFF` - the printable sheet's color and
   the stage.
 - **Surface** ({colors.surface}): `#F6F6F4` - section backgrounds, search
-  pill rest, sheet table header rows, stat chips.
+  pill rest, sheet table header rows, the command-bar stat strip.
 - **Surface Soft** ({colors.surface-soft}): `#FAFAF8` - quieter section
   bands, zebra striping off (we keep rows flat; this is for framing).
 - **Hairline** ({colors.hairline}): `#E6E6E3` - 1px borders and dividers.
@@ -336,11 +336,10 @@ rounded `{rounded.sm}`, `2px 6px`.
 `{colors.warn-text}` degraded, `{colors.error}` disconnected, `{colors.stone}`
 unconfigured. Applied with a soft halo (`box-shadow: 0 0 0 3px soft`).
 
-**`run-window` chips** - The command-bar window state: a pill showing
-ช่วงเวลา + the two abbreviated Thai datetimes (mono, tabular) + a badge -
-"อัตโนมัติ" on the mint pair, "แก้ไขเอง" on the amber pair. The amber state
-is the reason these chips exist; the requisition never hides the window it
-covers.
+**`run-window` card** - The command-bar window state: a compact card with a
+"ช่วงเวลาเบิก" heading and badge ("อัตโนมัติ" mint, "แก้ไขเอง" amber) above
+the two short Thai/BE datetimes (mono, tabular). The amber state is the
+reason this card exists; the requisition never hides the window it covers.
 
 ### Signature Components
 
@@ -355,13 +354,13 @@ only atmospheric surface:
   `{elevation.3}`) showing a miniature of the requisition table.
 
 **`command-bar`** - The only control surface, two rows tall when editing:
-- Row 1: วันที่เบิก (`text-input--compact`) · `run-window` chips · ghost
-  "แก้ไขช่วงเวลา" | right: `stat-chip`s (รายการยา / มีการใช้ / เบิกรวม, mono
-  numbers) · ดึงข้อมูล (primary when the sheet is empty, secondary "ดึงใหม่"
-  after) · **พิมพ์ใบเบิก** (black pill, disabled until the sheet exists).
-- Row 2 (collapsed by default): the manual window editors
-  (`datetime-local` × 2) + ghost "กลับเป็นอัตโนมัติ", separated by a dashed
-  hairline.
+- Row 1: a labelled date input · a `run-window` card (heading + badge over
+  the short Thai/BE times) · ghost "แก้ไขช่วงเวลา" on the left. On the right:
+  one segmented `stat-strip` (รายการยา / มีการใช้ / เบิกรวม, mono numbers) ·
+  ดึงข้อมูล (primary when the sheet is empty, secondary "ดึงใหม่" after) ·
+  **พิมพ์ใบเบิก** (black pill, disabled until the sheet exists).
+- Row 2 (collapsed by default): an inset surface card with the manual window
+  editors (`datetime-local` × 2) + ghost "กลับเป็นอัตโนมัติ".
 - Background `{colors.canvas}`, bottom hairline - chrome, not content.
 
 **`sheet`** - The document itself: the A4 paper staged on the desk.
@@ -471,8 +470,8 @@ A fixed-purpose desktop window (Tauri), 1120×800 default, min 900×620:
 
 | Window width | Behavior |
 |---|---|
-| < 960px | Command bar stacks into two lines (controls, then actions); the sheet goes full-width with reduced padding; the settings nav rail turns horizontal and the catalog collapses to one column. |
-| 960-1279px | Command bar on one line when the chips fit; the sheet stays at `min(210mm, 100%)`. |
+| < 1100px | Command bar stacks into two intentional rows (run context, then stats + actions); the sheet goes full-width with reduced padding; the settings nav rail turns horizontal and the catalog collapses to one column. |
+| 1100-1279px | Command bar on one row; the sheet stays at `min(210mm, 100%)`. |
 | ≥ 1280px | Full command bar; the sheet centered on the desk with breathing room. |
 
 Touch targets: buttons 40px effective height, icon-circular 32px desktop.

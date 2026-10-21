@@ -11,6 +11,9 @@ All notable changes to ER-Fill are documented here. The format follows
   (`units-per-pack/stock-packs`): `ceil(usage / units-per-pack)`, capped at
   the stock pack count; manual edits are rounded and clamped the same way.
 - Narrowed the จำนวน/Stock, จำนวนใช้, and จำนวนเบิก columns on the sheet.
+- Reworked the command bar: labelled date control, compact window card with
+  short Thai/BE times and badge, segmented stat strip, and a deliberate
+  two-row layout below 1100px.
 
 - Requisition window now ends at the run day's opening time (weekdays
   08:30, weekends 08:00) instead of a configurable cutoff.

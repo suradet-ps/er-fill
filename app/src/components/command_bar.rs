@@ -6,7 +6,7 @@
 use std::time::Duration;
 
 use chrono::{NaiveDate, NaiveDateTime};
-use er_fill_models::{RequisitionWindow, format_qty, format_thai_datetime_abbr};
+use er_fill_models::{RequisitionWindow, format_qty, format_thai_datetime_short};
 use leptos::prelude::*;
 
 use crate::components::icons::{IconPencil, IconPrinter, IconRefresh, IconX};
@@ -138,58 +138,68 @@ pub fn CommandBar(state: AppState) -> impl IntoView {
         let state = state.clone();
         move |_| state.window_edit_open.update(|open| *open = !*open)
     };
+    let stats_state = state.clone();
 
     view! {
         <div class="command-bar">
             <div class="command-bar__main">
-                <div class="command-bar__group">
-                    <label class="field field--inline">
-                        <span class="field__label">"วันที่เบิก"</span>
+                <div class="command-bar__run">
+                    <label class="run-field">
+                        <span class="run-field__label">"วันที่เบิก"</span>
                         <input
-                            class="text-input text-input--compact"
+                            class="text-input text-input--compact run-field__input"
                             type="date"
                             prop:value=date_value
                             on:change=on_date_change
                         />
                     </label>
-                    <span class=move || {
+
+                    <div class=move || {
                         format!(
                             "run-window{}",
                             if state.window_custom.get() { " run-window--custom" } else { "" },
                         )
                     }>
-                        <span class="run-window__label">"ช่วงเวลา"</span>
-                        <span class="run-window__time">
-                            {move || {
-                                state
-                                    .window
-                                    .get()
-                                    .map(|window| format_thai_datetime_abbr(window.start))
-                                    .unwrap_or_default()
-                            }}
-                        </span>
-                        <span class="run-window__arrow">"→"</span>
-                        <span class="run-window__time">
-                            {move || {
-                                state
-                                    .window
-                                    .get()
-                                    .map(|window| format_thai_datetime_abbr(window.end))
-                                    .unwrap_or_default()
-                            }}
-                        </span>
-                        <span class=move || {
-                            format!(
-                                "run-window__badge run-window__badge--{}",
-                                if state.window_custom.get() { "custom" } else { "auto" },
-                            )
-                        }>
-                            {move || {
-                                if state.window_custom.get() { "แก้ไขเอง" } else { "อัตโนมัติ" }
-                            }}
-                        </span>
-                    </span>
-                    <button class="button-ghost button-ghost--inline" on:click=toggle_edit>
+                        <div class="run-window__heading">
+                            <span class="run-window__label">"ช่วงเวลาเบิก"</span>
+                            <span class=move || {
+                                format!(
+                                    "run-window__badge run-window__badge--{}",
+                                    if state.window_custom.get() { "custom" } else { "auto" },
+                                )
+                            }>
+                                {move || {
+                                    if state.window_custom.get() { "แก้ไขเอง" } else { "อัตโนมัติ" }
+                                }}
+                            </span>
+                        </div>
+                        <div class="run-window__times">
+                            <span class="run-window__time">
+                                {move || {
+                                    state
+                                        .window
+                                        .get()
+                                        .map(|window| format_thai_datetime_short(window.start))
+                                        .unwrap_or_default()
+                                }}
+                            </span>
+                            <span class="run-window__arrow">"→"</span>
+                            <span class="run-window__time">
+                                {move || {
+                                    state
+                                        .window
+                                        .get()
+                                        .map(|window| format_thai_datetime_short(window.end))
+                                        .unwrap_or_default()
+                                }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <button
+                        class="button-ghost button-ghost--inline command-bar__edit-trigger"
+                        on:click=toggle_edit
+                    >
                         <IconPencil class="icon" />
                         "แก้ไขช่วงเวลา"
                     </button>
@@ -197,61 +207,73 @@ pub fn CommandBar(state: AppState) -> impl IntoView {
 
                 <div class="command-bar__actions">
                     {move || {
-                        state.sections.get().map(|sections| {
-                            let drugs: usize = sections.iter().map(|section| section.rows.len()).sum();
-                            let used = sections
-                                .iter()
-                                .flat_map(|section| section.rows.iter())
-                                .filter(|row| row.usage > 0.0)
-                                .count();
-                            let requested: f64 = sections
-                                .iter()
-                                .flat_map(|section| section.rows.iter())
-                                .map(|row| row.requested)
-                                .sum();
-                            view! {
-                                <span class="stat-chip">
-                                    "รายการยา " <b>{drugs}</b>
+                        let drugs = stats_state.catalog_drug_count();
+                        let (used, requested) = stats_state
+                            .sections
+                            .get()
+                            .map(|sections| {
+                                let used = sections
+                                    .iter()
+                                    .flat_map(|section| section.rows.iter())
+                                    .filter(|row| row.usage > 0.0)
+                                    .count();
+                                let requested: f64 = sections
+                                    .iter()
+                                    .flat_map(|section| section.rows.iter())
+                                    .map(|row| row.requested)
+                                    .sum();
+                                (used, requested)
+                            })
+                            .unwrap_or((0, 0.0));
+                        view! {
+                            <div class="stat-strip">
+                                <span class="stat">
+                                    <span class="stat__label">"รายการยา"</span>
+                                    <span class="stat__value">{drugs}</span>
                                 </span>
-                                <span class="stat-chip">
-                                    "มีการใช้ " <b>{used}</b>
+                                <span class="stat">
+                                    <span class="stat__label">"มีการใช้"</span>
+                                    <span class="stat__value">{used}</span>
                                 </span>
-                                <span class="stat-chip">
-                                    "เบิกรวม " <b>{format_qty(requested)}</b>
+                                <span class="stat">
+                                    <span class="stat__label">"เบิกรวม"</span>
+                                    <span class="stat__value">{format_qty(requested)}</span>
                                 </span>
-                            }
-                        })
-                    }}
-                    <button
-                        class=move || {
-                            if state.sections.get().is_none() {
-                                "button-primary"
-                            } else {
-                                "button-secondary"
-                            }
+                            </div>
                         }
-                        disabled=move || state.window.get().is_none() || state.loading.get()
-                        on:click=on_fetch
-                    >
-                        <IconRefresh class="icon" />
-                        {move || {
-                            if state.loading.get() {
-                                "กำลังดึงข้อมูล..."
-                            } else if state.sections.get().is_some() {
-                                "ดึงใหม่"
-                            } else {
-                                "ดึงข้อมูลการใช้ยา"
+                    }}
+                    <div class="command-bar__buttons">
+                        <button
+                            class=move || {
+                                if state.sections.get().is_none() {
+                                    "button-primary"
+                                } else {
+                                    "button-secondary"
+                                }
                             }
-                        }}
-                    </button>
-                    <button
-                        class="button-primary"
-                        disabled=move || state.sections.get().is_none()
-                        on:click=on_print
-                    >
-                        <IconPrinter class="icon" />
-                        "พิมพ์ใบเบิก"
-                    </button>
+                            disabled=move || state.window.get().is_none() || state.loading.get()
+                            on:click=on_fetch
+                        >
+                            <IconRefresh class="icon" />
+                            {move || {
+                                if state.loading.get() {
+                                    "กำลังดึงข้อมูล..."
+                                } else if state.sections.get().is_some() {
+                                    "ดึงใหม่"
+                                } else {
+                                    "ดึงข้อมูลการใช้ยา"
+                                }
+                            }}
+                        </button>
+                        <button
+                            class="button-primary"
+                            disabled=move || state.sections.get().is_none()
+                            on:click=on_print
+                        >
+                            <IconPrinter class="icon" />
+                            "พิมพ์ใบเบิก"
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -260,6 +282,7 @@ pub fn CommandBar(state: AppState) -> impl IntoView {
                     let reset_auto = reset_auto.clone();
                     view! {
                         <div class="command-bar__edit">
+                            <span class="command-bar__edit-label">"กำหนดช่วงเวลาเอง"</span>
                             <label class="field field--inline">
                                 <span class="field__label">"เริ่ม"</span>
                                 <input
