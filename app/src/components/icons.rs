@@ -1,9 +1,10 @@
-//! Lucide-style SVG icon components.
+//! ER-Fill's monoline SVG icon set.
 //!
-//! Stroke-based icons (24×24 viewBox, `currentColor`, 2px stroke, round
-//! caps) - render crisply at any size and inherit their color from the
-//! surrounding text. Icons are decorative: `aria-hidden` and never carry
-//! text alternatives; nearby text always explains the state.
+//! A deliberately softer, clinical set: 24×24 viewBox, `currentColor`,
+//! 1.8px stroke, round caps and joins. The glyphs sit on a common optical
+//! grid so they stay crisp at 16px inside buttons and 24px in settings.
+//! Icons are decorative: `aria-hidden` and never carry text alternatives;
+//! nearby text always explains the state.
 
 use leptos::prelude::*;
 
@@ -19,7 +20,7 @@ macro_rules! icon {
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
-                    stroke-width="2"
+                    stroke-width="1.8"
                     stroke-linecap="round"
                     stroke-linejoin="round"
                     aria-hidden="true"
@@ -34,7 +35,7 @@ macro_rules! icon {
 icon!(
     /// Check - confirmations ("บันทึกแล้ว").
     IconCheck,
-    <path d="M20 6 9 17l-5-5" />
+    <path d="M4.5 12.5 9.5 17.5 19.5 6.5" />
 );
 
 icon!(
@@ -47,43 +48,47 @@ icon!(
 icon!(
     /// Printer - print action.
     IconPrinter,
-    <path d="M6 9V3h12v6" />
-    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
-    <path d="M6 14h12v8H6z" />
+    <path d="M7 8V3.5h10V8" />
+    <path d="M7 17H5.5A2.5 2.5 0 0 1 3 14.5v-4A2.5 2.5 0 0 1 5.5 8h13A2.5 2.5 0 0 1 21 10.5v4a2.5 2.5 0 0 1-2.5 2.5H17" />
+    <rect x="7" y="14" width="10" height="7" rx="1.2" />
+    <path d="M17.5 11.5h.01" />
 );
 
 icon!(
-    /// Refresh (rotate-cw) - refetch action.
+    /// Refresh - refetch action.
     IconRefresh,
-    <path d="M21 12a9 9 0 1 1-2.64-6.36" />
-    <path d="M21 3v6h-6" />
+    <path d="M20 8a8 8 0 0 0-13.7-2.3L4 8" />
+    <path d="M4 3v5h5" />
+    <path d="M4 16a8 8 0 0 0 13.7 2.3L20 16" />
+    <path d="M20 21v-5h-5" />
 );
 
 icon!(
     /// Calendar - window panel.
     IconCalendar,
-    <path d="M8 2v4" />
-    <path d="M16 2v4" />
-    <path d="M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" />
+    <rect x="3" y="5" width="18" height="16" rx="3" />
+    <path d="M8 3v4" />
+    <path d="M16 3v4" />
     <path d="M3 10h18" />
+    <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01" />
 );
 
 icon!(
     /// Clock - the window band.
     IconClock,
-    <circle cx="12" cy="12" r="10" />
-    <polyline points="12 6 12 12 16 14" />
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 7v5l3 2" />
 );
 
 icon!(
     /// List - summary section.
     IconList,
-    <path d="M8 6h13" />
-    <path d="M8 12h13" />
-    <path d="M8 18h13" />
-    <path d="M3 6h.01" />
-    <path d="M3 12h.01" />
-    <path d="M3 18h.01" />
+    <path d="M9 6h11" />
+    <path d="M9 12h11" />
+    <path d="M9 18h11" />
+    <path d="M4.5 6h.01" />
+    <path d="M4.5 12h.01" />
+    <path d="M4.5 18h.01" />
 );
 
 icon!(
@@ -96,9 +101,10 @@ icon!(
 icon!(
     /// Trash - remove actions.
     IconTrash,
-    <path d="M3 6h18" />
-    <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+    <path d="M4 7h16" />
+    <path d="M9 7V4.5h6V7" />
+    <path d="M6.5 7l.8 12a2 2 0 0 0 2 1.9h5.4a2 2 0 0 0 2-1.9l.8-12" />
+    <path d="M10 11v6M14 11v6" />
 );
 
 icon!(
@@ -139,14 +145,14 @@ icon!(
 icon!(
     /// Search - drug picker.
     IconSearch,
-    <circle cx="11" cy="11" r="8" />
-    <path d="m21 21-4.3-4.3" />
+    <circle cx="11" cy="11" r="7" />
+    <path d="m20 20-4-4" />
 );
 
 icon!(
     /// Database - connection settings.
     IconDatabase,
-    <path d="M12 8c4.97 0 9-1.34 9-3s-4.03-3-9-3-9 1.34-9 3 4.03 3 9 3z" />
+    <ellipse cx="12" cy="5" rx="9" ry="3" />
     <path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5" />
     <path d="M3 12c0 1.66 4.03 3 9 3s9-1.34 9-3" />
 );
@@ -154,26 +160,26 @@ icon!(
 icon!(
     /// Pencil - edit actions.
     IconPencil,
-    <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+    <path d="M4 20l4.4-1.1L19.7 7.6a2.1 2.1 0 0 0-3-3L5.4 15.9 4 20Z" />
+    <path d="M14.5 6.5l3 3" />
+    <path d="M4 20h5" />
 );
 
 icon!(
     /// Clipboard list - the requisition document.
     IconClipboardList,
-    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
-    <path d="M15 2H9a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1z" />
-    <path d="M12 11h4" />
-    <path d="M12 16h4" />
-    <path d="M8 11h.01" />
-    <path d="M8 16h.01" />
+    <rect x="5" y="5" width="14" height="16" rx="3" />
+    <path d="M9 5V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v1" />
+    <path d="M9 11h6" />
+    <path d="M9 15h6" />
+    <path d="M9 19h4" />
 );
 
 icon!(
     /// File text - the printed header block.
     IconFileText,
-    <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z" />
-    <path d="M15 2v5h5" />
-    <path d="M16 13H8" />
-    <path d="M16 17H8" />
-    <path d="M10 9H8" />
+    <path d="M7 3h7l4 4v14H7z" />
+    <path d="M14 3v5h4" />
+    <path d="M10 13h5" />
+    <path d="M10 17h5" />
 );

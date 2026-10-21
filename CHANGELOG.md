@@ -14,6 +14,9 @@ All notable changes to ER-Fill are documented here. The format follows
 - Reworked the command bar: labelled date control, compact window card with
   short Thai/BE times and badge, segmented stat strip, and a deliberate
   two-row layout below 1100px.
+- Redrew the UI icon set as a custom monoline family (1.8px stroke) with new
+  pencil, refresh, printer, calendar, clipboard, file, trash, and database
+  glyphs.
 
 - Requisition window now ends at the run day's opening time (weekdays
   08:30, weekends 08:00) instead of a configurable cutoff.

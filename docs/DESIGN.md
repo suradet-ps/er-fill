@@ -281,6 +281,11 @@ rounded `{rounded.md}`.
 catalog list): background `{colors.canvas}`, border
 `1px solid {colors.hairline}`, rounded `{rounded.full}`.
 
+**`icon` set** - ER-Fill's own monoline SVGs: 24×24 viewBox, 1.8px stroke,
+round caps and joins, `currentColor`. 16px inside buttons, 24px in the
+settings rail. No filled or duotone variants; the line stays quiet beside
+Thai text and quantities.
+
 ### Cards & Containers
 
 **`card-base`** - Background `{colors.canvas}`, rounded `{rounded.lg}`,
