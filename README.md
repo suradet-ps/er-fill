@@ -89,8 +89,9 @@ Four crates, one hard law: HOSxP is read-only, without exceptions.
 - **Prints** - `app` is the Leptos frontend, document-first: the command bar
   holds the run controls, and the stage shows the A4 sheet itself - the
   same DOM and stylesheet that print. The sheet states the window as a Thai
-  sentence (Buddhist-era), shows จำนวนใช้ next to an editable จำนวนเบิก, and
-  carries the ผู้เบิก/ผู้จ่าย signature blocks; พิมพ์ใบเบิก just calls
+  sentence (Buddhist-era), shows จำนวนใช้ next to an editable จำนวนเบิก
+  (auto-derived as whole packs, capped at stock), and carries the
+  ผู้เบิก/ผู้จ่าย signature blocks; พิมพ์ใบเบิก just calls
   `window.print()` on what is already on screen.
 - **Seals** - read-only is enforced in layers: a dedicated user with
   `GRANT SELECT` only, `SET SESSION TRANSACTION READ ONLY` on every pooled
@@ -114,7 +115,8 @@ Four crates, one hard law: HOSxP is read-only, without exceptions.
    fetches itself - Sunday 16:00 → Monday 08:30 for a Monday, with the
    "อัตโนมัติ" chip on the window.
 2. The sheet is already staged: one grouped read returned every configured
-   drug's out-of-hours usage, with strength beside each name.
+   drug's out-of-hours usage, with strength beside each name and จำนวนเบิก
+   derived as whole packs from the จำนวน/Stock setting.
 3. Review the paper grouped by หมวด; where reality differs from the record,
    adjust จำนวนเบิก directly in its box - the preview is exactly what prints.
 4. กด "พิมพ์ใบเบิก": the A4 pages (40 items per page, so the 69-item list

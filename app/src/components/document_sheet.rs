@@ -106,6 +106,7 @@ fn SheetPageView(
                                         let section_index = placed.section_index;
                                         let row_index = placed.row_index;
                                         let row = placed.row;
+                                        let max_requested = row.max_requested;
                                         let on_request = {
                                             let state = state.clone();
                                             move |ev| {
@@ -116,6 +117,9 @@ fn SheetPageView(
                                                 if !(value.is_finite() && value >= 0.0) {
                                                     return;
                                                 }
+                                                let value = value.round();
+                                                let value = max_requested
+                                                    .map_or(value, |max| value.min(max));
                                                 state.sections.update(|sections| {
                                                     if let Some(row) = sections
                                                         .as_mut()
@@ -149,7 +153,8 @@ fn SheetPageView(
                                                         class="sheet__request-input"
                                                         type="number"
                                                         min="0"
-                                                        step="any"
+                                                        step="1"
+                                                        max=row.max_requested.map(format_qty).unwrap_or_default()
                                                         value=format_qty(row.requested)
                                                         on:change=on_request
                                                         aria-label=format!("จำนวนเบิก {}", row.name)

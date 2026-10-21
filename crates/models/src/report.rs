@@ -54,11 +54,14 @@ pub struct ReportRow {
     pub strength_text: String,
     /// Stock label (จำนวน/Stock column), printed as-is.
     pub stock_text: String,
-    /// Usage from HOSxP in the window.
+    /// Usage from HOSxP in the window, in base units (e.g. tablets).
     pub usage: f64,
-    /// Quantity to requisition - starts equal to `usage`, editable in the UI
-    /// before printing.
+    /// Whole packs to requisition, derived from the pack/stock label and
+    /// editable in the UI before printing.
     pub requested: f64,
+    /// Highest whole pack count allowed by the configured stock; `None` when
+    /// the stock label is not in `units/stock` form.
+    pub max_requested: Option<f64>,
 }
 
 /// A category section of the requisition.

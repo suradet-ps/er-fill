@@ -7,6 +7,11 @@ All notable changes to ER-Fill are documented here. The format follows
 
 ### Changed
 
+- จำนวนเบิก is now derived as whole packs from the จำนวน/Stock setting
+  (`units-per-pack/stock-packs`): `ceil(usage / units-per-pack)`, capped at
+  the stock pack count; manual edits are rounded and clamped the same way.
+- Narrowed the จำนวน/Stock, จำนวนใช้, and จำนวนเบิก columns on the sheet.
+
 - Requisition window now ends at the run day's opening time (weekdays
   08:30, weekends 08:00) instead of a configurable cutoff.
 - Weekday business hours extended to 08:30-20:30; weekends remain

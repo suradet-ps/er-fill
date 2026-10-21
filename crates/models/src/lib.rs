@@ -9,7 +9,7 @@
 //! - `thai`: Thai / Buddhist-era date, time, and quantity formatting.
 //! - `schedule`: [`BusinessSchedule`], [`TimeRange`], [`ScheduleError`].
 //! - `window`: [`RequisitionWindow`] (half-open `[start, end)`).
-//! - `catalog`: [`Catalog`], [`DrugCategory`], [`ErDrug`] (the ER drug list).
+//! - `catalog`: [`Catalog`], [`DrugCategory`], [`ErDrug`], [`PackStock`] (the ER drug list).
 //! - `report`: [`DrugItem`], [`UsageRow`], [`ReportRow`], [`ReportSection`],
 //!   [`ReportMeta`].
 //! - `settings`: [`AppSettings`] (schedule + catalog + report header).
@@ -21,7 +21,7 @@ mod settings;
 mod thai;
 mod window;
 
-pub use catalog::{Catalog, DrugCategory, ErDrug};
+pub use catalog::{Catalog, DrugCategory, ErDrug, PackStock};
 pub use report::{DrugItem, ReportMeta, ReportRow, ReportSection, UsageRow};
 pub use schedule::{BusinessSchedule, ScheduleError, TimeRange};
 pub use settings::AppSettings;

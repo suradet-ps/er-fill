@@ -212,8 +212,11 @@ command bar above holds the few run controls. No second layout exists.
   12mm internal padding, `{elevation.3}` on the `{colors.surface}` desk.
   On print, `@page` owns the margins and the sheet drops its padding.
 - The table is the *only* multi-column surface; column widths are frozen:
-  `46px` ลำดับ / `1fr` ชื่อยา (+ความแรง, +icode) / `150px` จำนวน/Stock /
-  `80px` จำนวนใช้ / `90px` จำนวนเบิก.
+  `46px` ลำดับ / `1fr` ชื่อยา (+ความแรง, +icode) / `108px` จำนวน/Stock /
+  `64px` จำนวนใช้ / `76px` จำนวนเบิก.
+- จำนวนเบิก starts as whole packs: `ceil(usage / units-per-pack)` from the
+  จำนวน/Stock setting, capped at the stock pack count; the operator can
+  adjust it on the sheet.
 
 ## Elevation & Depth
 

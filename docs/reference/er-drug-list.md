@@ -86,6 +86,12 @@ Notes:
   grouped by the six categories, with ลงชื่อ (ผู้เบิก) / ลงชื่อ (ผู้จ่าย)
   signature blocks.
 - The screen/print table adds a จำนวนใช้ column (usage from HOSxP) before
-  จำนวนเบิก (defaults to usage, editable).
+  จำนวนเบิก. The จำนวน/Stock setting is `units-per-pack/stock-packs`
+  (e.g. `10/20` = 10 tablets per pack, 20 packs on hand); จำนวนเบิก is
+  `ceil(usage / units-per-pack)`, whole packs, capped at the stock count.
+  The operator can still adjust the requested packs before printing.
+- Labels written as `20 เม็ด/10 ซอง` work too - the leading numbers are read
+  and the units ignored. A label without a slash has no pack arithmetic and
+  falls back to whole usage.
 - Item #5 vs #4 (Dicloxacillin 250 mg, two pack sizes) demonstrates why the
-  catalog keys on `icode` + a free-text stock label, not name alone.
+  catalog keys on `icode` + the stock label, not name alone.

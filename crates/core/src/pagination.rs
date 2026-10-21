@@ -75,6 +75,7 @@ pub struct SheetPage {
 ///     stock_text: String::new(),
 ///     usage: i as f64,
 ///     requested: i as f64,
+///     max_requested: None,
 /// };
 /// let section = ReportSection {
 ///     category_id: "cat-1".into(),
@@ -153,6 +154,7 @@ mod tests {
             stock_text: String::new(),
             usage: 1.0,
             requested: 1.0,
+            max_requested: None,
         }
     }
 

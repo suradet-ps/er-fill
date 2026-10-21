@@ -32,12 +32,66 @@ pub struct ErDrug {
     /// (Paracetamol 325 vs 500) on screen and on the printed sheet.
     #[serde(default)]
     pub strength_text: String,
-    /// Free-text stock label ("20 เม็ด/10"), printed as-is.
+    /// Stock label in `units-per-pack/stock-packs` form ("10/20"), printed
+    /// as-is. Leading numbers on each side are used for the requisition
+    /// arithmetic; a missing slash falls back to whole usage.
     pub stock_text: String,
     /// Owning [`DrugCategory::id`].
     pub category_id: String,
     /// Row order inside the category; lower first.
     pub sort_order: i32,
+}
+
+/// The arithmetic form of [`ErDrug::stock_text`]: base units in one pack and
+/// the number of packs on hand.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct PackStock {
+    /// Base units in one pack (e.g. tablets per pack).
+    pub units_per_pack: f64,
+    /// Packs on hand - the ceiling for a whole-pack requisition.
+    pub stock_packs: f64,
+}
+
+impl PackStock {
+    /// Largest whole number of packs that may be requested.
+    pub fn max_requested(self) -> f64 {
+        self.stock_packs.floor().max(0.0)
+    }
+}
+
+impl ErDrug {
+    /// Parses [`ErDrug::stock_text`] when it contains `units/stock` numbers.
+    pub fn pack_stock(&self) -> Option<PackStock> {
+        parse_pack_stock(&self.stock_text)
+    }
+}
+
+/// Reads a leading number from one side of the stock label. Commas are
+/// ignored ("1,000" -> 1000); units after the number are ignored.
+fn leading_number(text: &str) -> Option<f64> {
+    let token: String = text
+        .trim()
+        .chars()
+        .take_while(|c| c.is_ascii_digit() || matches!(c, '.' | ','))
+        .filter(|c| *c != ',')
+        .collect();
+    token.parse::<f64>().ok()
+}
+
+/// Parses `"10/20"`, `"10 เม็ด/20 ซอง"`, etc. Both numbers must be finite,
+/// the pack size positive, and the stock non-negative.
+fn parse_pack_stock(text: &str) -> Option<PackStock> {
+    let (units, stock) = text.split_once('/')?;
+    let units_per_pack = leading_number(units)?;
+    let stock_packs = leading_number(stock)?;
+    (units_per_pack.is_finite()
+        && stock_packs.is_finite()
+        && units_per_pack > 0.0
+        && stock_packs >= 0.0)
+        .then_some(PackStock {
+            units_per_pack,
+            stock_packs,
+        })
 }
 
 /// The full catalog.
@@ -186,5 +240,75 @@ mod tests {
         )?;
         assert_eq!(catalog.drugs[0].strength_text, "");
         Ok(())
+    }
+
+    #[test]
+    fn pack_stock_parses_compact_and_labeled_forms() {
+        assert_eq!(
+            parse_pack_stock("10/20"),
+            Some(PackStock {
+                units_per_pack: 10.0,
+                stock_packs: 20.0,
+            })
+        );
+        assert_eq!(
+            parse_pack_stock("20 เม็ด/10 ซอง"),
+            Some(PackStock {
+                units_per_pack: 20.0,
+                stock_packs: 10.0,
+            })
+        );
+        assert_eq!(
+            parse_pack_stock("1,000 ml / 5"),
+            Some(PackStock {
+                units_per_pack: 1000.0,
+                stock_packs: 5.0,
+            })
+        );
+        assert_eq!(
+            parse_pack_stock("10/20/30"),
+            Some(PackStock {
+                units_per_pack: 10.0,
+                stock_packs: 20.0,
+            })
+        );
+    }
+
+    #[test]
+    fn pack_stock_rejects_missing_or_invalid_numbers() {
+        assert_eq!(parse_pack_stock("10 เม็ด"), None);
+        assert_eq!(parse_pack_stock("10/"), None);
+        assert_eq!(parse_pack_stock("/20"), None);
+        assert_eq!(parse_pack_stock("0/20"), None);
+        assert_eq!(parse_pack_stock("-10/20"), None);
+        assert_eq!(parse_pack_stock("10/-20"), None);
+    }
+
+    #[test]
+    fn pack_stock_max_requested_is_a_whole_pack() {
+        let pack = PackStock {
+            units_per_pack: 10.0,
+            stock_packs: 20.9,
+        };
+        assert_eq!(pack.max_requested(), 20.0);
+    }
+
+    #[test]
+    fn er_drug_pack_stock_reads_its_label() {
+        let drug = ErDrug {
+            icode: "1001".into(),
+            name: "a".into(),
+            strength_text: String::new(),
+            stock_text: "10/20".into(),
+            category_id: "cat-1".into(),
+            sort_order: 0,
+        };
+        assert_eq!(
+            drug.pack_stock(),
+            Some(PackStock {
+                units_per_pack: 10.0,
+                stock_packs: 20.0,
+            })
+        );
     }
 }

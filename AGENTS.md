@@ -42,10 +42,10 @@ Dependency direction: `app` → `er-fill-core` → `er-fill-models`, and `er-fil
 
 - `BusinessSchedule { weekday: TimeRange, weekend: TimeRange }` - `TimeRange { start, end }`; defaults: weekday 08:30-20:30, weekend (Sat-Sun) 08:00-16:00. Serialized on the wire with `"HH:MM"` times. The requisition window always ends at the opening time of the run day; there is no separate cutoff.
 - `RequisitionWindow { start: NaiveDateTime, end: NaiveDateTime }` - the half-open window `[start, end)`.
-- `Catalog { categories: Vec<DrugCategory>, drugs: Vec<ErDrug> }` - `DrugCategory { id, name, sort_order }`, `ErDrug { icode, name, strength_text, stock_text, category_id, sort_order }`. Seeded with the six categories of the approved ER list (see `docs/reference/er-drug-list.md`); drugs are added from HOSxP `drugitems` search, which prefills `strength_text` from `strength`/`units` (e.g. "500 mg") so same-name drugs stay distinguishable.
+- `Catalog { categories: Vec<DrugCategory>, drugs: Vec<ErDrug> }` - `DrugCategory { id, name, sort_order }`, `ErDrug { icode, name, strength_text, stock_text, category_id, sort_order }`. Seeded with the six categories of the approved ER list (see `docs/reference/er-drug-list.md`); drugs are added from HOSxP `drugitems` search, which prefills `strength_text` from `strength`/`units` (e.g. "500 mg") so same-name drugs stay distinguishable. `stock_text` is `units-per-pack/stock-packs` ("10/20" = 10 tablets per pack, 20 packs on hand); leading numbers are parsed, units after them are ignored.
 - `DrugItem { icode, name, strength, units }` - a `drugitems` search hit.
 - `UsageRow { icode, qty }` - one grouped usage result from HOSxP.
-- `ReportSection { category_id, category_name, rows: Vec<ReportRow> }`, `ReportRow { icode, name, strength_text, stock_text, usage, requested }` - the printable table; `requested` starts equal to `usage` and is editable in the UI before printing.
+- `ReportSection { category_id, category_name, rows: Vec<ReportRow> }`, `ReportRow { icode, name, strength_text, stock_text, usage, requested, max_requested }` - the printable table. `requested` starts as `ceil(usage / units-per-pack)`, capped at the stock pack count (`max_requested`); it is editable in whole packs before printing. A stock label without a slash falls back to whole usage with no cap.
 - `ReportMeta { hospital_name, document_title, department_name }` - the printed header block; defaults for Sra Bos Hospital.
 
 Thai/Buddhist-era formatting (`be_year`, `format_thai_date*`, `format_qty`) lives in `models::thai` so the UI and the print sheet share one implementation.
@@ -131,9 +131,11 @@ by screen and print.
    query) for the window.
 3. `er-fill-core::build_report` joins catalog + usage into category sections;
    drugs with no usage show `0` (the pharmacy sees they were not used);
-   each row carries the drug's `strength_text` beside its name.
-4. Operator may edit each row's "จำนวนเบิก" (defaults to usage) directly on
-   the sheet.
+   each row carries the drug's `strength_text` beside its name and derives
+   "จำนวนเบิก" as whole packs (`ceil(usage / units-per-pack)`, capped at the
+   stock pack count).
+4. Operator may edit each row's "จำนวนเบิก" directly on the sheet; edits are
+   rounded to whole packs and clamped to the same stock cap.
 5. "พิมพ์ใบเบิก" calls `window.print()` on the on-screen sheet - the preview
    IS the printed output (grouped by category, with the window sentence,
    hospital header, and ผู้เบิก/ผู้จ่าย signature blocks). The sheet

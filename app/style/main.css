@@ -652,15 +652,15 @@ button:disabled {
 }
 
 .sheet__col-stock {
-    width: 150px;
+    width: 108px;
 }
 
 .sheet__col-usage {
-    width: 80px;
+    width: 64px;
 }
 
 .sheet__col-request {
-    width: 90px;
+    width: 76px;
 }
 
 .sheet__table th,

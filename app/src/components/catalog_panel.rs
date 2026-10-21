@@ -468,11 +468,11 @@ pub fn CatalogPanel(state: AppState) -> impl IntoView {
                                                 />
                                             </label>
                                             <label class="drug-row__cell">
-                                                <span class="drug-row__cell-label">"จำนวน/Stock"</span>
+                                                <span class="drug-row__cell-label">"จำนวน/Stock (ต่อชุด/จำนวนชุด)"</span>
                                                 <input
                                                     class="text-input"
                                                     type="text"
-                                                    placeholder="เช่น 10 เม็ด/10 ซอง"
+                                                    placeholder="เช่น 10/20"
                                                     value=drug.stock_text.clone()
                                                     on:change=on_stock_change
                                                 />
