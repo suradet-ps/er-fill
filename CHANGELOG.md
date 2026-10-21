@@ -3,6 +3,20 @@
 All notable changes to ER-Fill are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and versions follow SemVer.
 
+## [Unreleased]
+
+### Changed
+
+- Requisition window now ends at the run day's opening time (weekdays
+  08:30, weekends 08:00) instead of a configurable cutoff.
+- Weekday business hours extended to 08:30-20:30; weekends remain
+  08:00-16:00.
+- Settings export version 2 (the obsolete `schedule.cutoff` field is
+  removed; version 1 files still import).
+- On-disk settings version 2: a version 1 file with the old default weekday
+  hours (closing 16:30) is upgraded to the new 20:30 closing; custom
+  schedules are preserved.
+
 ## [0.1.0] - 2026-10-17
 
 ### Added

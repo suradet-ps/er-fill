@@ -1,5 +1,6 @@
-//! Settings tab: business hours + requisition cutoff (AGENTS.md section 7), with a
-//! live preview of the window the current inputs produce.
+//! Settings tab: business hours (AGENTS.md section 7), with a live preview
+//! of the window the current inputs produce. The window ends at the opening
+//! time of the run day - there is no separate cutoff.
 
 use chrono::NaiveTime;
 use er_fill_models::{BusinessSchedule, TimeRange, format_thai_datetime_abbr, format_time_hm};
@@ -17,7 +18,7 @@ fn parse_hm(raw: &str) -> Option<NaiveTime> {
         .ok()
 }
 
-/// The schedule form: weekday range, weekend range, cutoff.
+/// The schedule form: weekday range and weekend range.
 #[component]
 pub fn SchedulePanel(state: AppState) -> impl IntoView {
     let initial = state
@@ -29,7 +30,6 @@ pub fn SchedulePanel(state: AppState) -> impl IntoView {
     let weekday_end = RwSignal::new(format_time_hm(initial.weekday.end));
     let weekend_start = RwSignal::new(format_time_hm(initial.weekend.start));
     let weekend_end = RwSignal::new(format_time_hm(initial.weekend.end));
-    let cutoff = RwSignal::new(format_time_hm(initial.cutoff));
     let status = RwSignal::new(None::<StatusMessage>);
     let busy = RwSignal::new(false);
 
@@ -44,12 +44,7 @@ pub fn SchedulePanel(state: AppState) -> impl IntoView {
             parse_hm(&weekend_end.get()).ok_or("เวลาเลิกเสาร์-อาทิตย์ไม่ถูกต้อง")?,
         )
         .map_err(|_| "เสาร์-อาทิตย์: เวลาเริ่มต้องก่อนเวลาเลิก".to_string())?;
-        let cutoff = parse_hm(&cutoff.get()).ok_or("เวลาเบิกไม่ถูกต้อง")?;
-        Ok(BusinessSchedule {
-            weekday,
-            weekend,
-            cutoff,
-        })
+        Ok(BusinessSchedule { weekday, weekend })
     };
 
     let preview = move || {
@@ -134,18 +129,9 @@ pub fn SchedulePanel(state: AppState) -> impl IntoView {
                     </label>
                 </div>
             </div>
-            <h3 class="panel__subtitle">"การเบิก"</h3>
-            <div class="form-card">
-                <span class="form-card__title">"เวลาเบิกตอนเช้า"</span>
-                <div class="form-card__fields">
-                    <label class="field field--inline">
-                        <span class="field__label">"พิมพ์ใบเบิกเวลา"</span>
-                        <input class="text-input" type="time" prop:value=move || cutoff.get()
-                            on:input=move |ev| cutoff.set(event_target_value(&ev)) />
-                    </label>
-                    <span class="form-card__hint">"ใช้เป็นเวลาสิ้นสุดของช่วงเบิก"</span>
-                </div>
-            </div>
+            <p class="panel-note">
+                "ช่วงเบิกจะสิ้นสุดที่เวลาเปิดทำการของวันที่เบิกโดยอัตโนมัติ"
+            </p>
             <p class="panel-note panel-note--preview">
                 {move || preview().unwrap_or_else(|| "เวลาทำการไม่ถูกต้อง".to_string())}
             </p>

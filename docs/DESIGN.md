@@ -12,7 +12,7 @@ work.
 **The signature element is the sheet** - the A4 requisition itself, staged on
 a soft desk surface as a live preview: hospital header, the window sentence
 in full Thai ("วันอาทิตย์ที่ 18 ตุลาคม 2569 เวลา 16:00 น. ถึง วันจันทร์ที่ 19
-ตุลาคม 2569 เวลา 08:00 น."), the grouped drug table with editable จำนวนเบิก
+ตุลาคม 2569 เวลา 08:30 น."), the grouped drug table with editable จำนวนเบิก
 cells, and the ผู้เบิก/ผู้จ่าย signature blocks. The screen and the printer
 share one DOM and one stylesheet - what the pharmacist verifies is exactly
 what prints; there is no separate preview mode. The command bar above the
@@ -180,7 +180,7 @@ desk is the only control surface, and it states the window compactly
 │ Top bar (48px: mark · ER-Fill · ระบบใบเบิกยาห้องฉุกเฉิน · status · ตั้งค่า) │
 ├──────────────────────────────────────────────────────────────────────┤
 │ COMMAND BAR (the only control surface; two rows when editing)        │
-│  วันที่เบิก [date] │ ช่วงเวลา 17 ต.ค. 16:00 → 18 ต.ค. 08:00 [อัตโนมัติ]   │
+│  วันที่เบิก [date] │ ช่วงเวลา 20 ต.ค. 20:30 → 21 ต.ค. 08:30 [อัตโนมัติ]   │
 │  [แก้ไขช่วงเวลา]        รายการยา 69 · ใช้ 12 · เบิกรวม 34 [ดึงใหม่] [พิมพ์ใบเบิก] │
 ├──────────────────────────────────────────────────────────────────────┤
 │ STAGE (desk surface, scrollable)                                     │

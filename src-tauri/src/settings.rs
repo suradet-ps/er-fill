@@ -6,7 +6,9 @@
 
 use std::path::Path;
 
+use chrono::NaiveTime;
 pub use er_fill_models::AppSettings;
+use er_fill_models::{BusinessSchedule, TimeRange};
 use serde::{Deserialize, Serialize};
 
 /// File name of the settings file, inside the app config dir.
@@ -14,7 +16,10 @@ pub const SETTINGS_FILE_NAME: &str = "er-fill.settings.json";
 
 /// Version of the on-disk settings format. Bump (with migration) if the
 /// layout changes.
-const SETTINGS_VERSION: u32 = 1;
+const SETTINGS_VERSION: u32 = 2;
+
+/// Version 1 stored a `schedule.cutoff` and weekday hours ending at 16:30.
+const PREVIOUS_SETTINGS_VERSION: u32 = 1;
 
 /// Errors around reading and writing the settings file.
 #[derive(Debug, thiserror::Error)]
@@ -53,13 +58,39 @@ pub async fn load(path: &Path) -> Result<AppSettings, SettingsError> {
         .map_err(|e| SettingsError::Io(e.to_string()))?;
     let file: SettingsFile =
         serde_json::from_str(&raw).map_err(|e| SettingsError::Corrupt(e.to_string()))?;
-    if file.version != SETTINGS_VERSION {
-        return Err(SettingsError::Corrupt(format!(
-            "unsupported settings version {}",
-            file.version
-        )));
+    match file.version {
+        SETTINGS_VERSION => Ok(file.settings),
+        PREVIOUS_SETTINGS_VERSION => Ok(migrate_v1(file.settings)),
+        version => Err(SettingsError::Corrupt(format!(
+            "unsupported settings version {version}"
+        ))),
     }
-    Ok(file.settings)
+}
+
+/// Version 1 shipped weekday hours ending at 16:30. Upgrade only the exact
+/// old default; an operator's custom schedule is preserved.
+fn migrate_v1(mut settings: AppSettings) -> AppSettings {
+    let old_default = BusinessSchedule {
+        weekday: TimeRange {
+            start: at(8, 30),
+            end: at(16, 30),
+        },
+        weekend: TimeRange {
+            start: at(8, 0),
+            end: at(16, 0),
+        },
+    };
+    if settings.schedule == old_default {
+        settings.schedule = BusinessSchedule::default();
+    }
+    settings
+}
+
+/// Builds a [`NaiveTime`] from literal hours/minutes. The fallback is
+/// unreachable for the compile-time-valid values used here; it keeps the
+/// no-panic rule (AGENTS-RUST.md section 5.5).
+fn at(hour: u32, minute: u32) -> NaiveTime {
+    NaiveTime::from_hms_opt(hour, minute, 0).unwrap_or(NaiveTime::MIN)
 }
 
 /// Writes the settings file (pretty JSON), creating parent directories.
@@ -120,6 +151,56 @@ mod tests {
             .await
             .expect("write in test");
         assert!(matches!(load(&path).await, Err(SettingsError::Corrupt(_))));
+    }
+
+    #[tokio::test]
+    async fn v1_legacy_default_schedule_is_upgraded() {
+        let dir = tempdir().expect("tempdir in test");
+        let path = dir.path().join(SETTINGS_FILE_NAME);
+        tokio::fs::write(
+            &path,
+            r#"{
+                "version": 1,
+                "schedule": {
+                    "weekday": { "start": "08:30", "end": "16:30" },
+                    "weekend": { "start": "08:00", "end": "16:00" },
+                    "cutoff": "08:00"
+                }
+            }"#,
+        )
+        .await
+        .expect("write in test");
+        let settings = load(&path).await.expect("load succeeds");
+        assert_eq!(settings.schedule, BusinessSchedule::default());
+    }
+
+    #[tokio::test]
+    async fn v1_custom_schedule_is_preserved() -> Result<(), Box<dyn std::error::Error>> {
+        let dir = tempdir().expect("tempdir in test");
+        let path = dir.path().join(SETTINGS_FILE_NAME);
+        tokio::fs::write(
+            &path,
+            r#"{
+                "version": 1,
+                "schedule": {
+                    "weekday": { "start": "08:30", "end": "18:00" },
+                    "weekend": { "start": "08:00", "end": "16:00" },
+                    "cutoff": "08:00"
+                }
+            }"#,
+        )
+        .await
+        .expect("write in test");
+        let settings = load(&path).await.expect("load succeeds");
+        assert_eq!(
+            settings.schedule.weekday.end,
+            chrono::NaiveTime::from_hms_opt(18, 0, 0).ok_or("valid")?
+        );
+        assert_eq!(
+            settings.schedule.weekday.start,
+            chrono::NaiveTime::from_hms_opt(8, 30, 0).ok_or("valid")?
+        );
+        Ok(())
     }
 
     #[tokio::test]

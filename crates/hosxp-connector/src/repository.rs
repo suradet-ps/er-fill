@@ -91,6 +91,9 @@ impl HosxRepository for ConnectorRepository {
             .map_err(Into::into)
     }
 
+    /// Sums drug lines only (`JOIN drugitems`) on ER visits
+    /// (`er_regist.vn`, with `ovst.main_dep = '009'` as fallback) inside the
+    /// window.
     async fn fetch_usage(
         &self,
         icodes: &[String],

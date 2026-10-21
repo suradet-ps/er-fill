@@ -28,23 +28,36 @@ LIMIT 50";
 
 /// Head of the usage query; the `IN` list is `?` repeated by
 /// [`usage_in_window_sql`].
+///
+/// `opitemrece` mixes drugs and non-drug charge lines (6.8M rows on the
+/// surveyed instance, of which only 3.16M are drugs), so the `drugitems`
+/// join is mandatory - never count an `opitemrece` line without it.
 const USAGE_SELECT: &str = "\
 SELECT o.icode AS icode, CAST(SUM(o.qty) AS DOUBLE) AS qty
 FROM opitemrece o
+JOIN drugitems d ON d.icode = o.icode
 WHERE o.icode IN (";
 
 /// Tail of the usage query.
 ///
 /// - `qty > 0` drops billing corrections.
 /// - `an IS NULL OR an = ''` keeps inpatient-stay usage out of the ER
-///   requisition (ER visits are OPD visits) - pharmacist to confirm
-///   (docs/database.md section A.2).
+///   requisition (0 of 9,639 ER drug orders carry an `an` on the surveyed
+///   instance).
+/// - ER visits are anchored on `er_regist.vn` (the registry is 1:1 with
+///   `ovst`); `ovst.main_dep = '009'` is only a fallback for a missing
+///   registry row. `ovst.spclty = '17'` is never used - it had zero rows in
+///   90 days.
 /// - The time predicate is the index-friendly decomposition of
 ///   `vstdate/vsttime ∈ [start, end)`.
 const USAGE_FILTER: &str = "\
 )
   AND o.qty > 0
   AND (o.an IS NULL OR o.an = '')
+  AND (
+    EXISTS (SELECT 1 FROM er_regist e WHERE e.vn = o.vn)
+    OR EXISTS (SELECT 1 FROM ovst v WHERE v.vn = o.vn AND v.main_dep = '009')
+  )
   AND (o.vstdate > ? OR (o.vstdate = ? AND o.vsttime >= ?))
   AND (o.vstdate < ? OR (o.vstdate = ? AND o.vsttime < ?))
 GROUP BY o.icode
@@ -62,9 +75,10 @@ ORDER BY o.icode";
 /// assert!(sql.contains("IN (?, ?, ?)"));
 /// assert!(sql.starts_with("SELECT"));
 /// ```
-// SCHEMA-UNVERIFIED: confirm `opitemrece` (not a custom `opitemrace`) and
-// the `vstdate`/`vsttime`/`an` columns on the live instance
-// (docs/database.md section B1-B3).
+// Verified against the live Sra Bos instance on 2026-10-21: `opitemrece`,
+// `er_regist`, `ovst`, and `drugitems` are the real table names and the
+// columns used here exist (docs/database.md section A.3). The DBA sign-off
+// for indexes and timing is still tracked in section B.
 pub fn usage_in_window_sql(icodes_len: usize) -> String {
     let placeholders = std::iter::repeat_n("?", icodes_len)
         .collect::<Vec<_>>()
@@ -109,6 +123,27 @@ mod tests {
         assert!(sql.contains("o.qty > 0"));
         assert!(sql.contains("(o.an IS NULL OR o.an = '')"));
         assert!(sql.contains("GROUP BY o.icode"));
+    }
+
+    #[test]
+    fn usage_query_requires_drug_master_and_er_anchor() {
+        let sql = usage_in_window_sql(2);
+        assert!(
+            sql.contains("JOIN drugitems d ON d.icode = o.icode"),
+            "opitemrece also holds non-drug charge lines: {sql}"
+        );
+        assert!(
+            sql.contains("FROM er_regist e WHERE e.vn = o.vn"),
+            "ER visits must be anchored on er_regist.vn: {sql}"
+        );
+        assert!(
+            sql.contains("v.main_dep = '009'"),
+            "main_dep '009' is the fallback ER anchor: {sql}"
+        );
+        assert!(
+            !sql.contains("spclty"),
+            "spclty '17' had zero rows and must never identify ER: {sql}"
+        );
     }
 
     #[test]

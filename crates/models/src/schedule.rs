@@ -1,6 +1,6 @@
-//! Business-hours schedule: the weekday/weekend time ranges and the daily
-//! requisition cutoff (AGENTS.md section 7). The window algorithm itself lives in
-//! `er-fill-core`; this module owns the data and its `"HH:MM"` wire format.
+//! Business-hours schedule: the weekday/weekend time ranges (AGENTS.md
+//! section 7). The window algorithm itself lives in `er-fill-core`; this
+//! module owns the data and its `"HH:MM"` wire format.
 
 use chrono::{Datelike, NaiveDate, NaiveTime, Weekday};
 use serde::{Deserialize, Serialize};
@@ -50,13 +50,14 @@ impl TimeRange {
     }
 }
 
-/// Business hours for weekdays and weekends plus the daily requisition
-/// cutoff (AGENTS.md section 7).
+/// Business hours for weekdays and weekends (AGENTS.md section 7).
 ///
 /// Defaults, per the pharmacy department's workflow:
-/// - weekdays (Mon-Fri) `08:30-16:30`
+/// - weekdays (Mon-Fri) `08:30-20:30`
 /// - weekends (Sat-Sun) `08:00-16:00`
-/// - cutoff `08:00` - when the morning requisition is produced.
+///
+/// The daily requisition window always ends at the opening time of the run
+/// day; there is no separate cutoff.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BusinessSchedule {
@@ -64,9 +65,6 @@ pub struct BusinessSchedule {
     pub weekday: TimeRange,
     /// Hours for Saturday-Sunday.
     pub weekend: TimeRange,
-    /// Time of day the daily requisition is produced (window end).
-    #[serde(with = "hm_time")]
-    pub cutoff: NaiveTime,
 }
 
 impl Default for BusinessSchedule {
@@ -74,13 +72,12 @@ impl Default for BusinessSchedule {
         Self {
             weekday: TimeRange {
                 start: hm(8, 30),
-                end: hm(16, 30),
+                end: hm(20, 30),
             },
             weekend: TimeRange {
                 start: hm(8, 0),
                 end: hm(16, 0),
             },
-            cutoff: hm(8, 0),
         }
     }
 }
@@ -153,10 +150,9 @@ mod tests {
     fn default_matches_the_pharmacy_workflow() {
         let schedule = BusinessSchedule::default();
         assert_eq!(schedule.weekday.start, hm(8, 30));
-        assert_eq!(schedule.weekday.end, hm(16, 30));
+        assert_eq!(schedule.weekday.end, hm(20, 30));
         assert_eq!(schedule.weekend.start, hm(8, 0));
         assert_eq!(schedule.weekend.end, hm(16, 0));
-        assert_eq!(schedule.cutoff, hm(8, 0));
     }
 
     #[test]
@@ -176,14 +172,14 @@ mod tests {
         let sunday = date(2026, 10, 18).expect("valid date");
         let monday = date(2026, 10, 19).expect("valid date");
         assert_eq!(schedule.closing_time(sunday), hm(16, 0));
-        assert_eq!(schedule.closing_time(monday), hm(16, 30));
+        assert_eq!(schedule.closing_time(monday), hm(20, 30));
     }
 
     #[test]
     fn time_range_rejects_reversed_bounds() {
-        assert!(TimeRange::new(hm(16, 30), hm(8, 30)).is_err());
+        assert!(TimeRange::new(hm(20, 30), hm(8, 30)).is_err());
         assert!(TimeRange::new(hm(8, 30), hm(8, 30)).is_err());
-        assert!(TimeRange::new(hm(8, 30), hm(16, 30)).is_ok());
+        assert!(TimeRange::new(hm(8, 30), hm(20, 30)).is_ok());
     }
 
     #[test]
@@ -199,9 +195,8 @@ mod tests {
     #[test]
     fn serde_accepts_hh_mm_ss_too() -> Result<(), Box<dyn std::error::Error>> {
         let json = r#"{
-            "weekday": { "start": "08:30:00", "end": "16:30:00" },
-            "weekend": { "start": "08:00", "end": "16:00" },
-            "cutoff": "08:00"
+            "weekday": { "start": "08:30:00", "end": "20:30:00" },
+            "weekend": { "start": "08:00", "end": "16:00" }
         }"#;
         let schedule: BusinessSchedule = serde_json::from_str(json)?;
         assert_eq!(schedule, BusinessSchedule::default());

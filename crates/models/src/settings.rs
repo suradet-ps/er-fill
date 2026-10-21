@@ -13,7 +13,7 @@ use crate::schedule::BusinessSchedule;
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct AppSettings {
-    /// Business hours + requisition cutoff.
+    /// Business hours (the requisition window ends at opening time).
     pub schedule: BusinessSchedule,
     /// The ER drug list (categories + drugs).
     pub catalog: Catalog,

@@ -44,8 +44,9 @@ pub trait HosxRepository: Send + Sync {
     /// [`RepositoryError::Connection`] / [`RepositoryError::Query`].
     async fn search_drugs(&self, term: &str) -> Result<Vec<DrugItem>, RepositoryError>;
 
-    /// Summed usage (`SUM(qty)`) of each icode inside `window`, one row per
-    /// icode with usage; icodes without usage are omitted.
+    /// Summed drug usage (`SUM(qty)`) of each icode inside `window`, one row
+    /// per icode with usage; icodes without usage are omitted. Only lines
+    /// belonging to an ER visit are counted.
     ///
     /// # Errors
     ///

@@ -46,7 +46,7 @@ impl ConnectionHealth {
 pub enum SettingsTab {
     /// HOSxP connection credentials.
     Connection,
-    /// Business hours + requisition cutoff.
+    /// Business hours (the requisition window ends at opening time).
     Schedule,
     /// Categories + drugs.
     Catalog,
@@ -253,14 +253,14 @@ mod tests {
     fn recompute_window_uses_loaded_schedule() {
         let state = AppState::new();
         state.settings.set(Some(AppSettings::default()));
-        // 2026-10-19 is a Monday: window = Sunday 16:00 → Monday 08:00.
+        // 2026-10-19 is a Monday: window = Sunday 16:00 → Monday 08:30.
         state.selected_date.set(
             chrono::NaiveDate::from_ymd_opt(2026, 10, 19).expect("invariant: static test date"),
         );
         state.recompute_window();
         let window = state.window.get_untracked().expect("window computed");
         assert_eq!(window.start.to_string(), "2026-10-18 16:00:00");
-        assert_eq!(window.end.to_string(), "2026-10-19 08:00:00");
+        assert_eq!(window.end.to_string(), "2026-10-19 08:30:00");
         assert!(!state.window_custom.get_untracked());
     }
 }

@@ -12,7 +12,7 @@ ER-Fill ("ยาห้องฉุกเฉิน") is a desktop app for the pha
 - Not a system for writing/editing/deleting anything in HOSxP.
 - Not an inventory/depot system - it does not track ER stock on hand, only usage pulled from HOSxP.
 - Not a stock-par / min-max alerting system (may come later).
-- Does not handle in-hours (08:30-16:30 weekday / 08:00-16:00 weekend) usage - that flow stays with the pharmacy's normal process; this app covers **out-of-hours only**.
+- Does not handle in-hours (08:30-20:30 weekday / 08:00-16:00 weekend) usage - that flow stays with the pharmacy's normal process; this app covers **out-of-hours only**.
 - Does not persist patient data to disk (the report lists drugs and quantities, never patients).
 
 ## 2. Hard rules (non-negotiable)
@@ -40,7 +40,7 @@ Dependency direction: `app` → `er-fill-core` → `er-fill-models`, and `er-fil
 
 ## 4. Domain model (`crates/models`)
 
-- `BusinessSchedule { weekday: TimeRange, weekend: TimeRange, cutoff: NaiveTime }` - `TimeRange { start, end }`; defaults: weekday 08:30-16:30, weekend (Sat-Sun) 08:00-16:00, cutoff 08:00. Serialized on the wire with `"HH:MM"` times.
+- `BusinessSchedule { weekday: TimeRange, weekend: TimeRange }` - `TimeRange { start, end }`; defaults: weekday 08:30-20:30, weekend (Sat-Sun) 08:00-16:00. Serialized on the wire with `"HH:MM"` times. The requisition window always ends at the opening time of the run day; there is no separate cutoff.
 - `RequisitionWindow { start: NaiveDateTime, end: NaiveDateTime }` - the half-open window `[start, end)`.
 - `Catalog { categories: Vec<DrugCategory>, drugs: Vec<ErDrug> }` - `DrugCategory { id, name, sort_order }`, `ErDrug { icode, name, strength_text, stock_text, category_id, sort_order }`. Seeded with the six categories of the approved ER list (see `docs/reference/er-drug-list.md`); drugs are added from HOSxP `drugitems` search, which prefills `strength_text` from `strength`/`units` (e.g. "500 mg") so same-name drugs stay distinguishable.
 - `DrugItem { icode, name, strength, units }` - a `drugitems` search hit.
@@ -62,13 +62,11 @@ Same layered approach as the sibling AllerX project:
 
 ## 6. HOSxP integration - schema notes (confirm against the live instance)
 
-> **Naming note:** the original request referred to the table as `opitemrace`;
-> every verified reference (HOSxP table lists, `hosxp-dash` in this
-> workspace) uses **`opitemrece`** - "รายการสั่งยา ค่ารักษา ค่าบริการต่างๆ ทั้ง
-> OPD, IPD". The connector is written against `opitemrece`; if the hospital
-> genuinely has a custom `opitemrace` table/view, swap the constant behind a
-> DBA check (docs/database.md B1). All usage queries carry
-> `// SCHEMA-UNVERIFIED:` until the DBA confirms.
+> **Naming note:** the live Sra Bos instance uses **`opitemrece`** (not a
+> custom `opitemrace`), confirmed in the 2026-10-21 schema survey
+> (docs/database.md section A.3). The usage query is verified against that
+> survey; the drug-search columns and the timing/index questions remain
+> flagged or open in docs/database.md section B.
 
 ### 6.1 Drug search (`drugitems`)
 - Fields used: `icode`, `name`, `strength`, `units`.
@@ -78,37 +76,43 @@ Same layered approach as the sibling AllerX project:
 
 ### 6.2 Usage window (`opitemrece`)
 - Fields used: `icode`, `qty`, `vstdate` (date), `vsttime` (time), `an` (admission number - empty/NULL for OPD visits; ER visits are OPD).
+- Always `JOIN drugitems` - `opitemrece` also stores non-drug charge lines (3.66M of 6.82M rows on the surveyed instance); without the join usage inflates ~2.2x.
+- Anchor ER on `er_regist.vn` (1:1 with `ovst`); `ovst.main_dep = '009'` is only a fallback. Never use `ovst.spclty = '17'` - it had zero rows in 90 days.
 - Every query must filter `qty > 0` (zero/negative rows are billing corrections, not dispensing events).
-- Filter `(an IS NULL OR an = '')` - ER visits are OPD visits; this keeps inpatient-stay usage (e.g. ward NSS) out of an ER requisition. **Verify with the pharmacist** whether any ER usage is ever billed under an `an`.
+- Filter `(an IS NULL OR an = '')` - ER visits are OPD visits. On the surveyed instance 0 of 9,639 ER drug orders carry an `an`.
 - Time filtering is index-friendly decomposition, window `[start, end)`:
   `(vstdate > d1 OR (vstdate = d1 AND vsttime >= t1)) AND (vstdate < d2 OR (vstdate = d2 AND vsttime < t2))`.
 - `vstdate`/`vsttime` (visit time) is used, consistent with AllerX; `rxdate`/`rxtime` (dispense time) is a candidate alternative - confirm with the DBA which better reflects "drug left the ER cupboard".
+- Use `hos_guid` for line identity if a line-level feature is ever added - `vn + item_no` is not unique (`item_no` is `tinyint`).
 
 ### 6.3 Open questions for the DBA (docs/database.md section B)
-- Confirm `opitemrece` vs `opitemrace` naming on this instance.
+- ~~Confirm `opitemrece` vs `opitemrace` naming~~ - resolved: the live instance uses `opitemrece`.
 - Confirm `vsttime` reliability (populated for all drug lines?).
-- Confirm drug-type filter (`icode LIKE '1%'` vs `drugitems.istype`).
+- Confirm the ER line scope: all drug lines under an ER `vn` vs only `dep_code = '009'` (66% of ER drug orders).
+- Confirm drug-type filter for the picker (`icode LIKE '1%'` vs `drugitems.istype`).
 - Existing indexes on `opitemrece(icode, vstdate)` - daily window queries should stay < 300 ms.
 
 ## 7. Requisition window algorithm
 
 Out-of-hours only. The window for a morning run on day `D` is
-`[closing(day before D), cutoff(D))`:
+`[closing(day before D), opening(D))`:
 
-- `closing(day)` = that day's end of business hours (Mon-Fri 16:30, Sat-Sun 16:00).
-- `cutoff` = the daily requisition time, default **08:00** (configurable).
-- The window **ends at the cutoff**, and the remainder until business opens
-  (08:00-08:30 on weekdays) stays with the in-hours process - this matches the
-  approved workflow.
+- `closing(day)` = that day's end of business hours (Mon-Fri 20:30, Sat-Sun 16:00).
+- `opening(day)` = that day's start of business hours (Mon-Fri 08:30, Sat-Sun 08:00).
+- There is no separate cutoff: the window ends exactly when the run day's
+  business hours open, so all out-of-hours usage is covered.
 
-Examples (defaults):
+Examples (defaults, week of Mon 2026-10-19):
 
-| Run morning | Window starts (previous closing) | Window ends |
+| Run morning | Window starts (previous closing) | Window ends (run-day opening) |
 |---|---|---|
-| Monday | Sunday 16:00 | Monday 08:00 |
-| Tuesday | Monday 16:30 | Tuesday 08:00 |
-| Saturday | Friday 16:30 | Saturday 08:00 |
-| Sunday | Saturday 16:00 | Sunday 08:00 |
+| Monday 19 Oct | Sunday 18 Oct 16:00 | Monday 19 Oct 08:30 |
+| Tuesday 20 Oct | Monday 19 Oct 20:30 | Tuesday 20 Oct 08:30 |
+| Wednesday 21 Oct | Tuesday 20 Oct 20:30 | Wednesday 21 Oct 08:30 |
+| Thursday 22 Oct | Wednesday 21 Oct 20:30 | Thursday 22 Oct 08:30 |
+| Friday 23 Oct | Thursday 22 Oct 20:30 | Friday 23 Oct 08:30 |
+| Saturday 24 Oct | Friday 23 Oct 20:30 | Saturday 24 Oct 08:00 |
+| Sunday 25 Oct | Saturday 24 Oct 16:00 | Sunday 25 Oct 08:00 |
 
 The operator can always override both endpoints in the UI (`window_custom`
 state); the printed form always shows the window actually used, and the UI

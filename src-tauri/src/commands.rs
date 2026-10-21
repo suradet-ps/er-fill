@@ -168,7 +168,7 @@ pub async fn load_settings(state: State<'_, AppState>) -> Result<AppSettings, Co
     Ok(state.settings.lock().await.clone())
 }
 
-/// Persists new business hours + requisition cutoff.
+/// Persists new business hours.
 #[tauri::command]
 pub async fn save_schedule(
     schedule: BusinessSchedule,
@@ -406,7 +406,7 @@ mod tests {
     #[test]
     fn validate_schedule_rejects_reversed_ranges() -> Result<(), Box<dyn std::error::Error>> {
         let mut schedule = BusinessSchedule::default();
-        schedule.weekday.start = chrono::NaiveTime::from_hms_opt(17, 0, 0).ok_or("valid")?;
+        schedule.weekday.start = chrono::NaiveTime::from_hms_opt(21, 0, 0).ok_or("valid")?;
         assert!(validate_schedule(&schedule).is_err());
 
         let mut schedule = BusinessSchedule::default();
@@ -423,7 +423,7 @@ mod tests {
             .and_then(|date| date.and_hms_opt(16, 0, 0))
             .ok_or("valid")?;
         let end = chrono::NaiveDate::from_ymd_opt(2026, 10, 19)
-            .and_then(|date| date.and_hms_opt(8, 0, 0))
+            .and_then(|date| date.and_hms_opt(8, 30, 0))
             .ok_or("valid")?;
         let valid = RequisitionWindow { start, end };
         assert!(validate_window(&valid).is_ok());

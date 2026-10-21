@@ -14,7 +14,11 @@ use serde::{Deserialize, Serialize};
 pub const EXPORT_FORMAT: &str = "er-fill-settings";
 
 /// Version of the export envelope; bump if the layout changes.
-pub const EXPORT_VERSION: u32 = 1;
+///
+/// Version 2 removed the obsolete `schedule.cutoff` field (the requisition
+/// window now ends at opening time). Version 1 files still import: serde
+/// ignores the unknown field.
+pub const EXPORT_VERSION: u32 = 2;
 
 /// The exported file: marker + version + the settings themselves.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -120,6 +124,32 @@ mod tests {
         assert!(json.contains("\"format\": \"er-fill-settings\""));
         let parsed = parse_import(&json)?;
         assert_eq!(parsed, AppSettings::default());
+        Ok(())
+    }
+
+    #[test]
+    fn parse_import_accepts_a_v1_file_with_the_removed_cutoff_field()
+    -> Result<(), Box<dyn std::error::Error>> {
+        let json = r#"{
+            "format": "er-fill-settings",
+            "version": 1,
+            "exportedAt": "2026-10-17 08:00",
+            "settings": {
+                "schedule": {
+                    "weekday": { "start": "08:30", "end": "20:30" },
+                    "weekend": { "start": "08:00", "end": "16:00" },
+                    "cutoff": "08:00"
+                },
+                "catalog": {
+                    "categories": [
+                        { "id": "cat-1", "name": "ยาเม็ด", "sortOrder": 0 }
+                    ],
+                    "drugs": []
+                }
+            }
+        }"#;
+        let settings = parse_import(json)?;
+        assert_eq!(settings.schedule, AppSettings::default().schedule);
         Ok(())
     }
 

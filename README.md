@@ -15,7 +15,7 @@
 The ER cupboard empties at night; the requisition must be ready by morning.
 ER-Fill reads the hospital's [HOSxP](https://hosxp.org/) record, strictly
 read-only, and sums how much of the configured emergency drug list was used
-**outside business hours** - Sunday 16:00 to Monday 08:00 for a Monday run -
+**outside business hours** - Sunday 16:00 to Monday 08:30 for a Monday run -
 then prints the Thai requisition sheet (ใบเบิกยาประจำห้องฉุกเฉินรายวัน) for
 the ผู้เบิก / ผู้จ่าย signatures. The window is computed for the operator,
 stated on the paper, and overridable; HOSxP is never written, nothing is
@@ -74,16 +74,18 @@ The release artifact: `⟫ cargo tauri build` - output lands in
 Four crates, one hard law: HOSxP is read-only, without exceptions.
 
 - **Decides** - `er-fill-core` is pure Rust with the morning ritual in it:
-  the out-of-hours window algorithm (previous closing to today's cutoff),
+  the out-of-hours window algorithm (previous closing to today's opening),
   catalog operations, and the report builder that joins the configured drug
   list with usage into category sections. Tested against a mock repository -
   no live database in the default suite, ever.
 - **Reads** - `er-fill-hosxp-connector` talks to MySQL/MariaDB through
   `sqlx`: one grouped `SELECT` sums `opitemrece.qty` inside the window for
-  every configured icode; the drug picker searches `drugitems` and brings
-  `strength`/`units` (e.g. "500 mg") along. Every SQL constant carries a
-  guard test asserting it is a single read statement - no writes of any
-  kind.
+  every configured icode, joined to `drugitems` (so non-drug charge lines
+  never inflate the count) and anchored to `er_regist.vn` (with
+  `ovst.main_dep = '009'` as fallback). The drug picker searches `drugitems`
+  and brings `strength`/`units` (e.g. "500 mg") along. Every SQL constant
+  carries a guard test asserting it is a single read statement - no writes
+  of any kind.
 - **Prints** - `app` is the Leptos frontend, document-first: the command bar
   holds the run controls, and the stage shows the A4 sheet itself - the
   same DOM and stylesheet that print. The sheet states the window as a Thai
@@ -109,7 +111,7 @@ Four crates, one hard law: HOSxP is read-only, without exceptions.
 **The core ceremony** - the morning requisition:
 
 1. Open the app on the run morning: the window is computed and the usage
-   fetches itself - Sunday 16:00 → Monday 08:00 for a Monday, with the
+   fetches itself - Sunday 16:00 → Monday 08:30 for a Monday, with the
    "อัตโนมัติ" chip on the window.
 2. The sheet is already staged: one grouped read returned every configured
    drug's out-of-hours usage, with strength beside each name.
@@ -137,7 +139,7 @@ second version of the truth. The signed paper is the record of the morning.
 ```
 window  ▸ out-of-hours algorithm, overridable, amber-marked ────── ▸ sealed
 catalog ▸ 6 หมวด + drugitems picker (strength joined) ───────────── ▸ sealed
-usage   ▸ one grouped opitemrece read per run ───────────────────── ▸ sealed
+usage   ▸ one grouped, ER-anchored opitemrece read per run ──────── ▸ sealed
 print   ▸ A4 ใบเบิก + Thai/BE labels + signatures ───────────────── ▸ sealed
 travel  ▸ JSON export/import of schedule, catalog, report ──────── ▸ sealed
 schema  ▸ DBA sign-off: opitemrece columns, vsttime, indexes ────── ▸ ahead

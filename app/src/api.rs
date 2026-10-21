@@ -214,7 +214,7 @@ pub async fn load_settings() -> Result<AppSettings, ApiError> {
     call_empty("load_settings").await
 }
 
-/// Persists new business hours + requisition cutoff.
+/// Persists new business hours.
 pub async fn save_schedule(schedule: &BusinessSchedule) -> Result<(), ApiError> {
     call_struct_arg("save_schedule", "schedule", schedule).await
 }
