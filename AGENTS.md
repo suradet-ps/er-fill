@@ -43,7 +43,7 @@ Dependency direction: `app` → `er-refill-core` → `er-refill-models`, and `er
 
 - `BusinessSchedule { weekday: TimeRange, weekend: TimeRange }` - `TimeRange { start, end }`; defaults: weekday 08:30-20:30, weekend (Sat-Sun) 08:00-16:00. Serialized on the wire with `"HH:MM"` times. The requisition window always ends at the opening time of the run day; there is no separate cutoff.
 - `RequisitionWindow { start: NaiveDateTime, end: NaiveDateTime }` - the half-open window `[start, end)`.
-- `Catalog { categories: Vec<DrugCategory>, drugs: Vec<ErDrug> }` - `DrugCategory { id, name, sort_order }`, `ErDrug { icode, name, strength_text, stock_text, category_id, sort_order }`. Seeded with the six categories of the approved ER list (see `docs/reference/er-drug-list.md`); drugs are added from HOSxP `drugitems` search, which prefills `strength_text` from `strength`/`units` (e.g. "500 mg") so same-name drugs stay distinguishable. `stock_text` is `units-per-pack/stock-packs` ("10/20" = 10 tablets per pack, 20 packs on hand); leading numbers are parsed, units after them are ignored.
+- `Catalog { categories: Vec<DrugCategory>, drugs: Vec<ErDrug> }` - `DrugCategory { id, name, sort_order }`, `ErDrug { icode, name, strength_text, stock_text, category_id, sort_order }`. Seeded with the six categories of the approved ER list (see `docs/reference/er-drug-list.md`); drugs are added from HOSxP `drugitems` search, which prefills `strength_text` from `strength`/`units` (e.g. "500 mg") so same-name drugs stay distinguishable. The printed sheet hides the Thai unit suffix. `stock_text` is `units-per-pack/stock-packs` ("10/20" = 10 tablets per pack, 20 packs on hand); leading numbers are parsed, units after them are ignored.
 - `DrugItem { icode, name, strength, units }` - a `drugitems` search hit.
 - `UsageRow { icode, qty }` - one grouped usage result from HOSxP.
 - `ReportSection { category_id, category_name, rows: Vec<ReportRow> }`, `ReportRow { icode, name, strength_text, stock_text, usage, requested, max_requested }` - the printable table. `requested` starts as `ceil(usage / units-per-pack)`, capped at the stock pack count (`max_requested`); it is editable in whole packs before printing. A stock label without a slash falls back to whole usage with no cap.
@@ -73,7 +73,7 @@ Same layered approach as the sibling AllerX project:
 ### 6.1 Drug search (`drugitems`)
 - Fields used: `icode`, `name`, `strength`, `units`.
 - Standard HOSxP convention: drug icodes start with `1` (`icode LIKE '1%'`) - filters out non-drug items that share the table family. Confirm on the instance.
-- `strength` + `units` are shown in the picker as the drug's strength label (e.g. "500 mg", via `DrugItem::strength_label`); both may be empty on some instances - confirm the `strength` column with the DBA.
+- The picker keeps the icode chip and shows the full strength label (`strength` + `units`, e.g. "500 mg") so operators can identify the item; the printed sheet hides the Thai dispensing-unit suffix and the icode. Both columns may be empty on some instances - confirm the `strength` column with the DBA.
 - Escape `\`, `%`, `_` in the operator's term before wrapping in `%...%` (contains match).
 
 ### 6.2 Usage window (`opitemrece`)
@@ -152,10 +152,12 @@ by screen and print.
    rounded to whole packs and clamped to the same stock cap.
 5. "พิมพ์ใบเบิก" calls `window.print()` on the on-screen sheet - the preview
    IS the printed output (grouped by category, with the window sentence,
-   hospital header, and ผู้เบิก/ผู้จ่าย signature blocks). The sheet
-   paginates at **40 drug rows per A4 page** (`er-refill-core::paginate_sections`)
-   so the 69-item pilot list prints on two sheets; split categories continue
-   with "(ต่อ)" and the signatures render on the last page only.
+   hospital header, and ผู้เบิก/ผู้จ่าย signature blocks). The ผู้เบิก
+   parentheses use the signed-in officer's display name; the ผู้จ่าย line is
+   left blank for the pharmacy. The sheet paginates at **40 drug rows per A4
+   page** (`er-refill-core::paginate_sections`) so the 69-item pilot list
+   prints on two sheets; split categories continue with "(ต่อ)" and the
+   signatures render on the last page only.
 
 ## 9. Performance
 

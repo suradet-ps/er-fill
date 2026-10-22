@@ -29,7 +29,8 @@ pub struct ErDrug {
     pub name: String,
     /// Strength label seeded from `drugitems` (`strength` + `units`, e.g.
     /// "500 mg"); editable, may be empty. Distinguishes same-name drugs
-    /// (Paracetamol 325 vs 500) on screen and on the printed sheet.
+    /// (Paracetamol 325 vs 500) on screen. The printed sheet hides the Thai
+    /// dispensing-unit suffix.
     #[serde(default)]
     pub strength_text: String,
     /// Stock label in `units-per-pack/stock-packs` form ("10/20"), printed

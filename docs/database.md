@@ -21,9 +21,10 @@ LIMIT 50
 
 - `icode LIKE '1%'` - standard HOSxP drug-category prefix (non-drug items live
   in `nondrugitems`/other prefixes). Confirm.
-- `strength` and `units` join along for the picker's strength label (e.g.
-  "500 mg"). **Confirm the `strength` column exists** on this instance; both
-  fields may be empty.
+- The picker displays the icode plus the strength label (`strength` +
+  `units`, e.g. "500 mg"). The printed sheet hides the Thai unit suffix and
+  icode. **Confirm the `strength` column exists** on this instance; it may
+  be empty.
 - Operator term is escaped (`\`, `%`, `_`) then wrapped `%...%`; contains-match
   on name for Thai partial words.
 

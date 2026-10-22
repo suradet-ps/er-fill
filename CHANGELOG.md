@@ -21,6 +21,11 @@ All notable changes to ER-Refill are documented here. The format follows
   stamp, and regenerated every Tauri platform icon from `icon-master.svg`.
 - The top-bar name now falls back to `doctor.name` (via `officer_doctor_code`)
   when the officer name columns are blank, then to the login name.
+- The printed requisition now fills the ผู้เบิก signature block with the
+  signed-in officer's display name.
+- The printed requisition shows the drug name + strength only (no icode or
+  Thai dispensing-unit suffix); the settings picker keeps the icode and full
+  strength label for identification.
 - จำนวนเบิก is now derived as whole packs from the จำนวน/Stock setting
   (`units-per-pack/stock-packs`): `ceil(usage / units-per-pack)`, capped at
   the stock pack count; manual edits are rounded and clamped the same way.
@@ -50,6 +55,9 @@ All notable changes to ER-Refill are documented here. The format follows
 
 ### Fixed
 
+- Printed sheets no longer carry the browser's automatic title/URL header and
+  footer: empty `@page` margin boxes suppress them while the A4 12mm margins
+  remain.
 - The top-bar officer name no longer clips Thai ascenders, and long names get
   more room before ellipsizing. The command-bar date/window labels also keep
   their full glyph height.

@@ -216,9 +216,9 @@ command bar above holds the few run controls. No second layout exists.
   need to survive phone widths).
 - The sheet is a real A4: `min(210mm, 100%)` wide, `297mm` min-height,
   12mm internal padding, `{elevation.3}` on the `{colors.surface}` desk.
-  On print, `@page` owns the margins and the sheet drops its padding.
+  On print, `@page` owns the 12mm margins and the sheet drops its padding.
 - The table is the *only* multi-column surface; column widths are frozen:
-  `46px` ลำดับ / `1fr` ชื่อยา (+ความแรง, +icode) / `108px` จำนวน/Stock /
+  `46px` ลำดับ / `1fr` ชื่อยา (+ความแรง) / `108px` จำนวน/Stock /
   `64px` จำนวนใช้ / `76px` จำนวนเบิก.
 - จำนวนเบิก starts as whole packs: `ceil(usage / units-per-pack)` from the
   จำนวน/Stock setting, capped at the stock pack count; the operator can
@@ -389,12 +389,14 @@ top bar and splash.
 - Table: header row `{typography.caption}` on `{colors.surface-soft}`,
   `1px solid {colors.hairline}` cells (print: `#999`); category rows bold,
   `{colors.surface-soft}`; name cell = name (600) + strength label
-  (`{typography.code-sm}` `{colors.slate}`) + icode (`{typography.code-sm}`
-  `{colors.steel}`) so same-name drugs never blur together; จำนวนใช้
+  (`{typography.code-sm}` `{colors.slate}`) so same-name drugs never blur
+  together. The printed strength hides the Thai dispensing-unit suffix and no
+  icode is printed; the settings picker still shows both. จำนวนใช้
   right-aligned mono, จำนวนเบิก the `sheet-request-input`.
 - Signature blocks (ลงชื่อ ผู้เบิก / ผู้จ่าย + date lines) are visible on
   screen too - the preview is the paper, and they render on the **last
-  page only**.
+  page only**. The ผู้เบิก line prints the signed-in officer's display name
+  in parentheses; the ผู้จ่าย line stays blank for the pharmacy.
 - **Pagination is explicit**: one `<article class="sheet">` per A4 page,
   at most **40 drug rows per page** (`er-refill-core::ROWS_PER_PAGE`), so the
   69-item pilot list always prints on two sheets. Every page repeats the
@@ -406,19 +408,22 @@ top bar and splash.
 - Ordering is the catalog order - never re-sorted by quantity.
 
 **`signature-block`** - Always visible at the sheet's foot (the screen
-previews the paper): two columns "ลงชื่อ .................................. (ผู้เบิก)" /
-"(ผู้จ่าย)" with a date line under each, `{typography.body-md}`.
+previews the paper): two columns "ลงชื่อ .................................. ผู้เบิก" /
+"ผู้จ่าย", with the signed-in officer's name in the requester's parentheses,
+a blank payer line, and a date line under each, `{typography.body-md}`.
 
 **`@media print`** - The rule that keeps the preview honest: chrome
 (`.top-bar`, `.command-bar`, `.banner`, modal) hides with
 `display: none !important`; the stage loses its padding, background, and
 overflow; the sheet drops its width cap, min-height, padding (the `@page`
-A4 portrait 12mm margins own it now), and shadow; cell borders darken to
-`#999`, header/category backgrounds go transparent, and the จำนวนเบิก input
-prints its value plainly. Every sheet after the first starts a new printed
-page (`break-before: page`), and rows are `break-inside: avoid` so nothing
-is ever sliced. One DOM, one stylesheet - the preview cannot diverge from
-the printout.
+A4 portrait 12mm margins own it now), and shadow. The `@page` block also
+declares empty top/bottom margin boxes, which suppresses Chromium's automatic
+title/URL header and footer while keeping the 12mm paper margin. Cell borders
+darken to `#999`, header/category backgrounds go transparent, and the
+จำนวนเบิก input prints its value plainly. Every sheet after the first starts
+a new printed page (`break-before: page`), and rows are `break-inside: avoid`
+so nothing is ever sliced. One DOM, one stylesheet - the preview cannot
+diverge from the printout.
 
 **`settings-modal`** - `{elevation.3}` dialog over a `rgba(17,17,19,0.4)`
 backdrop, `{rounded.lg}`, max-width 960px. A 200px vertical `settings-nav`
@@ -440,9 +445,10 @@ ghost button. Error banners use the red pair.
 categories (`{typography.body-sm-medium}`), right list of drugs with
 `button-icon-circular` ↑/↓/remove per row and three inline editors (name ·
 ความแรง · จำนวน/Stock); `search-pill` above, results as `{elevation.2}`
-picker rows with `+ เพิ่ม` ghost action. Each result shows the icode chip
-plus the drug's strength label from `drugitems` (`{typography.code-sm}`,
-e.g. "500 mg"), which is saved into the drug's `strengthText` when added.
+picker rows with `+ เพิ่ม` ghost action. Each result keeps the icode chip plus
+the full strength label from `drugitems` (`{typography.code-sm}`, e.g.
+"500 mg"), so operators can identify the item; the label is saved into the
+drug's `strengthText`, and the printed sheet trims the Thai unit suffix.
 
 ## Do's and Don'ts
 

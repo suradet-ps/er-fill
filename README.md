@@ -85,8 +85,10 @@ Four crates, one hard law: HOSxP is read-only, without exceptions.
   every configured icode, joined to `drugitems` (so non-drug charge lines
   never inflate the count), filtered to ER orders (`dep_code = '009'`,
   `sub_type = '1'`, no `item_type = 'A'` automatic charges), and timed by the
-  ER order time (`rxdate`/`rxtime`). The drug picker searches `drugitems`
-  and brings `strength`/`units` (e.g. "500 mg") along. Every SQL constant
+  ER order time (`rxdate`/`rxtime`). The drug picker keeps the icode and
+  full strength label from `drugitems`; the printed sheet shows only the
+  drug name + strength (hiding the icode and Thai dispensing-unit suffix).
+  Every SQL constant
   carries a guard test asserting it is a single read statement - no writes
   of any kind.
 - **Prints** - `app` is the Leptos frontend, document-first: the command bar

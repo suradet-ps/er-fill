@@ -15,6 +15,20 @@ use leptos::prelude::*;
 use crate::components::icons::IconX;
 use crate::state::AppState;
 
+/// The printed sheet shows the strength only. HOSxP's `units` column (the
+/// dispensing unit, e.g. "เม็ด (Cat B)") is appended to the catalog strength
+/// label on older entries; hide that suffix while keeping the strength text.
+fn printed_strength(text: &str) -> &str {
+    let thai = |c: char| ('\u{0E00}'..='\u{0E7F}').contains(&c);
+    let cut = text.find(thai).unwrap_or(text.len());
+    let prefix = text[..cut].trim_end();
+    if prefix.is_empty() || !prefix.chars().any(|c| c.is_ascii_digit()) {
+        text.trim()
+    } else {
+        prefix
+    }
+}
+
 /// The document: one `<article class="sheet">` per A4 page.
 #[component]
 pub fn DocumentSheet(state: AppState, sections: Vec<ReportSection>) -> impl IntoView {
@@ -107,6 +121,8 @@ fn SheetPageView(
                                         let row_index = placed.row_index;
                                         let row = placed.row;
                                         let max_requested = row.max_requested;
+                                        let strength =
+                                            printed_strength(&row.strength_text).to_string();
                                         let on_request = {
                                             let state = state.clone();
                                             move |ev| {
@@ -136,15 +152,14 @@ fn SheetPageView(
                                                 <td class="sheet__no">{row_index + 1}</td>
                                                 <td class="sheet__name-cell">
                                                     <span class="sheet__drug">{row.name.clone()}</span>
-                                                    {(!row.strength_text.is_empty())
+                                                    {(!strength.is_empty())
                                                         .then(|| {
                                                             view! {
                                                                 <span class="sheet__strength">
-                                                                    {row.strength_text.clone()}
+                                                                    {strength.clone()}
                                                                 </span>
                                                             }
                                                         })}
-                                                    <span class="sheet__icode">{row.icode.clone()}</span>
                                                 </td>
                                                 <td class="sheet__stock-cell">{row.stock_text.clone()}</td>
                                                 <td class="sheet__num">{format_qty(row.usage)}</td>
@@ -174,14 +189,31 @@ fn SheetPageView(
                     view! {
                         <div class="sheet__signatures">
                             <div class="sheet__signature">
-                                <p>"ลงชื่อ .................................................. ผู้เบิก"</p>
-                                <p>"( .................................................. )"</p>
-                                <p>"วันที่ ......... / ......... / ........."</p>
+                                <div class="sheet__signature-inner">
+                                    <p>"ลงชื่อ .................................................. ผู้เบิก"</p>
+                                    <p class="sheet__signer-name">
+                                        "( "
+                                        {move || {
+                                            state
+                                                .session
+                                                .get()
+                                                .map(|user| user.display_name.trim().to_string())
+                                                .filter(|name| !name.is_empty())
+                                                .unwrap_or_else(|| {
+                                                    "..................................................".to_string()
+                                                })
+                                        }}
+                                        " )"
+                                    </p>
+                                    <p>"วันที่ ......... / ......... / ........."</p>
+                                </div>
                             </div>
                             <div class="sheet__signature">
-                                <p>"ลงชื่อ .................................................. ผู้จ่าย"</p>
-                                <p>"( .................................................. )"</p>
-                                <p>"วันที่ ......... / ......... / ........."</p>
+                                <div class="sheet__signature-inner">
+                                    <p>"ลงชื่อ .................................................. ผู้จ่าย"</p>
+                                    <p>"( .................................................. )"</p>
+                                    <p>"วันที่ ......... / ......... / ........."</p>
+                                </div>
                             </div>
                         </div>
                     }
@@ -233,5 +265,32 @@ pub fn SheetBanner(state: AppState) -> impl IntoView {
                     }
                 })
         }}
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::printed_strength;
+
+    #[test]
+    fn printed_strength_hides_appended_thai_units() {
+        assert_eq!(
+            printed_strength("500 mg. \u{0e40}\u{0e21}\u{0e47}\u{0e14} (Cat B)"),
+            "500 mg."
+        );
+        assert_eq!(
+            printed_strength("250 mg/5ml \u{0e40}\u{0e21}\u{0e47}\u{0e14} (60 ml.)"),
+            "250 mg/5ml"
+        );
+    }
+
+    #[test]
+    fn printed_strength_keeps_plain_strength() {
+        assert_eq!(printed_strength("500"), "500");
+        assert_eq!(printed_strength(""), "");
+        assert_eq!(
+            printed_strength("\u{0e40}\u{0e21}\u{0e47}\u{0e14}\u{0e25}\u{0e30} 500 mg"),
+            "\u{0e40}\u{0e21}\u{0e47}\u{0e14}\u{0e25}\u{0e30} 500 mg"
+        );
     }
 }
