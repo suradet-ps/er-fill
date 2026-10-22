@@ -38,16 +38,15 @@ Additional verified facts:
 ```
 Launch
   │
-  ├─ no encrypted connection config
-  │     └─ connection form (host · port · database · read-only user · password)
-  │           └─ connect: connect → SELECT 1 → encrypt & save → pool
-  │
-  ├─ config exists
-  │     ├─ saved-connection confirmation (no host/database/user shown)
-  │     ├─ reconnect: load vault → connect → SELECT 1
-  │     └─ on failure: retry or replace the connection
-  │
-  └─ connection ready
+  └─ login gate (the first screen)
+        ├─ "ตั้งค่าการเชื่อมต่อ" opens the settings dialog
+        │     └─ connection form (host · port · database · read-only user · password)
+        │           └─ save: connect → SELECT 1 → encrypt & save → pool
+        │
+        ├─ saved config is re-probed at startup
+        │     ├─ reconnect: load vault → connect → SELECT 1
+        │     └─ on failure: the login attempt reports the connection error
+        │
         └─ officer login (username + password)
               ├─ fetch one officer row by login name
               ├─ check active = 'Y'
@@ -56,9 +55,10 @@ Launch
               └─ store an in-memory SessionUser; UI opens
 ```
 
-The connection must be verified before the login form is enabled. The
-settings dialog can still replace the connection later; doing so clears the
-backend session and returns the operator to the login gate.
+The login screen only handles officer credentials; connection setup lives in
+the settings dialog. The connection must be usable before login succeeds. The
+settings dialog can replace the connection later; doing so clears the backend
+session and returns the operator to the login gate.
 
 ## C. Password verification
 

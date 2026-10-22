@@ -4,7 +4,7 @@ This file gives coding agents (and future contributors) the context needed to wo
 
 ## 1. What this project is
 
-ER-Refill ("ยาห้องฉุกเฉิน") is a desktop app for the pharmacy department of a community hospital. It generates the **daily emergency-room drug requisition form** (ใบเบิกยาประจำห้องฉุกเฉินรายวัน): it sums how much of each configured ER drug was used in HOSxP during the **out-of-hours window** since the last requisition, then prints the form for the ER to sign and the pharmacy to fill. Operators sign in with their HOSxP **`officer`** account after the database connection is verified; the session is in-memory only.
+ER-Refill ("ยาห้องฉุกเฉิน") is a desktop app for the pharmacy department of a community hospital. It generates the **daily emergency-room drug requisition form** (ใบเบิกยาประจำห้องฉุกเฉินรายวัน): it sums how much of each configured ER drug was used in HOSxP during the **out-of-hours window** since the last requisition, then prints the form for the ER to sign and the pharmacy to fill. The login gate is the first screen and handles only the HOSxP **`officer`** credentials; connection setup lives in the settings dialog. The session is in-memory only.
 
 **Design goals:** simple, no unnecessary features; read-only against HOSxP (hospital MySQL/MariaDB); the requisition window is computed for the operator but always overridable; the printed A4 sheet must look like the hospital's real paper form.
 
@@ -132,10 +132,12 @@ Document-first UI (DESIGN.md "Structure"): the command bar holds the run
 controls; the stage shows the A4 sheet, which is one DOM/stylesheet shared
 by screen and print.
 
-1. Operator opens the app: the login gate connects to HOSxP, then verifies
-   the `officer` username/password. After sign-in the window is computed, and
-   - the morning ritual - usage **auto-fetches once** when the catalog is
-   ready (the command bar can refetch any time).
+1. Operator opens the app on the login gate and verifies the `officer`
+   username/password (the saved HOSxP connection is re-probed at startup;
+   connection setup lives in the settings dialog, not on the login card).
+   After sign-in the window is computed, and - the morning ritual - usage
+   **auto-fetches once** when the catalog is ready (the command bar can
+   refetch any time).
 2. "ดึงข้อมูล" reads usage for **all configured icodes at once** (one grouped
    query) for the window.
 3. `er-refill-core::build_report` joins catalog + usage into category sections;

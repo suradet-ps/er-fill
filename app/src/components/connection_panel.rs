@@ -7,16 +7,37 @@ use leptos::prelude::*;
 
 use crate::api::{self, ConnectionInput};
 use crate::components::settings_modal::{StatusLine, StatusMessage};
-use crate::state::AppState;
+use crate::state::{AppState, ConnectionHealth};
 
 /// The connection form: host · port · database · user · password, with a
 /// `SELECT 1` test and an encrypted save.
 #[component]
 pub fn ConnectionPanel(state: AppState) -> impl IntoView {
-    let host = RwSignal::new(String::new());
-    let port = RwSignal::new("3306".to_string());
-    let database = RwSignal::new(String::new());
-    let user = RwSignal::new(String::new());
+    let summary = state.connection_summary.get_untracked();
+    let host = RwSignal::new(
+        summary
+            .as_ref()
+            .map(|summary| summary.host.clone())
+            .unwrap_or_default(),
+    );
+    let port = RwSignal::new(
+        summary
+            .as_ref()
+            .map(|summary| summary.port.to_string())
+            .unwrap_or_else(|| "3306".to_string()),
+    );
+    let database = RwSignal::new(
+        summary
+            .as_ref()
+            .map(|summary| summary.database.clone())
+            .unwrap_or_default(),
+    );
+    let user = RwSignal::new(
+        summary
+            .as_ref()
+            .map(|summary| summary.user.clone())
+            .unwrap_or_default(),
+    );
     let password = RwSignal::new(String::new());
     let status = RwSignal::new(None::<StatusMessage>);
     let busy = RwSignal::new(false);
@@ -28,10 +49,10 @@ pub fn ConnectionPanel(state: AppState) -> impl IntoView {
             .parse::<u16>()
             .map_err(|_| "พอร์ตต้องเป็นตัวเลข 1-65535".to_string())?;
         Ok(ConnectionInput {
-            host: host.get(),
+            host: host.get().trim().to_string(),
             port: port_value,
-            database: database.get(),
-            user: user.get(),
+            database: database.get().trim().to_string(),
+            user: user.get().trim().to_string(),
             password: password.get(),
         })
     };
@@ -71,14 +92,11 @@ pub fn ConnectionPanel(state: AppState) -> impl IntoView {
             status.set(None);
             let state = state.clone();
             leptos::task::spawn_local(async move {
-                match api::configure_connection(&input).await {
-                    Ok(()) => {
+                match api::connect(&input).await {
+                    Ok(latency_ms) => {
                         state.configured.set(true);
-                        state
-                            .health
-                            .set(crate::state::ConnectionHealth::Disconnected);
+                        state.health.set(ConnectionHealth::Connected);
                         state.connection_error.set(None);
-                        state.clear_session();
                         state
                             .connection_summary
                             .set(Some(er_refill_models::ConnectionSummary {
@@ -87,31 +105,25 @@ pub fn ConnectionPanel(state: AppState) -> impl IntoView {
                                 database: input.database.clone(),
                                 user: input.user.clone(),
                             }));
-                        status.set(Some(StatusMessage::ok("บันทึกการตั้งค่าการเชื่อมต่อแล้ว")));
+                        state.clear_session();
+                        status.set(Some(StatusMessage::ok(format!(
+                            "เชื่อมต่อและบันทึกการตั้งค่าแล้ว ({latency_ms} ms)"
+                        ))));
                     }
-                    Err(err) => status.set(Some(StatusMessage::error(err.message))),
+                    Err(err) => {
+                        state.health.set(ConnectionHealth::Disconnected);
+                        state.connection_error.set(Some(err.message.clone()));
+                        status.set(Some(StatusMessage::error(err.message)));
+                    }
                 }
                 busy.set(false);
             });
         }
     };
 
-    let configured_note = {
-        let state = state.clone();
-        move || {
-            state.configured.get().then(|| {
-                view! {
-                    <p class="panel-note panel-note--ok">
-                        "บันทึกการเชื่อมต่อไว้แล้วบนเครื่องนี้ กรอกใหม่เพื่อเปลี่ยนค่า"
-                    </p>
-                }
-            })
-        }
-    };
-
     view! {
         <div class="panel">
-            <h3 class="panel__subtitle">"ฐานข้อมูล HOSxP (อ่านอย่างเดียว)"</h3>
+            <h3 class="panel__subtitle">"ฐานข้อมูล HOSxP"</h3>
             <div class="form-grid">
                 <label class="field">
                     <span class="field__label">"ที่อยู่เซิร์ฟเวอร์ HOSxP" <span class="required">"จำเป็น"</span></span>
@@ -165,10 +177,6 @@ pub fn ConnectionPanel(state: AppState) -> impl IntoView {
                     />
                 </label>
             </div>
-            {configured_note}
-            <p class="panel-note">
-                "รหัสผ่านถูกเข้ารหัสแบบ AES-256-GCM โดยกุญแจหลักถูกเก็บไว้ในระบบปฏิบัติการของเครื่องนี้ และไม่มีการบันทึกเป็นข้อความธรรมดาลงดิสก์"
-            </p>
             <StatusLine message=status />
             <div class="panel__actions">
                 <button class="button-secondary" disabled=move || busy.get() on:click=on_test>

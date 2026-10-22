@@ -78,9 +78,11 @@ fn App() -> impl IntoView {
     trigger();
 
     let stage_state = state.clone();
+    let shell_state = state.clone();
     view! {
         <div class="app">
             {move || {
+                let state = shell_state.clone();
                 if !state.auth_checked.get() {
                     view! { <StartupSplash /> }.into_any()
                 } else if state.session.get().is_none() {
@@ -113,11 +115,11 @@ fn App() -> impl IntoView {
                                 }
                             }}
                         </main>
-                        <SettingsModal state=state.clone() />
                     }
                         .into_any()
                 }
             }}
+            <SettingsModal state=state.clone() />
         </div>
     }
 }

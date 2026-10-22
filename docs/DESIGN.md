@@ -176,7 +176,8 @@ desk is the only control surface, and it states the window compactly
 ### Structure - Command Bar + Paper Stage (document-first)
 
 Before the document exists, the full-height `login-gate` replaces the shell
-until the HOSxP connection is verified and an `officer` signs in. After
+until an `officer` signs in. Connection setup is not part of this surface:
+the settings dialog opens from the gate and owns the HOSxP credentials. After
 sign-in the shell below is revealed; the top bar adds the signed-in user and
 the logout action beside the connection status.
 
@@ -354,15 +355,17 @@ reason this card exists; the requisition never hides the window it covers.
 ### Signature Components
 
 **`login-gate`** - Full-height split surface before the document exists:
-- Left brand panel: the sky hero gradient, seal mark, the promise
-  headline, and three quiet proof points (read-only, HOSxP account, no
-  stored password).
-- Right panel: a single `rounded.lg` card with a two-step indicator
-  (`01 การเชื่อมต่อ` / `02 เข้าสู่ระบบ`). The connection block collapses to a
-  quiet confirmation once connected; host/database/user are not shown on the
-  login screen. The login block stays muted until the connection is live.
-- The connection password is a DB credential; the login password is never
-  persisted. Both use the standard field and button components.
+- Left brand panel: the sky hero gradient, seal mark, the
+  "ใบเบิกยาห้องฉุกเฉิน" headline, and a custom paper-and-pills illustration
+  (`app/assets/login-illustration.svg`) - no marketing copy or proof points.
+- Right panel: a single `rounded.lg` card focused on the `officer`
+  username/password, with a "ตั้งค่า" button in the page toolbar. Until a
+  connection is configured, a warn-toned notice inside the card points at the
+  settings dialog; the card never embeds the connection form or connection
+  summary.
+- The connection password is a DB credential and lives only in the settings
+  dialog; the login password is never persisted. Both use the standard field
+  and button components.
 
 **`command-bar`** - The only control surface, two rows tall when editing:
 - Row 1: a labelled date input · a `run-window` card (heading + badge over

@@ -166,8 +166,8 @@ pub async fn connection_summary(
 }
 
 /// Tests typed connection settings, saves them only after a successful
-/// `SELECT 1`, and keeps the resulting pool. Used by the login screen's
-/// connection step.
+/// `SELECT 1`, and keeps the resulting pool. Used by the settings dialog's
+/// connection panel, including before sign-in.
 #[tauri::command]
 pub async fn connect(
     input: ConnectionInput,

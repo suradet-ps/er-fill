@@ -113,34 +113,41 @@ pub fn SettingsModal(state: AppState) -> impl IntoView {
             let nav_state = state.clone();
             let body_state = state.clone();
             let footer_state = state.clone();
-            let nav_items = TABS
-                .into_iter()
-                .map(|(tab, label)| {
-                    let active = Memo::new({
-                        let state = nav_state.clone();
-                        move |_| state.settings_tab.get() == tab
-                    });
-                    let on_click = {
-                        let state = nav_state.clone();
-                        move |_| state.settings_tab.set(tab)
-                    };
-                    view! {
-                        <button
-                            class=move || if active.get() {
-                                "settings-nav__item settings-nav__item--active"
-                            } else {
-                                "settings-nav__item"
-                            }
-                            role="tab"
-                            aria-selected=move || active.get().to_string()
-                            on:click=on_click
-                        >
-                            {tab_icon(tab)}
-                            <span>{label}</span>
-                        </button>
-                    }
-                })
-                .collect_view();
+            let signed_in = Memo::new({
+                let state = state.clone();
+                move |_| state.session.get().is_some()
+            });
+            let nav_items = move || {
+                TABS
+                    .into_iter()
+                    .filter(|(tab, _)| signed_in.get() || *tab == SettingsTab::Connection)
+                    .map(|(tab, label)| {
+                        let active = Memo::new({
+                            let state = nav_state.clone();
+                            move |_| state.settings_tab.get() == tab
+                        });
+                        let on_click = {
+                            let state = nav_state.clone();
+                            move |_| state.settings_tab.set(tab)
+                        };
+                        view! {
+                            <button
+                                class=move || if active.get() {
+                                    "settings-nav__item settings-nav__item--active"
+                                } else {
+                                    "settings-nav__item"
+                                }
+                                role="tab"
+                                aria-selected=move || active.get().to_string()
+                                on:click=on_click
+                            >
+                                {tab_icon(tab)}
+                                <span>{label}</span>
+                            </button>
+                        }
+                    })
+                    .collect_view()
+            };
             Some(
                 view! {
                     <div class="modal-backdrop" on:click=close_backdrop>
@@ -152,7 +159,15 @@ pub fn SettingsModal(state: AppState) -> impl IntoView {
                             on:click=stop_propagation
                         >
                             <header class="settings-modal__header">
-                                <h2 class="settings-modal__title">"ตั้งค่า"</h2>
+                                <h2 class="settings-modal__title">
+                                    {move || {
+                                        if signed_in.get() {
+                                            "ตั้งค่า"
+                                        } else {
+                                            "ตั้งค่าการเชื่อมต่อ"
+                                        }
+                                    }}
+                                </h2>
                                 <button
                                     class="button-icon-circular"
                                     aria-label="ปิด"
@@ -166,27 +181,42 @@ pub fn SettingsModal(state: AppState) -> impl IntoView {
                                     {nav_items}
                                 </nav>
                                 <div class="settings-content">
-                                    {move || match body_state.settings_tab.get() {
-                                        SettingsTab::Connection => {
-                                            view! { <ConnectionPanel state=body_state.clone() /> }
-                                                .into_any()
-                                        }
-                                        SettingsTab::Schedule => {
-                                            view! { <SchedulePanel state=body_state.clone() /> }
-                                                .into_any()
-                                        }
-                                        SettingsTab::Catalog => {
-                                            view! { <CatalogPanel state=body_state.clone() /> }
-                                                .into_any()
-                                        }
-                                        SettingsTab::Report => {
-                                            view! { <ReportPanel state=body_state.clone() /> }
-                                                .into_any()
+                                    {move || {
+                                        let tab = if body_state.session.get().is_some() {
+                                            body_state.settings_tab.get()
+                                        } else {
+                                            SettingsTab::Connection
+                                        };
+                                        match tab {
+                                            SettingsTab::Connection => {
+                                                view! { <ConnectionPanel state=body_state.clone() /> }
+                                                    .into_any()
+                                            }
+                                            SettingsTab::Schedule => {
+                                                view! { <SchedulePanel state=body_state.clone() /> }
+                                                    .into_any()
+                                            }
+                                            SettingsTab::Catalog => {
+                                                view! { <CatalogPanel state=body_state.clone() /> }
+                                                    .into_any()
+                                            }
+                                            SettingsTab::Report => {
+                                                view! { <ReportPanel state=body_state.clone() /> }
+                                                    .into_any()
+                                            }
                                         }
                                     }}
                                 </div>
                             </div>
-                            <SettingsFooter state=footer_state />
+                            {move || {
+                                footer_state
+                                    .session
+                                    .get()
+                                    .is_some()
+                                    .then(|| {
+                                        view! { <SettingsFooter state=footer_state.clone() /> }
+                                    })
+                            }}
                         </div>
                     </div>
                 },

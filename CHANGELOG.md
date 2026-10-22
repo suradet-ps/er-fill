@@ -7,6 +7,12 @@ All notable changes to ER-Refill are documented here. The format follows
 
 ### Changed
 
+- The login gate now handles the `officer` sign-in only. HOSxP connection
+  setup moved entirely into the settings dialog, opened from the login page;
+  the connection form/status block is no longer embedded in the login card.
+- Replaced the login brand copy and proof points with a custom requisition
+  illustration, and trimmed the login/connection panels of the read-only and
+  encryption explanatory paragraphs.
 - จำนวนเบิก is now derived as whole packs from the จำนวน/Stock setting
   (`units-per-pack/stock-packs`): `ceil(usage / units-per-pack)`, capped at
   the stock pack count; manual edits are rounded and clamped the same way.
