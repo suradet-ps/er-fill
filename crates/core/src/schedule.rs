@@ -7,7 +7,7 @@
 //! the pharmacy's in-hours process - this app covers out-of-hours only.
 
 use chrono::{Days, NaiveDate, NaiveDateTime};
-use er_fill_models::{BusinessSchedule, RequisitionWindow, ScheduleError};
+use er_refill_models::{BusinessSchedule, RequisitionWindow, ScheduleError};
 
 /// Computes the requisition window for a run on `today`.
 ///
@@ -25,8 +25,8 @@ use er_fill_models::{BusinessSchedule, RequisitionWindow, ScheduleError};
 ///
 /// ```
 /// use chrono::NaiveDate;
-/// use er_fill_core::window_for;
-/// use er_fill_models::BusinessSchedule;
+/// use er_refill_core::window_for;
+/// use er_refill_models::BusinessSchedule;
 ///
 /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// let monday = NaiveDate::from_ymd_opt(2026, 10, 19).ok_or("valid date")?;
@@ -52,7 +52,7 @@ pub fn window_for(
 mod tests {
     use super::*;
     use chrono::NaiveTime;
-    use er_fill_models::TimeRange;
+    use er_refill_models::TimeRange;
 
     fn date(y: i32, m: u32, d: u32) -> Result<NaiveDate, Box<dyn std::error::Error>> {
         NaiveDate::from_ymd_opt(y, m, d).ok_or_else(|| "valid test date".into())

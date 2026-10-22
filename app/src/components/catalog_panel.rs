@@ -2,11 +2,11 @@
 //! to HOSxP `drugitems` icodes.
 //!
 //! All edits land on a local draft; nothing is persisted until "บันทึก".
-//! Mutations go through `er-fill-core::catalog_ops`, whose errors are
+//! Mutations go through `er-refill-core::catalog_ops`, whose errors are
 //! translated to Thai here (Thai strings stay in the frontend, AGENTS.md section 2).
 
-use er_fill_core::CatalogOpsError;
-use er_fill_models::{Catalog, DrugItem};
+use er_refill_core::CatalogOpsError;
+use er_refill_models::{Catalog, DrugItem};
 use leptos::prelude::*;
 
 use crate::api;
@@ -61,10 +61,12 @@ pub fn CatalogPanel(state: AppState) -> impl IntoView {
         let name = new_category.get();
         let mut created = None;
         let mut error = None;
-        draft.update(|catalog| match er_fill_core::add_category(catalog, &name) {
-            Ok(id) => created = Some(id),
-            Err(err) => error = Some(catalog_error_th(&err)),
-        });
+        draft.update(
+            |catalog| match er_refill_core::add_category(catalog, &name) {
+                Ok(id) => created = Some(id),
+                Err(err) => error = Some(catalog_error_th(&err)),
+            },
+        );
         if let Some(id) = created {
             selected.set(Some(id));
             new_category.set(String::new());
@@ -82,7 +84,7 @@ pub fn CatalogPanel(state: AppState) -> impl IntoView {
         let name = event_target_value(&ev);
         let mut error = None;
         draft.update(|catalog| {
-            if let Err(err) = er_fill_core::rename_category(catalog, &category_id, &name) {
+            if let Err(err) = er_refill_core::rename_category(catalog, &category_id, &name) {
                 error = Some(catalog_error_th(&err));
             }
         });
@@ -98,7 +100,7 @@ pub fn CatalogPanel(state: AppState) -> impl IntoView {
     let on_remove_category = move |category_id: String| {
         let mut error = None;
         draft.update(|catalog| {
-            if let Err(err) = er_fill_core::remove_category(catalog, &category_id) {
+            if let Err(err) = er_refill_core::remove_category(catalog, &category_id) {
                 error = Some(catalog_error_th(&err));
             }
         });
@@ -152,7 +154,7 @@ pub fn CatalogPanel(state: AppState) -> impl IntoView {
         };
         let mut error = None;
         draft.update(|catalog| {
-            if let Err(err) = er_fill_core::add_drug(catalog, &category_id, &item, "") {
+            if let Err(err) = er_refill_core::add_drug(catalog, &category_id, &item, "") {
                 error = Some(catalog_error_th(&err));
             }
         });
@@ -175,7 +177,7 @@ pub fn CatalogPanel(state: AppState) -> impl IntoView {
             let mut error = None;
             draft.update(|catalog| {
                 if let Err(err) =
-                    er_fill_core::update_drug(catalog, &icode, &name, &strength, &stock_text)
+                    er_refill_core::update_drug(catalog, &icode, &name, &strength, &stock_text)
                 {
                     error = Some(catalog_error_th(&err));
                 }
@@ -192,7 +194,7 @@ pub fn CatalogPanel(state: AppState) -> impl IntoView {
     let on_move_drug = move |icode: String, delta: i32| {
         let mut error = None;
         draft.update(|catalog| {
-            if let Err(err) = er_fill_core::move_drug(catalog, &icode, delta) {
+            if let Err(err) = er_refill_core::move_drug(catalog, &icode, delta) {
                 error = Some(catalog_error_th(&err));
             }
         });
@@ -208,7 +210,7 @@ pub fn CatalogPanel(state: AppState) -> impl IntoView {
     let on_remove_drug = move |icode: String| {
         let mut error = None;
         draft.update(|catalog| {
-            if let Err(err) = er_fill_core::remove_drug(catalog, &icode) {
+            if let Err(err) = er_refill_core::remove_drug(catalog, &icode) {
                 error = Some(catalog_error_th(&err));
             }
         });

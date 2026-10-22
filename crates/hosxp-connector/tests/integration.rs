@@ -1,11 +1,11 @@
 //! Live-database integration tests (AGENTS.md section 13).
 //!
 //! Gated behind `--features integration-tests` and pointed at a **test or
-//! staging** HOSxP instance via `ER_FILL_TEST_DATABASE_URL` - never production.
+//! staging** HOSxP instance via `ER_REFILL_TEST_DATABASE_URL` - never production.
 //!
 //! ```bash
 //! cd crates/hosxp-connector
-//! ER_FILL_TEST_DATABASE_URL='mysql://erfill_ro:pass@host:3306/hos' \
+//! ER_REFILL_TEST_DATABASE_URL='mysql://errefill_ro:pass@host:3306/hos' \
 //!     cargo test --features integration-tests
 //! ```
 
@@ -14,13 +14,13 @@
 use sqlx::mysql::MySqlPoolOptions;
 
 fn database_url() -> Result<String, Box<dyn std::error::Error>> {
-    std::env::var("ER_FILL_TEST_DATABASE_URL")
-        .map_err(|_| "ER_FILL_TEST_DATABASE_URL must be set for integration tests".into())
+    std::env::var("ER_REFILL_TEST_DATABASE_URL")
+        .map_err(|_| "ER_REFILL_TEST_DATABASE_URL must be set for integration tests".into())
 }
 
 /// The smoke test must succeed against a reachable test instance.
 #[tokio::test]
-#[ignore = "requires ER_FILL_TEST_DATABASE_URL pointing at a staging instance"]
+#[ignore = "requires ER_REFILL_TEST_DATABASE_URL pointing at a staging instance"]
 async fn ping_against_test_instance_succeeds() -> Result<(), Box<dyn std::error::Error>> {
     let url = database_url()?;
     let pool = MySqlPoolOptions::new()
@@ -35,7 +35,7 @@ async fn ping_against_test_instance_succeeds() -> Result<(), Box<dyn std::error:
 /// A read-only session must reject DDL; the read-only account has no grants
 /// for it either - either way the write fails while reads keep working.
 #[tokio::test]
-#[ignore = "requires ER_FILL_TEST_DATABASE_URL pointing at a staging instance"]
+#[ignore = "requires ER_REFILL_TEST_DATABASE_URL pointing at a staging instance"]
 async fn read_only_session_rejects_ddl() -> Result<(), Box<dyn std::error::Error>> {
     let url = database_url()?;
     let pool = MySqlPoolOptions::new()
@@ -45,7 +45,7 @@ async fn read_only_session_rejects_ddl() -> Result<(), Box<dyn std::error::Error
     sqlx::query("SET SESSION TRANSACTION READ ONLY")
         .execute(&pool)
         .await?;
-    let ddl = sqlx::query("CREATE TABLE erfill_ro_probe (id INT)")
+    let ddl = sqlx::query("CREATE TABLE errefill_ro_probe (id INT)")
         .execute(&pool)
         .await;
     assert!(ddl.is_err(), "read-only session must reject DDL");

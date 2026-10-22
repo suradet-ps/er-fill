@@ -13,11 +13,11 @@ use secrecy::{ExposeSecret, SecretBox, SecretString};
 use serde::{Deserialize, Serialize};
 
 /// Keychain service name - used as both the keyring identifier and the
-/// HKDF context (domain isolation for ER-Fill).
-pub const SERVICE_NAME: &str = "er-fill";
+/// HKDF context (domain isolation for ER-Refill).
+pub const SERVICE_NAME: &str = "er-refill";
 
 /// File name of the encrypted settings file, inside the app config dir.
-pub const CONFIG_FILE_NAME: &str = "er-fill.config.json";
+pub const CONFIG_FILE_NAME: &str = "er-refill.config.json";
 
 /// Version of the on-disk config format. Bump (with migration) if the
 /// layout changes.
@@ -82,7 +82,7 @@ impl KeyStore for VaultKeyStore {
     }
 }
 
-/// Loads (creating on first use) the keychain-backed vault for ER-Fill.
+/// Loads (creating on first use) the keychain-backed vault for ER-Refill.
 ///
 /// # Errors
 ///
@@ -127,7 +127,7 @@ pub struct HosxConfig {
     pub port: u16,
     /// Database name (usually `hos` / `hosxp`).
     pub database: String,
-    /// Read-only account user (e.g. `erfill_ro`).
+    /// Read-only account user (e.g. `errefill_ro`).
     pub user: String,
     /// Account password.
     pub password: SecretString,
@@ -283,7 +283,7 @@ mod tests {
             "10.0.0.5".into(),
             3306,
             "hos".into(),
-            "erfill_ro".into(),
+            "errefill_ro".into(),
             SecretBox::from("s3cret!p@ss".to_string()),
         )
     }
@@ -346,7 +346,7 @@ mod tests {
         let raw = tokio::fs::read_to_string(&path)
             .await
             .expect("read in test");
-        for secret in ["s3cret!p@ss", "erfill_ro", "10.0.0.5"] {
+        for secret in ["s3cret!p@ss", "errefill_ro", "10.0.0.5"] {
             assert!(
                 !raw.contains(secret),
                 "plaintext {secret:?} must not appear on disk"

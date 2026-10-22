@@ -1,10 +1,10 @@
 [package]
-name = "er-fill-hosxp-connector"
+name = "er-refill-hosxp-connector"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
-description = "The only crate allowed to talk to HOSxP MySQL for ER-Fill - SELECT-only pool, encrypted settings, read-only guard"
+description = "The only crate allowed to talk to HOSxP MySQL for ER-Refill - SELECT-only pool, encrypted settings, read-only guard"
 
 [features]
 # Live-DB tests, never run against production (AGENTS.md section 13).
@@ -21,8 +21,8 @@ serde_json.workspace = true        # config file on disk
 sqlx.workspace = true              # SELECT-only MySQL access
 thiserror.workspace = true         # structured errors in library crates
 tokio.workspace = true             # async file I/O for the config file
-er-fill-core = { path = "../core" }
-er-fill-models = { path = "../models" }
+er-refill-core = { path = "../core" }
+er-refill-models = { path = "../models" }
 
 [dev-dependencies]
 tempfile.workspace = true          # test-only config files

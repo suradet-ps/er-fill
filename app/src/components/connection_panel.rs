@@ -81,7 +81,7 @@ pub fn ConnectionPanel(state: AppState) -> impl IntoView {
                         state.clear_session();
                         state
                             .connection_summary
-                            .set(Some(er_fill_models::ConnectionSummary {
+                            .set(Some(er_refill_models::ConnectionSummary {
                                 host: input.host.clone(),
                                 port: input.port,
                                 database: input.database.clone(),
@@ -148,7 +148,7 @@ pub fn ConnectionPanel(state: AppState) -> impl IntoView {
                     <input
                         class="text-input"
                         type="text"
-                        placeholder="erfill_ro"
+                        placeholder="errefill_ro"
                         autocomplete="off"
                         prop:value=move || user.get()
                         on:input=move |ev| user.set(event_target_value(&ev))

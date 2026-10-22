@@ -1,7 +1,7 @@
 //! Settings tab: the printed header block - hospital name, document title,
 //! issuing department.
 
-use er_fill_models::ReportMeta;
+use er_refill_models::ReportMeta;
 use leptos::prelude::*;
 
 use crate::api;

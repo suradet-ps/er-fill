@@ -75,7 +75,7 @@ jobs:
 
       - name: Cargo test (host)
         working-directory: app
-        run: cargo test -p er-fill-app
+        run: cargo test -p er-refill-app
 
       - name: Install Trunk
         run: |

@@ -1,4 +1,4 @@
-//! ER-Fill's monoline SVG icon set.
+//! ER-Refill's monoline SVG icon set.
 //!
 //! A deliberately softer, clinical set: 24×24 viewBox, `currentColor`,
 //! 1.8px stroke, round caps and joins. The glyphs sit on a common optical

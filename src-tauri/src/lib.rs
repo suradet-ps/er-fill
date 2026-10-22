@@ -1,7 +1,7 @@
-//! Tauri 2 shell for ER-Fill - thin command adapters only (AGENTS.md section 3).
+//! Tauri 2 shell for ER-Refill - thin command adapters only (AGENTS.md section 3).
 //!
 //! No SQL and no business logic live here: everything HOSxP-related goes
-//! through `er-fill-hosxp-connector`, the only crate allowed to touch MySQL.
+//! through `er-refill-hosxp-connector`, the only crate allowed to touch MySQL.
 
 mod commands;
 mod error;

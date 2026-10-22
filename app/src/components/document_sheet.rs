@@ -3,13 +3,13 @@
 //! second layout (DESIGN.md "sheet").
 //!
 //! Pagination is explicit (40 drug rows per page, see
-//! `er_fill_core::paginate_sections`): every page repeats the document
+//! `er_refill_core::paginate_sections`): every page repeats the document
 //! header, the window sentence, and the column headers; a split category
 //! continues with "(ต่อ)"; the signature blocks and print stamp render on
 //! the last page only. 69 items therefore always print on two sheets.
 
-use er_fill_core::{ROWS_PER_PAGE, SheetPage, paginate_sections};
-use er_fill_models::{ReportSection, format_qty, format_thai_datetime_full};
+use er_refill_core::{ROWS_PER_PAGE, SheetPage, paginate_sections};
+use er_refill_models::{ReportSection, format_qty, format_thai_datetime_full};
 use leptos::prelude::*;
 
 use crate::components::icons::IconX;
@@ -40,7 +40,7 @@ pub fn DocumentSheet(state: AppState, sections: Vec<ReportSection>) -> impl Into
 fn SheetPageView(
     state: AppState,
     page: SheetPage,
-    meta: er_fill_models::ReportMeta,
+    meta: er_refill_models::ReportMeta,
 ) -> impl IntoView {
     let is_last = page.is_last;
     let page_label = format!("หน้า {} / {}", page.number, page.count);

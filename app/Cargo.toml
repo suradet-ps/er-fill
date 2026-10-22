@@ -3,23 +3,23 @@
 [workspace]
 
 [package]
-name = "er-fill-app"
+name = "er-refill-app"
 version = "0.1.0"
 edition = "2024"
 license = "MIT"
 
 [lib]
-name = "er_fill_app"
+name = "er_refill_app"
 path = "src/lib.rs"
 
 [[bin]]
-name = "er-fill-app"
+name = "er-refill-app"
 path = "src/main.rs"
 
 [dependencies]
 leptos = { version = "0.8", features = ["csr"] }
-er-fill-core = { path = "../crates/core" }     # window algorithm + report builder (wasm-compatible)
-er-fill-models = { path = "../crates/models" } # domain types + Thai/BE formatting
+er-refill-core = { path = "../crates/core" }     # window algorithm + report builder (wasm-compatible)
+er-refill-models = { path = "../crates/models" } # domain types + Thai/BE formatting
 chrono = "0.4"                 # dates/times in UI state + the print timestamp
 js-sys = "0.3"                 # Promise handle returned by the Tauri IPC bridge
 serde = { version = "1.0", features = ["derive"] }  # DeserializeOwned bound on command results

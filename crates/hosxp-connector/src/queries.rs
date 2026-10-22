@@ -87,7 +87,7 @@ ORDER BY o.icode";
 /// # Examples
 ///
 /// ```
-/// use er_fill_hosxp_connector::queries::usage_in_window_sql;
+/// use er_refill_hosxp_connector::queries::usage_in_window_sql;
 ///
 /// let sql = usage_in_window_sql(3);
 /// assert!(sql.contains("IN (?, ?, ?)"));

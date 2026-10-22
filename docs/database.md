@@ -1,6 +1,6 @@
 # Database notes - HOSxP integration
 
-ER-Fill reads from the hospital's HOSxP MySQL/MariaDB instance **read-only**
+ER-Refill reads from the hospital's HOSxP MySQL/MariaDB instance **read-only**
 (`AGENTS.md` sections 2 and 5). This file documents what the connector touches, what is
 verified, and what the DBA must confirm.
 
@@ -75,7 +75,7 @@ ORDER BY o.icode
 
 ### A.3 Verified survey (Sra Bos, 2026-10-21)
 
-| Area | Observed | Consequence for ER-Fill |
+| Area | Observed | Consequence for ER-Refill |
 |---|---|---|
 | `er_regist` | 302,370 rows (2005-11-26 to 2026-10-21), PK `vn`, joins `ovst.vn` 100% | Anchor ER usage on `er_regist.vn` |
 | `ovst.spclty = '17'` | 0 rows in 90 days | Never used to identify ER |
@@ -87,21 +87,21 @@ ORDER BY o.icode
 | Prescriber | `opitemrece.doctor` differs from `er_regist.er_doctor` on 5,132 / 9,639 (53%) | Two doctor concepts if line detail is ever added |
 | Sig | `drugusage` populated 55,734 / 123,904 (45%); ER missing 1,042 / 9,639 (10.8%) | Require Sig at line level if a line-level module is added |
 | Dispensing | `opi_dispense` 2,431,625 rows; `opi_dispense_dru` 948,498 rows, matches 935,057 / 948,498 orders (98.6%) | Evidence of actual dispensing; not safe to aggregate by `vn + item_no` |
-| HOSxP stock module | `stock_department*`, `stock_dep_*`, `drugstock` all 0 rows | No dependency; ER-Fill does not track stock |
+| HOSxP stock module | `stock_department*`, `stock_dep_*`, `drugstock` all 0 rows | No dependency; ER-Refill does not track stock |
 | Unused tables | `dispensing_drug`, `nurse_confirm_rx`, `drug_delivery`, `opitemrece_drug_control`, `er_iv_list`, `iptdrugorder` | Not used |
 | Safety tables | `opd_allergy.agent` is a drug name (no icode); `drug_interaction` uses names | Patient-level checks are outside this aggregate app |
 
 ### A.4 What was deliberately not adopted
 
 The survey also proposed a read model (`v_er_visit`, `v_er_drug_order`,
-`v_er_drug_dispense`) and new requisition/stock tables. ER-Fill cannot adopt
+`v_er_drug_dispense`) and new requisition/stock tables. ER-Refill cannot adopt
 them as DDL because the app is read-only (AGENTS.md section 2): `CREATE VIEW`
 and `CREATE TABLE` are writes. The equivalent read model is the inline
 `SELECT` in A.2, compiled into `crates/hosxp-connector/src/queries.rs`.
 
 The `er_drug_store`, `er_drug_stock`, `er_drug_requisition*`,
 `er_drug_stock_txn`, and `er_drug_safety_check` tables are not part of this
-app: ER-Fill does not track stock, does not persist per-day requisitions,
+app: ER-Refill does not track stock, does not persist per-day requisitions,
 and never handles patient-level data. They belong to a separate system if
 the hospital decides to build one.
 
@@ -130,7 +130,7 @@ data-safe and can be requested separately.
 UTF-8 - affects Thai name search in the drug picker.
 
 **B6. Read-only account.** Confirm a dedicated `GRANT SELECT` user (e.g.
-`erfill_ro`) for the app; this is the real security boundary (`AGENTS.md` section 5).
+`errefill_ro`) for the app; this is the real security boundary (`AGENTS.md` section 5).
 
 **B7. ER line scope.** The query counts every drug line under an ER visit,
 not only `dep_code = '009'` (which covers 66% of ER drug orders). Confirm
@@ -149,7 +149,7 @@ the next candidate is `dep_code = '009'` as an additional predicate.
 ## D. Integration test hook
 
 Live-DB tests (never production) are gated behind the connector's
-`integration-tests` feature and read `ER_FILL_TEST_DATABASE_URL`:
+`integration-tests` feature and read `ER_REFILL_TEST_DATABASE_URL`:
 
 ```bash
 cd crates/hosxp-connector

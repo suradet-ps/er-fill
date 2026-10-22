@@ -1,18 +1,18 @@
 //! Plain (unencrypted) application settings persistence: schedule, catalog,
 //! and the report header (AGENTS.md section 10). The [`AppSettings`] type itself
-//! lives in `er-fill-models` (shared with the frontend); these are **not
+//! lives in `er-refill-models` (shared with the frontend); these are **not
 //! secrets** - credentials live in the encrypted config file handled by
-//! `er-fill-hosxp-connector`.
+//! `er-refill-hosxp-connector`.
 
 use std::path::Path;
 
 use chrono::NaiveTime;
-pub use er_fill_models::AppSettings;
-use er_fill_models::{BusinessSchedule, TimeRange};
+pub use er_refill_models::AppSettings;
+use er_refill_models::{BusinessSchedule, TimeRange};
 use serde::{Deserialize, Serialize};
 
 /// File name of the settings file, inside the app config dir.
-pub const SETTINGS_FILE_NAME: &str = "er-fill.settings.json";
+pub const SETTINGS_FILE_NAME: &str = "er-refill.settings.json";
 
 /// Version of the on-disk settings format. Bump (with migration) if the
 /// layout changes.
@@ -119,7 +119,7 @@ pub async fn save(path: &Path, settings: &AppSettings) -> Result<(), SettingsErr
 #[cfg(test)]
 mod tests {
     use super::*;
-    use er_fill_models::{BusinessSchedule, ReportMeta};
+    use er_refill_models::{BusinessSchedule, ReportMeta};
     use tempfile::tempdir;
 
     #[tokio::test]

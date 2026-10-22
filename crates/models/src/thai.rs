@@ -48,7 +48,7 @@ pub const THAI_DAYS_ABBR: [&str; 7] = ["อา.", "จ.", "อ.", "พ.", "พ�
 /// # Examples
 ///
 /// ```
-/// use er_fill_models::be_year;
+/// use er_refill_models::be_year;
 ///
 /// assert_eq!(be_year(2026), 2569);
 /// ```

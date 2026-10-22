@@ -4,7 +4,7 @@
 use std::collections::HashMap;
 
 use async_trait::async_trait;
-use er_fill_models::{DrugItem, OfficerAccount, RequisitionWindow, UsageRow};
+use er_refill_models::{DrugItem, OfficerAccount, RequisitionWindow, UsageRow};
 
 use crate::repository::{HosxRepository, RepositoryError};
 
@@ -79,7 +79,7 @@ impl HosxRepository for MockRepository {
 mod tests {
     use super::*;
     use chrono::NaiveDate;
-    use er_fill_models::RequisitionWindow;
+    use er_refill_models::RequisitionWindow;
 
     fn window() -> Result<RequisitionWindow, Box<dyn std::error::Error>> {
         let start = NaiveDate::from_ymd_opt(2026, 10, 18)

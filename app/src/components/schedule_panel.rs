@@ -3,7 +3,7 @@
 //! time of the run day - there is no separate cutoff.
 
 use chrono::NaiveTime;
-use er_fill_models::{BusinessSchedule, TimeRange, format_thai_datetime_abbr, format_time_hm};
+use er_refill_models::{BusinessSchedule, TimeRange, format_thai_datetime_abbr, format_time_hm};
 use leptos::prelude::*;
 
 use crate::api;
@@ -51,7 +51,7 @@ pub fn SchedulePanel(state: AppState) -> impl IntoView {
         build()
             .ok()
             .and_then(|schedule| {
-                er_fill_core::window_for(&schedule, state.selected_date.get()).ok()
+                er_refill_core::window_for(&schedule, state.selected_date.get()).ok()
             })
             .map(|window| {
                 format!(

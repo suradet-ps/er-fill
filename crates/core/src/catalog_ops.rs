@@ -3,7 +3,7 @@
 //! Every operation works on an owned [`Catalog`] so the Tauri layer can
 //! validate the whole result before persisting it.
 
-use er_fill_models::{Catalog, DrugCategory, DrugItem, ErDrug};
+use er_refill_models::{Catalog, DrugCategory, DrugItem, ErDrug};
 
 use crate::error::CatalogOpsError;
 

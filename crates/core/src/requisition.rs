@@ -3,7 +3,7 @@
 
 use std::collections::HashMap;
 
-use er_fill_models::{Catalog, ErDrug, ReportRow, ReportSection, UsageRow};
+use er_refill_models::{Catalog, ErDrug, ReportRow, ReportSection, UsageRow};
 
 /// Builds the requisition sections from catalog + usage.
 ///
@@ -21,11 +21,11 @@ use er_fill_models::{Catalog, ErDrug, ReportRow, ReportSection, UsageRow};
 /// # Examples
 ///
 /// ```
-/// use er_fill_core::build_report;
-/// use er_fill_models::{Catalog, DrugItem, UsageRow};
+/// use er_refill_core::build_report;
+/// use er_refill_models::{Catalog, DrugItem, UsageRow};
 ///
 /// let mut catalog = Catalog::seed_default();
-/// er_fill_core::add_drug(
+/// er_refill_core::add_drug(
 ///     &mut catalog,
 ///     "cat-1",
 ///     &DrugItem {
@@ -52,7 +52,7 @@ pub fn build_report(catalog: &Catalog, usage: &[UsageRow]) -> Vec<ReportSection>
         .map(|row| (row.icode.as_str(), row.qty))
         .collect();
 
-    let mut categories: Vec<&er_fill_models::DrugCategory> = catalog.categories.iter().collect();
+    let mut categories: Vec<&er_refill_models::DrugCategory> = catalog.categories.iter().collect();
     categories.sort_by_key(|category| category.sort_order);
 
     categories
@@ -109,7 +109,7 @@ fn requested_for(drug: &ErDrug, used: f64) -> (f64, Option<f64>) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use er_fill_models::DrugItem;
+    use er_refill_models::DrugItem;
 
     fn setup_catalog() -> Result<Catalog, Box<dyn std::error::Error>> {
         let mut catalog = Catalog::seed_default();

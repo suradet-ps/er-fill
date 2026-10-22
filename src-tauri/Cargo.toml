@@ -1,13 +1,13 @@
 [package]
-name = "er-fill-tauri"
+name = "er-refill-tauri"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
-description = "Tauri 2 shell for ER-Fill - thin command adapters only, no business logic, no SQL"
+description = "Tauri 2 shell for ER-Refill - thin command adapters only, no business logic, no SQL"
 
 [lib]
-name = "er_fill_tauri_lib"
+name = "er_refill_tauri_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
@@ -21,9 +21,9 @@ serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
 tokio.workspace = true
-er-fill-core = { path = "../crates/core" }
-er-fill-hosxp-connector = { path = "../crates/hosxp-connector" }
-er-fill-models = { path = "../crates/models" }
+er-refill-core = { path = "../crates/core" }
+er-refill-hosxp-connector = { path = "../crates/hosxp-connector" }
+er-refill-models = { path = "../crates/models" }
 
 [dev-dependencies]
 tempfile.workspace = true

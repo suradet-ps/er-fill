@@ -327,7 +327,7 @@ When applying these standards to an existing codebase, follow this sequence:
 
 [OVERRIDE §3] Root `default-members` excludes `src-tauri` (GUI shell) so
 `cargo test` at the root stays fast and DB-free. Check the shell explicitly
-with `-p er-fill-tauri` or `--workspace`.
+with `-p er-refill-tauri` or `--workspace`.
 
 [OVERRIDE §4.2] `app/` is a **separate workspace** (empty `[workspace]` table
 in its own `Cargo.toml`): it compiles for `wasm32-unknown-unknown` and must

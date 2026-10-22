@@ -20,7 +20,7 @@ pub struct GuardError;
 /// # Examples
 ///
 /// ```
-/// use er_fill_hosxp_connector::readonly_guard::assert_read_only;
+/// use er_refill_hosxp_connector::readonly_guard::assert_read_only;
 ///
 /// assert!(assert_read_only("SELECT 1").is_ok());
 /// assert!(assert_read_only("with x as (select 1) select * from x").is_ok());

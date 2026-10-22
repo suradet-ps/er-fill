@@ -1176,12 +1176,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "00d174d5400e5e8fd687ad1049e2f578285fa914201b1af7e8b112a4546bd826"
 
 [[package]]
-name = "er-fill-core"
+name = "er-refill-core"
 version = "0.1.0"
 dependencies = [
  "async-trait",
  "chrono",
- "er-fill-models",
+ "er-refill-models",
  "md-5",
  "serde",
  "thiserror 2.0.21",
@@ -1189,15 +1189,15 @@ dependencies = [
 ]
 
 [[package]]
-name = "er-fill-hosxp-connector"
+name = "er-refill-hosxp-connector"
 version = "0.1.0"
 dependencies = [
  "async-trait",
  "chrono",
  "encryptman 0.3.1",
  "encryptman-keyring",
- "er-fill-core",
- "er-fill-models",
+ "er-refill-core",
+ "er-refill-models",
  "secrecy",
  "serde",
  "serde_json",
@@ -1208,7 +1208,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "er-fill-models"
+name = "er-refill-models"
 version = "0.1.0"
 dependencies = [
  "chrono",
@@ -1218,13 +1218,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "er-fill-tauri"
+name = "er-refill-tauri"
 version = "0.1.0"
 dependencies = [
  "chrono",
- "er-fill-core",
- "er-fill-hosxp-connector",
- "er-fill-models",
+ "er-refill-core",
+ "er-refill-hosxp-connector",
+ "er-refill-models",
  "secrecy",
  "serde",
  "serde_json",

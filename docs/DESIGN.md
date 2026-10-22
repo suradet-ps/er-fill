@@ -1,8 +1,8 @@
-# DESIGN.md - ER-Fill
+# DESIGN.md - ER-Refill
 
 ## Overview
 
-ER-Fill is used by a pharmacist once a day, in the morning, to produce one
+ER-Refill is used by a pharmacist once a day, in the morning, to produce one
 paper: the ER drug requisition form. The interface therefore borrows two
 things from the Mintlify language - **cinematic atmosphere on the rare empty
 states** (gradient hero bands) and **documentation-grade density everywhere
@@ -43,7 +43,7 @@ desk is the only control surface, and it states the window compactly
 
 ### Adaptation Notes - what changed from the Mintlify reference
 
-| Reference token | ER-Fill token | Why |
+| Reference token | ER-Refill token | Why |
 |---|---|---|
 | Mintlify mint `#00D4A4`-family | `{colors.brand-green}` `#00A87E` ("เขียวตราประทับ" seal green) | Same role; deepened one step so it holds WCAG AA on white for accent text and reads as ink-stamp green, not neon. |
 | Inter + Geist Mono only | Inter + **IBM Plex Sans Thai** + IBM Plex Mono | The app is Thai-first; Inter has no Thai glyphs. Plex Thai pairs with Plex Mono and matches the sibling AllerX system. |
@@ -182,7 +182,7 @@ the logout action beside the connection status.
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
-│ Top bar (48px: mark · ER-Fill · ระบบใบเบิกยาห้องฉุกเฉิน · status · ตั้งค่า) │
+│ Top bar (48px: mark · ER-Refill · ระบบใบเบิกยาห้องฉุกเฉิน · status · ตั้งค่า) │
 ├──────────────────────────────────────────────────────────────────────┤
 │ COMMAND BAR (the only control surface; two rows when editing)        │
 │  วันที่เบิก [date] │ ช่วงเวลา 20 ต.ค. 20:30 → 21 ต.ค. 08:30 [อัตโนมัติ]   │
@@ -201,7 +201,7 @@ the logout action beside the connection status.
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
-**Why document-first:** ER-Fill's job is not "look a value up" (the sidebar
+**Why document-first:** ER-Refill's job is not "look a value up" (the sidebar
 pattern of the sibling AllerX tool); it is "verify a document, then print
 it". Established document tools teach the same lesson: the print preview
 must reuse the same DOM and CSS as the print output, or the preview lies.
@@ -286,7 +286,7 @@ rounded `{rounded.md}`.
 catalog list): background `{colors.canvas}`, border
 `1px solid {colors.hairline}`, rounded `{rounded.full}`.
 
-**`icon` set** - ER-Fill's own monoline SVGs: 24×24 viewBox, 1.8px stroke,
+**`icon` set** - ER-Refill's own monoline SVGs: 24×24 viewBox, 1.8px stroke,
 round caps and joins, `currentColor`. 16px inside buttons, 24px in the
 settings rail. No filled or duotone variants; the line stays quiet beside
 Thai text and quantities.
@@ -388,7 +388,7 @@ reason this card exists; the requisition never hides the window it covers.
   screen too - the preview is the paper, and they render on the **last
   page only**.
 - **Pagination is explicit**: one `<article class="sheet">` per A4 page,
-  at most **40 drug rows per page** (`er-fill-core::ROWS_PER_PAGE`), so the
+  at most **40 drug rows per page** (`er-refill-core::ROWS_PER_PAGE`), so the
   69-item pilot list always prints on two sheets. Every page repeats the
   header block, the window sentence, and the column headers; a split
   category continues with "(ต่อ)"; the footer carries หน้า X / Y (and the

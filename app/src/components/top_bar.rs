@@ -31,7 +31,7 @@ pub fn TopBar(state: AppState) -> impl IntoView {
             <div class="top-bar__left">
                 <BrandMark />
                 <div class="top-bar__titles">
-                    <span class="top-bar__title">"ER-Fill"</span>
+                    <span class="top-bar__title">"ER-Refill"</span>
                     <span class="top-bar__subtitle">"ระบบใบเบิกยาห้องฉุกเฉิน"</span>
                 </div>
             </div>
@@ -85,12 +85,12 @@ pub fn BrandMark() -> impl IntoView {
     view! {
         <svg class="brand-mark" viewBox="0 0 48 48" width="28" height="28" aria-hidden="true">
             <defs>
-                <linearGradient id="erfill-seal" x1="0" y1="0" x2="1" y2="1">
+                <linearGradient id="errefill-seal" x1="0" y1="0" x2="1" y2="1">
                     <stop offset="0" stop-color="#00C08F" />
                     <stop offset="1" stop-color="#00795B" />
                 </linearGradient>
             </defs>
-            <rect x="2" y="2" width="44" height="44" rx="10" fill="url(#erfill-seal)" />
+            <rect x="2" y="2" width="44" height="44" rx="10" fill="url(#errefill-seal)" />
             <g fill="none" stroke="#FFFFFF" stroke-width="3.2" stroke-linecap="round">
                 <rect
                     x="16.5"

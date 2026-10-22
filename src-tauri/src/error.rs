@@ -5,9 +5,9 @@
 //! everything else in the workspace is English (AGENTS-RUST.md section 14
 //! override).
 
-use er_fill_core::RepositoryError;
-use er_fill_hosxp_connector::Error as ConnectorError;
-use er_fill_hosxp_connector::config::ConfigError;
+use er_refill_core::RepositoryError;
+use er_refill_hosxp_connector::Error as ConnectorError;
+use er_refill_hosxp_connector::config::ConfigError;
 use serde::Serialize;
 
 use crate::settings::SettingsError;
@@ -153,7 +153,7 @@ impl From<SettingsError> for CommandError {
 /// parameter values (AGENTS.md section 2) - callers pass driver/summary text only.
 pub(crate) fn dev_log(message: &str) {
     if cfg!(debug_assertions) {
-        eprintln!("[er-fill] {message}");
+        eprintln!("[er-refill] {message}");
     } else {
         let _ = message;
     }

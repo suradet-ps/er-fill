@@ -1,4 +1,4 @@
-//! Shared reactive state for the ER-Fill frontend (Leptos 0.8, CSR).
+//! Shared reactive state for the ER-Refill frontend (Leptos 0.8, CSR).
 //!
 //! One [`AppState`] of cheap `RwSignal` handles is created in `App` and
 //! passed by value into every component (the sibling-workbench pattern):
@@ -6,7 +6,7 @@
 //! graph, not the values themselves.
 
 use chrono::{Local, NaiveDate, NaiveDateTime};
-use er_fill_models::{
+use er_refill_models::{
     AppSettings, ConnectionSummary, ReportSection, RequisitionWindow, SessionUser,
 };
 use leptos::prelude::*;
@@ -179,7 +179,7 @@ impl AppState {
         let Some(settings) = self.settings.get() else {
             return;
         };
-        let Ok(window) = er_fill_core::window_for(&settings.schedule, self.selected_date.get())
+        let Ok(window) = er_refill_core::window_for(&settings.schedule, self.selected_date.get())
         else {
             return;
         };
@@ -240,7 +240,7 @@ impl AppState {
         leptos::task::spawn_local(async move {
             match crate::api::fetch_usage(&window).await {
                 Ok(usage) => {
-                    let sections = er_fill_core::build_report(&settings.catalog, &usage);
+                    let sections = er_refill_core::build_report(&settings.catalog, &usage);
                     state.sections.set(Some(sections));
                 }
                 Err(err) => {

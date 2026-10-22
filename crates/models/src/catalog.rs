@@ -3,7 +3,7 @@
 //! The catalog is the pharmacy's approved ER drug list - the requisition
 //! table is built from it, so nothing appears on the printed form that is
 //! not in this catalog. Mutations (add/remove/reorder) live in
-//! `er-fill-core::catalog_ops`.
+//! `er-refill-core::catalog_ops`.
 
 use serde::{Deserialize, Serialize};
 

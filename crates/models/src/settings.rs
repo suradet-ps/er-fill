@@ -1,7 +1,7 @@
 //! The complete set of operator-configurable settings: schedule, catalog,
 //! and report header - shared by the backend (persistence) and the frontend
 //! (editing). Credentials are deliberately **not** here; they live in the
-//! encrypted config file handled by `er-fill-hosxp-connector` (AGENTS.md section 10).
+//! encrypted config file handled by `er-refill-hosxp-connector` (AGENTS.md section 10).
 
 use serde::{Deserialize, Serialize};
 

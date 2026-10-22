@@ -1,10 +1,10 @@
-# AGENTS.md - ER-Fill
+# AGENTS.md - ER-Refill
 
 This file gives coding agents (and future contributors) the context needed to work on this repo correctly and safely. Read this **and** `docs/DESIGN.md` (visual/UI design system) before writing any code. `AGENTS-RUST.md` holds the Rust-specific style and workflow rules - this file covers product context, architecture, and process; `DESIGN.md` covers visual design only.
 
 ## 1. What this project is
 
-ER-Fill ("ยาห้องฉุกเฉิน") is a desktop app for the pharmacy department of a community hospital. It generates the **daily emergency-room drug requisition form** (ใบเบิกยาประจำห้องฉุกเฉินรายวัน): it sums how much of each configured ER drug was used in HOSxP during the **out-of-hours window** since the last requisition, then prints the form for the ER to sign and the pharmacy to fill. Operators sign in with their HOSxP **`officer`** account after the database connection is verified; the session is in-memory only.
+ER-Refill ("ยาห้องฉุกเฉิน") is a desktop app for the pharmacy department of a community hospital. It generates the **daily emergency-room drug requisition form** (ใบเบิกยาประจำห้องฉุกเฉินรายวัน): it sums how much of each configured ER drug was used in HOSxP during the **out-of-hours window** since the last requisition, then prints the form for the ER to sign and the pharmacy to fill. Operators sign in with their HOSxP **`officer`** account after the database connection is verified; the session is in-memory only.
 
 **Design goals:** simple, no unnecessary features; read-only against HOSxP (hospital MySQL/MariaDB); the requisition window is computed for the operator but always overridable; the printed A4 sheet must look like the hospital's real paper form.
 
@@ -27,7 +27,7 @@ ER-Fill ("ยาห้องฉุกเฉิน") is a desktop app for the pha
 ## 3. Workspace layout (ports-lite)
 
 ```
-er-fill/
+er-refill/
 ├── src-tauri/            # Tauri 2 shell - thin command adapters only, no business logic, no SQL
 ├── crates/
 │   ├── models/           # Domain types + Thai/BE formatting. No sqlx, no I/O.
@@ -37,7 +37,7 @@ er-fill/
     └── style/            # CSS implementing DESIGN.md tokens
 ```
 
-Dependency direction: `app` → `er-fill-core` → `er-fill-models`, and `er-fill-hosxp-connector` implements a repository trait defined in `er-fill-core`. `er-fill-core` must be testable with a mock repository, without a real database. The `app` workspace also depends on `er-fill-core`/`er-fill-models` directly (both are wasm-compatible - no tokio, no sqlx on their dependency path).
+Dependency direction: `app` → `er-refill-core` → `er-refill-models`, and `er-refill-hosxp-connector` implements a repository trait defined in `er-refill-core`. `er-refill-core` must be testable with a mock repository, without a real database. The `app` workspace also depends on `er-refill-core`/`er-refill-models` directly (both are wasm-compatible - no tokio, no sqlx on their dependency path).
 
 ## 4. Domain model (`crates/models`)
 
@@ -56,7 +56,7 @@ Thai/Buddhist-era formatting (`be_year`, `format_thai_date*`, `format_qty`) live
 
 Same layered approach as the sibling AllerX project:
 
-1. **DB user level:** a MySQL user dedicated to ER-Fill, `GRANT SELECT` only. This is the real security boundary.
+1. **DB user level:** a MySQL user dedicated to ER-Refill, `GRANT SELECT` only. This is the real security boundary.
 2. **Connection level:** `SET SESSION TRANSACTION READ ONLY;` immediately after connect (`after_connect` hook), plus a best-effort `SET SESSION max_execution_time = 5000` (SELECT timeout).
 3. **Application level:** `readonly_guard.rs` rejects any outgoing statement that is not a single `SELECT`/`WITH` (comment-aware, semicolon-aware). Defense in depth, not the primary boundary.
 4. **Queries:** sqlx with bound parameters only; SQL strings are compile-time constants (or assembled from constants with `?` repetition).
@@ -138,7 +138,7 @@ by screen and print.
    ready (the command bar can refetch any time).
 2. "ดึงข้อมูล" reads usage for **all configured icodes at once** (one grouped
    query) for the window.
-3. `er-fill-core::build_report` joins catalog + usage into category sections;
+3. `er-refill-core::build_report` joins catalog + usage into category sections;
    drugs with no usage show `0` (the pharmacy sees they were not used);
    each row carries the drug's `strength_text` beside its name and derives
    "จำนวนเบิก" as whole packs (`ceil(usage / units-per-pack)`, capped at the
@@ -148,7 +148,7 @@ by screen and print.
 5. "พิมพ์ใบเบิก" calls `window.print()` on the on-screen sheet - the preview
    IS the printed output (grouped by category, with the window sentence,
    hospital header, and ผู้เบิก/ผู้จ่าย signature blocks). The sheet
-   paginates at **40 drug rows per A4 page** (`er-fill-core::paginate_sections`)
+   paginates at **40 drug rows per A4 page** (`er-refill-core::paginate_sections`)
    so the 69-item pilot list prints on two sheets; split categories continue
    with "(ต่อ)" and the signatures render on the last page only.
 
@@ -163,10 +163,10 @@ by screen and print.
 
 - Connection credentials: every field encrypted at rest with `encryptman`
   (AES-256-GCM), master key in the OS keychain via `encryptman-keyring`
-  (service name `er-fill`). Password is `secrecy::SecretString` end to end in
+  (service name `er-refill`). Password is `secrecy::SecretString` end to end in
   Rust, zeroized on drop, `Debug`-redacted. Documented residuals: the webview
   JS heap while typing, and sqlx's internal pool copy (needed for reconnects).
-- The plain settings file (`er-fill.settings.json`) holds the schedule, catalog,
+- The plain settings file (`er-refill.settings.json`) holds the schedule, catalog,
   and report header only - never credentials.
 - Login passwords are sent to the Rust backend, moved into a `SecretString`
   for the MD5 check, and dropped; they are never stored or logged. The
@@ -198,11 +198,11 @@ by screen and print.
 
 ## 13. Testing expectations
 
-- `er-fill-core` + `er-fill-models`: the default suite (`cargo test` at root) -
+- `er-refill-core` + `er-refill-models`: the default suite (`cargo test` at root) -
   window algorithm (all seven example days + custom hours + invalid input),
   catalog operations, report building, Thai formatting, MD5 verification.
   No DB required.
-- `er-fill-hosxp-connector`: unit tests for the guard and encrypted config run in
+- `er-refill-hosxp-connector`: unit tests for the guard and encrypted config run in
   the default suite; live-DB checks are gated behind
   `--features integration-tests` (never production).
 - Every SQL constant gets a guard assertion test.

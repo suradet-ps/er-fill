@@ -7,8 +7,8 @@
 
 #![cfg(target_arch = "wasm32")]
 
-use er_fill_app::api;
-use er_fill_models::AppSettings;
+use er_refill_app::api;
+use er_refill_models::AppSettings;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_test::*;
 
@@ -35,7 +35,7 @@ fn install_default_mock() {
         "connection_health" => js_ok(JsValue::from_str("Connected")),
         "load_settings" => js_ok(to_js(&AppSettings::default())),
         "current_session" => js_ok(JsValue::NULL),
-        "login" => js_ok(to_js(&er_fill_models::SessionUser {
+        "login" => js_ok(to_js(&er_refill_models::SessionUser {
             officer_id: 7,
             login_name: "pharm".into(),
             display_name: "Pharmacist".into(),
@@ -43,7 +43,7 @@ fn install_default_mock() {
             role: "STAFF".into(),
         })),
         "logout" => js_ok(JsValue::UNDEFINED),
-        "fetch_usage" => js_ok(to_js(&[er_fill_models::UsageRow {
+        "fetch_usage" => js_ok(to_js(&[er_refill_models::UsageRow {
             icode: "1001".into(),
             qty: 6.0,
         }])),
@@ -79,7 +79,7 @@ async fn fetch_usage_returns_rows() {
     let end = chrono::NaiveDate::from_ymd_opt(2026, 10, 19)
         .and_then(|date| date.and_hms_opt(8, 0, 0))
         .expect("valid test datetime");
-    let window = er_fill_models::RequisitionWindow::new(start, end).expect("valid window");
+    let window = er_refill_models::RequisitionWindow::new(start, end).expect("valid window");
     let usage = api::fetch_usage(&window)
         .await
         .expect("mock resolves usage");

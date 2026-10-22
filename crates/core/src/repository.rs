@@ -1,11 +1,11 @@
 //! The repository contract between business logic and the HOSxP connector.
 //!
-//! `er-fill-hosxp-connector` implements [`HosxRepository`]; everything else
+//! `er-refill-hosxp-connector` implements [`HosxRepository`]; everything else
 //! depends on this trait only, which keeps the default test suite DB-free
 //! (AGENTS.md sections 3 and 13).
 
 use async_trait::async_trait;
-use er_fill_models::{DrugItem, OfficerAccount, RequisitionWindow, UsageRow};
+use er_refill_models::{DrugItem, OfficerAccount, RequisitionWindow, UsageRow};
 
 /// Errors crossing the repository boundary. English and dev-facing - the
 /// Thai user-facing translation happens only in `src-tauri/commands.rs`.
@@ -26,7 +26,7 @@ pub enum RepositoryError {
     Guard,
 }
 
-/// Read-only access to the HOSxP data ER-Fill needs.
+/// Read-only access to the HOSxP data ER-Refill needs.
 #[async_trait]
 pub trait HosxRepository: Send + Sync {
     /// `SELECT 1` smoke test against the configured database.

@@ -1,5 +1,5 @@
 //! Business-hours schedule: the weekday/weekend time ranges (AGENTS.md
-//! section 7). The window algorithm itself lives in `er-fill-core`; this
+//! section 7). The window algorithm itself lives in `er-refill-core`; this
 //! module owns the data and its `"HH:MM"` wire format.
 
 use chrono::{Datelike, NaiveDate, NaiveTime, Weekday};

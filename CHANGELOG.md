@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to ER-Fill are documented here. The format follows
+All notable changes to ER-Refill are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and versions follow SemVer.
 
 ## [Unreleased]
@@ -38,8 +38,8 @@ All notable changes to ER-Fill are documented here. The format follows
 
 ### Added
 
-- Initial workspace: `er-fill-models`, `er-fill-core`, `er-fill-hosxp-connector`,
-  `er-fill-tauri`, `er-fill-app`.
+- Initial workspace: `er-refill-models`, `er-refill-core`, `er-refill-hosxp-connector`,
+  `er-refill-tauri`, `er-refill-app`.
 - Out-of-hours requisition window algorithm (weekday 08:30-16:30, weekend
   08:00-16:00, cutoff 08:00) with Thai/Buddhist-era labels.
 - ER drug catalog (categories + drugs) with defaults seeded from the approved
@@ -62,7 +62,7 @@ All notable changes to ER-Fill are documented here. The format follows
   fetch, print) over a paper stage; the A4 sheet previews exactly what
   prints (one DOM, one stylesheet), and usage auto-fetches once on launch.
 - CI workflows: root and wasm check suites, headless-Chrome wasm tests,
-  cargo-deny, Miri on `er-fill-models`, a Tauri test build (plus a
+  cargo-deny, Miri on `er-refill-models`, a Tauri test build (plus a
   dispatch-only Windows installer job), and tagged releases via
   tauri-action.
 - The sheet paginates explicitly at 40 drug rows per A4 page (69 items

@@ -1,8 +1,8 @@
-//! [`er_fill_core::HosxRepository`] implementation over the read-only pool.
+//! [`er_refill_core::HosxRepository`] implementation over the read-only pool.
 
 use chrono::NaiveDateTime;
-use er_fill_core::{HosxRepository, RepositoryError};
-use er_fill_models::{DrugItem, OfficerAccount, RequisitionWindow, UsageRow};
+use er_refill_core::{HosxRepository, RepositoryError};
+use er_refill_models::{DrugItem, OfficerAccount, RequisitionWindow, UsageRow};
 use sqlx::Row;
 use sqlx::mysql::MySqlPool;
 

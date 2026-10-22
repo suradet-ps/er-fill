@@ -8,7 +8,7 @@
 //! Module map:
 //! - [`config`]: encrypted connection settings (save/load).
 //! - [`readonly_guard`]: rejects any statement that is not `SELECT`/`WITH`.
-//! - [`ConnectorRepository`]: the [`er_fill_core::HosxRepository`] impl.
+//! - [`ConnectorRepository`]: the [`er_refill_core::HosxRepository`] impl.
 //! - [`connect`] / [`MySqlPool`]: pool creation with a read-only session.
 
 pub mod config;

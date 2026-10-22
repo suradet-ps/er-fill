@@ -31,7 +31,7 @@ pub enum Error {
 /// This is the **only** conversion point between the two layers: internals
 /// of this crate return [`Error`] and lose nothing; the trait boundary maps
 /// once, deliberately.
-impl From<Error> for er_fill_core::RepositoryError {
+impl From<Error> for er_refill_core::RepositoryError {
     fn from(err: Error) -> Self {
         match err {
             Error::Config(inner) => Self::Query(inner.to_string()),
@@ -46,7 +46,7 @@ impl From<Error> for er_fill_core::RepositoryError {
 mod tests {
     use super::*;
     use crate::config::ConfigError;
-    use er_fill_core::RepositoryError;
+    use er_refill_core::RepositoryError;
 
     #[test]
     fn maps_connect_to_connection() {

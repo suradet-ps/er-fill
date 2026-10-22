@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "ER-Fill",
+  "productName": "ER-Refill",
   "version": "0.1.0",
-  "identifier": "com.suradet.erfill",
+  "identifier": "com.suradet.errefill",
   "build": {
     "beforeDevCommand": { "script": "trunk serve --port 1420", "cwd": "../app" },
     "devUrl": "http://localhost:1420",
@@ -13,7 +13,7 @@
     "withGlobalTauri": true,
     "windows": [
       {
-        "title": "ER-Fill - ใบเบิกยาห้องฉุกเฉิน",
+        "title": "ER-Refill - ใบเบิกยาห้องฉุกเฉิน",
         "width": 1120,
         "height": 800,
         "minWidth": 900,

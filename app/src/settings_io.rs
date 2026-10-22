@@ -7,11 +7,11 @@
 //! (AGENTS.md section 10), so it is unreadable elsewhere by design. The
 //! password and connection settings stay per-machine.
 
-use er_fill_models::AppSettings;
+use er_refill_models::AppSettings;
 use serde::{Deserialize, Serialize};
 
 /// Marker written into every export file.
-pub const EXPORT_FORMAT: &str = "er-fill-settings";
+pub const EXPORT_FORMAT: &str = "er-refill-settings";
 
 /// Version of the export envelope; bump if the layout changes.
 ///
@@ -54,12 +54,12 @@ pub fn export_json(settings: &AppSettings) -> Result<String, String> {
 /// # Errors
 ///
 /// Returns the Thai message to display verbatim when the file is not a
-/// ER-Fill settings export, was written by a newer version, or is corrupt.
+/// ER-Refill settings export, was written by a newer version, or is corrupt.
 pub fn parse_import(raw: &str) -> Result<AppSettings, String> {
     let file: SettingsExport = serde_json::from_str(raw)
-        .map_err(|_| "ไฟล์ไม่ถูกต้อง: ไม่ใช่ไฟล์ตั้งค่าของ ER-Fill หรือไฟล์เสียหาย".to_string())?;
+        .map_err(|_| "ไฟล์ไม่ถูกต้อง: ไม่ใช่ไฟล์ตั้งค่าของ ER-Refill หรือไฟล์เสียหาย".to_string())?;
     if file.format != EXPORT_FORMAT {
-        return Err("ไฟล์ไม่ถูกต้อง: ไม่ใช่ไฟล์ตั้งค่าของ ER-Fill".to_string());
+        return Err("ไฟล์ไม่ถูกต้อง: ไม่ใช่ไฟล์ตั้งค่าของ ER-Refill".to_string());
     }
     if file.version > EXPORT_VERSION {
         return Err("ไฟล์ถูกสร้างจากเวอร์ชันใหม่กว่า กรุณาอัปเดตโปรแกรม".to_string());
@@ -70,10 +70,10 @@ pub fn parse_import(raw: &str) -> Result<AppSettings, String> {
     Ok(file.settings)
 }
 
-/// File name offered by the browser download: `er-fill-settings-YYYYMMDD.json`.
+/// File name offered by the browser download: `er-refill-settings-YYYYMMDD.json`.
 pub fn export_file_name() -> String {
     format!(
-        "er-fill-settings-{}.json",
+        "er-refill-settings-{}.json",
         chrono::Local::now().format("%Y%m%d")
     )
 }
@@ -121,7 +121,7 @@ mod tests {
     #[test]
     fn export_round_trips_through_parse_import() -> Result<(), Box<dyn std::error::Error>> {
         let json = export_json(&AppSettings::default())?;
-        assert!(json.contains("\"format\": \"er-fill-settings\""));
+        assert!(json.contains("\"format\": \"er-refill-settings\""));
         let parsed = parse_import(&json)?;
         assert_eq!(parsed, AppSettings::default());
         Ok(())
@@ -131,7 +131,7 @@ mod tests {
     fn parse_import_accepts_a_v1_file_with_the_removed_cutoff_field()
     -> Result<(), Box<dyn std::error::Error>> {
         let json = r#"{
-            "format": "er-fill-settings",
+            "format": "er-refill-settings",
             "version": 1,
             "exportedAt": "2026-10-17 08:00",
             "settings": {
@@ -156,7 +156,7 @@ mod tests {
     #[test]
     fn parse_import_rejects_a_foreign_json_file() {
         let error = parse_import("{\"hello\":\"world\"}").expect_err("must reject");
-        assert!(error.contains("ไม่ใช่ไฟล์ตั้งค่าของ ER-Fill"));
+        assert!(error.contains("ไม่ใช่ไฟล์ตั้งค่าของ ER-Refill"));
     }
 
     #[test]
@@ -168,7 +168,7 @@ mod tests {
     #[test]
     fn parse_import_rejects_a_newer_version() {
         let json = r#"{
-            "format": "er-fill-settings",
+            "format": "er-refill-settings",
             "version": 99,
             "exportedAt": "2026-10-17 08:00",
             "settings": {}
@@ -189,7 +189,7 @@ mod tests {
     #[test]
     fn export_file_name_is_a_json_file() {
         let name = export_file_name();
-        assert!(name.starts_with("er-fill-settings-"));
+        assert!(name.starts_with("er-refill-settings-"));
         assert!(name.ends_with(".json"));
     }
 }

@@ -18,7 +18,7 @@ const MAX_CONNECTIONS: u32 = 5;
 /// to an unencrypted channel when it does not. The hospital instance has TLS
 /// disabled and the link stays on the hospital LAN; the read-only user, the
 /// session mode, and the SQL guard remain the enforced boundaries. Raise the
-/// bar with `ER_FILL_HOSXP_SSL_MODE=required|verify_ca|verify_identity` once
+/// bar with `ER_REFILL_HOSXP_SSL_MODE=required|verify_ca|verify_identity` once
 /// the DBA enables TLS (docs/database.md section B).
 const DEFAULT_SSL_MODE: MySqlSslMode = MySqlSslMode::Preferred;
 
@@ -77,12 +77,12 @@ pub async fn connect(cfg: &HosxConfig) -> Result<MySqlPool, Error> {
         .map_err(Error::Connect)
 }
 
-/// The TLS posture in effect, read from `ER_FILL_HOSXP_SSL_MODE`.
+/// The TLS posture in effect, read from `ER_REFILL_HOSXP_SSL_MODE`.
 ///
 /// Accepted values (case-insensitive): `preferred` (default), `required`,
 /// `verify_ca`, `verify_identity`. Anything else falls back to `preferred`.
 fn configured_ssl_mode() -> MySqlSslMode {
-    ssl_mode_from(std::env::var("ER_FILL_HOSXP_SSL_MODE").ok().as_deref())
+    ssl_mode_from(std::env::var("ER_REFILL_HOSXP_SSL_MODE").ok().as_deref())
 }
 
 /// Pure resolver for the TLS posture, so the mapping is testable.

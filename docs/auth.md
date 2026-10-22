@@ -1,6 +1,6 @@
 # Authentication - HOSxP officer login
 
-ER-Fill signs operators in with their HOSxP **`officer`** account. The
+ER-Refill signs operators in with their HOSxP **`officer`** account. The
 HOSxP database remains read-only (AGENTS.md section 2); the login session
 lives only in the Tauri process, and the app never writes an audit row or a
 session token back to HOSxP.
@@ -12,7 +12,7 @@ session token back to HOSxP.
 | `officer` | 104 accounts, 100% active; `officer_login_name` unique and non-empty; `officer_login_password_md5` 32 hex on all 104 | **The only login source** |
 | `opduser` | 221 old (V3) accounts | **Never read** - the gateway blacklists it |
 | `onlineuser` | 56 rows / 19 users | Optional online-status hint only, never identity |
-| `officer_activity_log` | 131,415 rows | Existing HOSxP audit trail; ER-Fill does not write it |
+| `officer_activity_log` | 131,415 rows | Existing HOSxP audit trail; ER-Refill does not write it |
 | `user_jwt` | 1,868 rows | Never read |
 | `emp` | 0 rows | Not used |
 
@@ -112,9 +112,9 @@ The survey proposed `v_hosxp_user`, `v_hosxp_user_permission`,
 `v_hosxp_online`, `app_user`, `app_session`, `app_login_log`, `app_role`,
 and `app_role_permission`. None are created:
 
-- `CREATE VIEW`/`CREATE TABLE` are writes, and ER-Fill must never write to
+- `CREATE VIEW`/`CREATE TABLE` are writes, and ER-Refill must never write to
   HOSxP (AGENTS.md section 2).
-- ER-Fill has no separate application database. Adding one is a product
+- ER-Refill has no separate application database. Adding one is a product
   decision, not part of this milestone.
 - A persistent login log would duplicate HOSxP `officer_activity_log` and
   would store staff identifiers locally; the current privacy rule is to

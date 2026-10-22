@@ -1,4 +1,4 @@
-//! Business logic for ER-Fill - everything that can be tested without a
+//! Business logic for ER-Refill - everything that can be tested without a
 //! database and without a GUI (AGENTS.md section 3).
 //!
 //! Module map:

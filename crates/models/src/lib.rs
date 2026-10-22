@@ -1,4 +1,4 @@
-//! Domain types for ER-Fill - the daily emergency-room drug requisition app.
+//! Domain types for ER-Refill - the daily emergency-room drug requisition app.
 //!
 //! Pure data + formatting only: no SQL, no I/O, no async. Every type here is
 //! shared across the Tauri boundary and the Leptos frontend, so this crate

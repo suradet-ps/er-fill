@@ -11,7 +11,7 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
 
-use er_fill_models::{
+use er_refill_models::{
     AppSettings, BusinessSchedule, Catalog, ConnectionSummary, DrugItem, ReportMeta,
     RequisitionWindow, SessionUser, UsageRow,
 };

@@ -1,12 +1,12 @@
-# ER-Fill
+# ER-Refill
 
-[![CI](https://github.com/suradet-ps/er-fill/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/suradet-ps/er-fill/actions/workflows/ci.yml)
-[![Rust Safety Check](https://github.com/suradet-ps/er-fill/actions/workflows/rust-safety.yml/badge.svg?branch=main)](https://github.com/suradet-ps/er-fill/actions/workflows/rust-safety.yml)
+[![CI](https://github.com/suradet-ps/er-refill/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/suradet-ps/er-refill/actions/workflows/ci.yml)
+[![Rust Safety Check](https://github.com/suradet-ps/er-refill/actions/workflows/rust-safety.yml/badge.svg?branch=main)](https://github.com/suradet-ps/er-refill/actions/workflows/rust-safety.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Rust: stable](https://img.shields.io/badge/rust-stable-orange.svg?logo=rust&logoColor=white)](https://www.rust-lang.org/)
 [![Tauri 2](https://img.shields.io/badge/Tauri-2-24C8DB?logo=tauri&logoColor=white)](https://tauri.app/)
 [![Leptos 0.8](https://img.shields.io/badge/Leptos-0.8-blue.svg)](https://leptos.dev)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/suradet-ps/er-fill/issues)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/suradet-ps/er-refill/issues)
 
 ---
 
@@ -14,7 +14,7 @@
 
 The ER cupboard empties at night; the requisition must be ready by morning.
 Operators sign in with their HOSxP **`officer`** account after the database
-connection is verified. ER-Fill then reads the hospital's
+connection is verified. ER-Refill then reads the hospital's
 [HOSxP](https://hosxp.org/) record, strictly read-only, and sums how much of
 the configured emergency drug list was used
 **outside business hours** - Sunday 16:00 to Monday 08:30 for a Monday run -
@@ -30,8 +30,8 @@ cached, and no patient appears anywhere - only aggregated quantities.
 is sealed. The paper-form review against the real xlsx, the DBA sign-off,
 and the pharmacy department pilot wait ahead.*
 
-> Built with Tauri 2 + Leptos 0.8, decided by `er-fill-core`, read from
-> HOSxP `opitemrece` by `er-fill-hosxp-connector` - never a write, never a
+> Built with Tauri 2 + Leptos 0.8, decided by `er-refill-core`, read from
+> HOSxP `opitemrece` by `er-refill-hosxp-connector` - never a write, never a
 > silent guess.
 >
 > **suradet-ps**, artifact keeper
@@ -46,7 +46,7 @@ Two installs, one test, one launch.
 ⟫ rustup target add wasm32-unknown-unknown
 ⟫ cargo install trunk --locked
 ⟫ cargo install tauri-cli --locked
-⟫ cargo test            # DB-free: er-fill-core runs against a mock repository
+⟫ cargo test            # DB-free: er-refill-core runs against a mock repository
 ⟫ cargo tauri dev       # desktop app; trunk serves itself
 ```
 
@@ -75,12 +75,12 @@ The release artifact: `⟫ cargo tauri build` - output lands in
 
 Four crates, one hard law: HOSxP is read-only, without exceptions.
 
-- **Decides** - `er-fill-core` is pure Rust with the morning ritual in it:
+- **Decides** - `er-refill-core` is pure Rust with the morning ritual in it:
   the out-of-hours window algorithm (previous closing to today's opening),
   catalog operations, and the report builder that joins the configured drug
   list with usage into category sections. Tested against a mock repository -
   no live database in the default suite, ever.
-- **Reads** - `er-fill-hosxp-connector` talks to MySQL/MariaDB through
+- **Reads** - `er-refill-hosxp-connector` talks to MySQL/MariaDB through
   `sqlx`: one grouped `SELECT` sums `opitemrece.qty` inside the window for
   every configured icode, joined to `drugitems` (so non-drug charge lines
   never inflate the count) and anchored to `er_regist.vn` (with
@@ -107,7 +107,7 @@ Four crates, one hard law: HOSxP is read-only, without exceptions.
   reads one `officer` row, checks active/auth type, and compares
   `MD5(password)` with `officer_login_password_md5`. The plaintext hash
   column is never read; the session is memory-only (see `docs/auth.md`).
-- **Labels** - Thai/Buddhist-era formatting lives in `er-fill-models`
+- **Labels** - Thai/Buddhist-era formatting lives in `er-refill-models`
   (`วันอาทิตย์ที่ 18 ตุลาคม 2569 เวลา 16:00 น.`), one implementation shared by
   the screen and the paper.
 
@@ -165,7 +165,7 @@ confirms. The visual system is `docs/DESIGN.md`; the DBA checklist lives in
 **Status** - every change runs fmt, `clippy -D warnings`, the DB-free test
 suite, `cargo doc`, `cargo-deny`, and a `trunk build` of the wasm frontend.
 
-> ER-Fill prints what HOSxP recorded. The pharmacist counts, signs, and
+> ER-Refill prints what HOSxP recorded. The pharmacist counts, signs, and
 > dispenses - the paper is the contract.
 
 ---
@@ -178,4 +178,4 @@ suite, `cargo doc`, `cargo-deny`, and a `trunk build` of the wasm frontend.
   ─────────────────────────────────────────
 ```
 
-ER-Fill is distributed under the [MIT License](LICENSE).
+ER-Refill is distributed under the [MIT License](LICENSE).

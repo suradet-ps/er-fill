@@ -1,4 +1,4 @@
-//! ER-Fill frontend library (Leptos 0.8, CSR).
+//! ER-Refill frontend library (Leptos 0.8, CSR).
 //!
 //! Document-first layout (DESIGN.md "Structure"): the top bar, the command
 //! bar (the only control surface), and the stage - a paper-styled canvas
@@ -6,7 +6,7 @@
 //! frontend talks to the backend only through [`api`].
 //!
 //! The crate is split lib + bin so components are wasm-testable: `main.rs`
-//! is only `er_fill_app::run()`.
+//! is only `er_refill_app::run()`.
 
 pub mod api;
 pub mod components;
@@ -17,7 +17,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use std::time::Duration;
 
-use er_fill_models::AppSettings;
+use er_refill_models::AppSettings;
 use leptos::prelude::*;
 
 use components::command_bar::CommandBar;

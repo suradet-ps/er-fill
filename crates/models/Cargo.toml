@@ -1,10 +1,10 @@
 [package]
-name = "er-fill-models"
+name = "er-refill-models"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
-description = "Domain types and Thai/Buddhist-era formatting for ER-Fill - no sqlx, no I/O, wasm-compatible"
+description = "Domain types and Thai/Buddhist-era formatting for ER-Refill - no sqlx, no I/O, wasm-compatible"
 
 [dependencies]
 chrono.workspace = true   # NaiveDate/NaiveTime/NaiveDateTime in domain types

@@ -1,4 +1,4 @@
-# cargo-deny configuration for ER-Fill
+# cargo-deny configuration for ER-Refill
 # https://embarkstudios.github.io/cargo-deny/
 
 [graph]

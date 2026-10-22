@@ -1,15 +1,15 @@
 //! Tauri command adapters (AGENTS.md section 3): validate → delegate → translate.
 //!
 //! No SQL and no business logic live here - everything HOSxP-related goes
-//! through `er-fill-hosxp-connector`, and this file is the boundary where
+//! through `er-refill-hosxp-connector`, and this file is the boundary where
 //! errors become Thai ([`crate::error::CommandError`]).
 
 use std::time::{Duration, Instant};
 
-use er_fill_core::{HosxRepository, RepositoryError, verify_password};
-use er_fill_hosxp_connector::config::{HosxConfig, load_vault};
-use er_fill_hosxp_connector::{ConnectorRepository, MySqlPool, connect as connect_hosxp};
-use er_fill_models::{
+use er_refill_core::{HosxRepository, RepositoryError, verify_password};
+use er_refill_hosxp_connector::config::{HosxConfig, load_vault};
+use er_refill_hosxp_connector::{ConnectorRepository, MySqlPool, connect as connect_hosxp};
+use er_refill_models::{
     BusinessSchedule, Catalog, ConnectionSummary, DrugItem, ReportMeta, RequisitionWindow,
     SessionUser, UsageRow,
 };
@@ -129,7 +129,7 @@ pub async fn configure_connection(
     let config = input.into_config();
 
     let vault = load_vault().map_err(CommandError::from)?;
-    er_fill_hosxp_connector::config::save_encrypted(&state.config_path(), &vault, &config)
+    er_refill_hosxp_connector::config::save_encrypted(&state.config_path(), &vault, &config)
         .await
         .map_err(CommandError::from)?;
 
@@ -153,7 +153,7 @@ pub async fn connection_summary(
         return Ok(None);
     }
     let vault = load_vault().map_err(CommandError::from)?;
-    let config = er_fill_hosxp_connector::config::load(&state.config_path(), &vault)
+    let config = er_refill_hosxp_connector::config::load(&state.config_path(), &vault)
         .await
         .map_err(CommandError::from)?
         .ok_or_else(CommandError::not_configured)?;
@@ -190,7 +190,7 @@ pub async fn connect(
     }
 
     let vault = load_vault().map_err(CommandError::from)?;
-    er_fill_hosxp_connector::config::save_encrypted(&state.config_path(), &vault, &config)
+    er_refill_hosxp_connector::config::save_encrypted(&state.config_path(), &vault, &config)
         .await
         .map_err(CommandError::from)?;
     *state.pool.lock().await = Some(pool);
@@ -422,7 +422,7 @@ async fn probe_health(state: &AppState) -> ConnectionHealth {
         return ConnectionHealth::Disconnected;
     };
     let Ok(Some(config)) =
-        er_fill_hosxp_connector::config::load(&state.config_path(), &vault).await
+        er_refill_hosxp_connector::config::load(&state.config_path(), &vault).await
     else {
         return ConnectionHealth::Disconnected;
     };
@@ -443,7 +443,7 @@ async fn probe_health(state: &AppState) -> ConnectionHealth {
 async fn ensure_pool(
     state: &AppState,
     config: &HosxConfig,
-) -> Result<MySqlPool, er_fill_hosxp_connector::Error> {
+) -> Result<MySqlPool, er_refill_hosxp_connector::Error> {
     let mut guard = state.pool.lock().await;
     if let Some(pool) = guard.as_ref() {
         return Ok(pool.clone());
@@ -469,7 +469,7 @@ async fn acquire_repository(state: &AppState) -> Result<ConnectorRepository, Com
         return Err(CommandError::not_configured());
     }
     let vault = load_vault().map_err(CommandError::from)?;
-    let config = er_fill_hosxp_connector::config::load(&state.config_path(), &vault)
+    let config = er_refill_hosxp_connector::config::load(&state.config_path(), &vault)
         .await
         .map_err(CommandError::from)?
         .ok_or_else(CommandError::not_configured)?;
@@ -543,14 +543,18 @@ mod tests {
     #[test]
     fn connection_input_accepts_valid_and_rejects_blank_fields() {
         assert!(
-            input("10.0.0.1", 3306, "hos", "erfill_ro")
+            input("10.0.0.1", 3306, "hos", "errefill_ro")
                 .validate()
                 .is_ok()
         );
-        assert!(input("   ", 3306, "hos", "erfill_ro").validate().is_err());
-        assert!(input("10.0.0.1", 0, "hos", "erfill_ro").validate().is_err());
+        assert!(input("   ", 3306, "hos", "errefill_ro").validate().is_err());
         assert!(
-            input("10.0.0.1", 3306, "  ", "erfill_ro")
+            input("10.0.0.1", 0, "hos", "errefill_ro")
+                .validate()
+                .is_err()
+        );
+        assert!(
+            input("10.0.0.1", 3306, "  ", "errefill_ro")
                 .validate()
                 .is_err()
         );
@@ -559,10 +563,10 @@ mod tests {
 
     #[test]
     fn into_config_trims_every_field() {
-        let config = input(" 10.0.0.1 ", 3306, " hos ", " erfill_ro ").into_config();
+        let config = input(" 10.0.0.1 ", 3306, " hos ", " errefill_ro ").into_config();
         assert_eq!(config.host, "10.0.0.1");
         assert_eq!(config.database, "hos");
-        assert_eq!(config.user, "erfill_ro");
+        assert_eq!(config.user, "errefill_ro");
     }
 
     #[test]

@@ -4,7 +4,7 @@
 //! is enabled. Passwords are verified in the Rust backend against the stored
 //! MD5 and are never persisted (docs/auth.md).
 
-use er_fill_models::ConnectionSummary;
+use er_refill_models::ConnectionSummary;
 use leptos::prelude::*;
 
 use crate::api::{self, ConnectionInput};
@@ -204,7 +204,7 @@ pub fn LoginScreen(state: AppState) -> impl IntoView {
                 <div class="login__brand-top">
                     <BrandMark />
                     <div class="login__brand-titles">
-                        <span class="login__brand-name">"ER-Fill"</span>
+                        <span class="login__brand-name">"ER-Refill"</span>
                         <span class="login__brand-sub">"ระบบใบเบิกยาห้องฉุกเฉิน"</span>
                     </div>
                 </div>
@@ -338,7 +338,7 @@ pub fn LoginScreen(state: AppState) -> impl IntoView {
                                                 <input
                                                     class="text-input"
                                                     type="text"
-                                                    placeholder="erfill_ro"
+                                                    placeholder="errefill_ro"
                                                     autocomplete="off"
                                                     prop:value=move || db_user.get()
                                                     on:input=move |ev| db_user.set(event_target_value(&ev))
@@ -503,7 +503,7 @@ pub fn LoginScreen(state: AppState) -> impl IntoView {
                 </div>
 
                 <p class="login__foot">
-                    "ER-Fill อ่านข้อมูลจาก HOSxP แบบ read-only · ไม่แสดงข้อมูลผู้ป่วย"
+                    "ER-Refill อ่านข้อมูลจาก HOSxP แบบ read-only · ไม่แสดงข้อมูลผู้ป่วย"
                 </p>
             </main>
         </div>

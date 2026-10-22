@@ -295,7 +295,7 @@ fn SettingsFooter(state: AppState) -> impl IntoView {
 /// the in-memory state; returns the Thai success summary.
 async fn persist_import(
     state: &AppState,
-    settings: &er_fill_models::AppSettings,
+    settings: &er_refill_models::AppSettings,
 ) -> Result<String, String> {
     crate::api::save_schedule(&settings.schedule)
         .await

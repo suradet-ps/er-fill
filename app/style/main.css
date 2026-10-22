@@ -1,5 +1,5 @@
 /* ──────────────────────────────────────────────────────────────────────
-   ER-Fill - design tokens & component styles
+   ER-Refill - design tokens & component styles
    Implements docs/DESIGN.md: a document-first clinical tool. The command
    bar is the only control surface; the stage shows the A4 requisition
    sheet, and the sheet is one DOM/CSS shared by screen and print.

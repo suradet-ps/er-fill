@@ -9,7 +9,7 @@
 //! and the table's column headers; the signature blocks and the print
 //! stamp render on the last page only.
 
-use er_fill_models::{ReportRow, ReportSection};
+use er_refill_models::{ReportRow, ReportSection};
 
 /// Drug rows per A4 page. Chosen so 69 items print on two sheets with room
 /// for the document header, the repeated column headers, category rows,
@@ -65,8 +65,8 @@ pub struct SheetPage {
 /// # Examples
 ///
 /// ```
-/// use er_fill_core::{paginate_sections, ROWS_PER_PAGE};
-/// use er_fill_models::{ReportRow, ReportSection};
+/// use er_refill_core::{paginate_sections, ROWS_PER_PAGE};
+/// use er_refill_models::{ReportRow, ReportSection};
 ///
 /// let row = |i: usize| ReportRow {
 ///     icode: format!("100{i}"),
