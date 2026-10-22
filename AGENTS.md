@@ -97,6 +97,7 @@ Same layered approach as the sibling AllerX project:
 ### 6.4 Authentication (`officer`)
 - Read one row by `officer_login_name`; check `officer_active = 'Y'`, `IFNULL(officer_authentication_type_id, 1) = 1`, and `MD5(password) = officer_login_password_md5` (case-insensitive).
 - Never select `officer_login_password`; never read `opduser`; never write a session or audit row to HOSxP.
+- Display name: `officer_pname`/`fname`/`lname`, falling back to `doctor.name` through `officer_doctor_code`, then to the login name.
 - `officer_group*` is empty, so the app assigns `role = "STAFF"`; app-specific roles are a later milestone.
 - The MD5 assumption is **not** source-confirmed; test one real account before the pilot. Full design and caveats: `docs/auth.md`.
 

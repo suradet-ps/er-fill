@@ -13,6 +13,8 @@ All notable changes to ER-Refill are documented here. The format follows
 - Replaced the login brand copy and proof points with a custom requisition
   illustration, and trimmed the login/connection panels of the read-only and
   encryption explanatory paragraphs.
+- The top-bar name now falls back to `doctor.name` (via `officer_doctor_code`)
+  when the officer name columns are blank, then to the login name.
 - จำนวนเบิก is now derived as whole packs from the จำนวน/Stock setting
   (`units-per-pack/stock-packs`): `ceil(usage / units-per-pack)`, capped at
   the stock pack count; manual edits are rounded and clamped the same way.
@@ -39,6 +41,12 @@ All notable changes to ER-Refill are documented here. The format follows
 - On-disk settings version 2: a version 1 file with the old default weekday
   hours (closing 16:30) is upgraded to the new 20:30 closing; custom
   schedules are preserved.
+
+### Fixed
+
+- The top-bar officer name no longer clips Thai ascenders, and long names get
+  more room before ellipsizing. The command-bar date/window labels also keep
+  their full glyph height.
 
 ## [0.1.0] - 2026-10-17
 

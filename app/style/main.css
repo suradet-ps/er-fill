@@ -251,8 +251,10 @@ button {
 }
 
 .run-field__label {
+    padding-top: 1px;
     font-size: 10.5px;
     font-weight: 600;
+    line-height: 1.5;
     letter-spacing: 0.55px;
     text-transform: uppercase;
     color: var(--steel);
@@ -289,8 +291,10 @@ button {
 }
 
 .run-window__label {
+    padding-top: 1px;
     font-size: 10.5px;
     font-weight: 600;
+    line-height: 1.5;
     letter-spacing: 0.55px;
     text-transform: uppercase;
     color: var(--brand-green-deep);
@@ -663,7 +667,8 @@ button {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 3px 10px 3px 3px;
+    min-width: 0;
+    padding: 5px 12px 5px 4px;
     border: 1px solid var(--hairline);
     border-radius: var(--rounded-full);
     background: var(--surface);
@@ -685,11 +690,12 @@ button {
 .user-chip__text {
     display: flex;
     flex-direction: column;
-    line-height: 1.15;
+    min-width: 0;
+    line-height: 1.45;
 }
 
 .user-chip__name {
-    max-width: 130px;
+    max-width: 220px;
     overflow: hidden;
     text-overflow: ellipsis;
     font-size: 11.5px;

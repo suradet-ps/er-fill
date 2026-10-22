@@ -55,8 +55,9 @@ pub fn TopBar(state: AppState) -> impl IntoView {
                                 .or_else(|| user.login_name.chars().next())
                                 .map(|c| c.to_string())
                                 .unwrap_or_default();
+                            let title = format!("{} · {}", user.display_name, user.login_name);
                             view! {
-                                <span class="user-chip" title=user.login_name.clone()>
+                                <span class="user-chip" title=title>
                                     <span class="user-chip__avatar">{initial}</span>
                                     <span class="user-chip__text">
                                         <span class="user-chip__name">{user.display_name}</span>

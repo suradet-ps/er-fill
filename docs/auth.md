@@ -29,8 +29,9 @@ Additional verified facts:
   empty). The app assigns every signed-in officer the same `STAFF` role for
   now; app-specific roles are a later milestone.
 - `officer_doctor_code` is present on 103/104 accounts and has one orphan
-  (no matching `doctor` row). The query uses `NULLIF` and the UI must not
-  assume a doctor record exists.
+  (no matching `doctor` row). The query uses `NULLIF` and falls back to the
+  login name when neither the officer name fields nor `doctor.name` yield a
+  display name.
 - `emp_id` is 0 on all accounts, so no employee-table join is possible.
 
 ## B. Flow
@@ -97,14 +98,21 @@ SELECT CAST(o.officer_id AS SIGNED) AS officer_id,
        COALESCE(o.officer_active, 'N') AS active,
        CAST(COALESCE(o.officer_authentication_type_id, 1) AS SIGNED) AS auth_type_id,
        NULLIF(o.officer_doctor_code, '') AS doctor_code,
-       TRIM(CONCAT(COALESCE(o.officer_pname, ''), COALESCE(o.officer_fname, ''), ' ', COALESCE(o.officer_lname, ''))) AS display_name
+       COALESCE(
+           NULLIF(TRIM(CONCAT(COALESCE(o.officer_pname, ''), COALESCE(o.officer_fname, ''), ' ', COALESCE(o.officer_lname, ''))), ''),
+           NULLIF(TRIM(d.name), ''),
+           ''
+       ) AS display_name
 FROM officer o
+LEFT JOIN doctor d ON d.code = NULLIF(o.officer_doctor_code, '')
 WHERE o.officer_login_name = ?
 LIMIT 1
 ```
 
 It is a single `SELECT` with one bound parameter; `opduser` and the
-plaintext password column never appear.
+plaintext password column never appear. The top bar shows this display name;
+if both the officer name fields and the doctor name are blank, the backend
+falls back to the login name.
 
 ## F. Why the proposed app_* tables are not created
 
@@ -197,8 +205,8 @@ HOSxP. The app queries the base tables directly and inline.
 - [ ] Confirm the test account's password encoding (ASCII/UTF-8/TIS-620).
 - [ ] Confirm `officer_authentication_type_id` really means 1 = Local
       Database on this instance.
-- [ ] Confirm the officer name columns used for the display name
-      (`officer_pname`, `officer_fname`, `officer_lname`).
+- [ ] Confirm the display-name sources: `officer_pname`, `officer_fname`,
+      `officer_lname`, and the `doctor.name` fallback via `officer_doctor_code`.
 - [ ] Confirm whether the 221 `opduser` users were migrated to `officer`;
       users who only exist in `opduser` cannot sign in.
 - [ ] Test active/inactive and LDAP rejection paths with test data.

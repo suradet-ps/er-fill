@@ -30,8 +30,13 @@ LIMIT 50";
 ///
 /// Only `officer` is used: `opduser` is blacklisted by the gateway and
 /// `officer_login_password` (the plaintext column) is never selected.
+/// The display name comes from the officer name fields, falling back to
+/// `doctor.name` through `officer_doctor_code` when they are blank.
 /// Verified against the live Sra Bos instance on 2026-10-21; the hash
 /// algorithm itself still needs a one-account pilot check (docs/auth.md).
+///
+/// SCHEMA-UNVERIFIED: `doctor.name` is the documented HOSxP display-name
+/// column, but the DBA has not confirmed it on this instance yet.
 pub const FETCH_OFFICER_SQL: &str = "\
 SELECT CAST(o.officer_id AS SIGNED) AS officer_id,
        o.officer_login_name AS login_name,
@@ -39,8 +44,13 @@ SELECT CAST(o.officer_id AS SIGNED) AS officer_id,
        COALESCE(o.officer_active, 'N') AS active,
        CAST(COALESCE(o.officer_authentication_type_id, 1) AS SIGNED) AS auth_type_id,
        NULLIF(o.officer_doctor_code, '') AS doctor_code,
-       TRIM(CONCAT(COALESCE(o.officer_pname, ''), COALESCE(o.officer_fname, ''), ' ', COALESCE(o.officer_lname, ''))) AS display_name
+       COALESCE(
+           NULLIF(TRIM(CONCAT(COALESCE(o.officer_pname, ''), COALESCE(o.officer_fname, ''), ' ', COALESCE(o.officer_lname, ''))), ''),
+           NULLIF(TRIM(d.name), ''),
+           ''
+       ) AS display_name
 FROM officer o
+LEFT JOIN doctor d ON d.code = NULLIF(o.officer_doctor_code, '')
 WHERE o.officer_login_name = ?
 LIMIT 1";
 
@@ -178,6 +188,8 @@ mod tests {
         assert!(FETCH_OFFICER_SQL.contains("officer_login_password_md5"));
         assert!(!FETCH_OFFICER_SQL.contains("officer_login_password "));
         assert!(!FETCH_OFFICER_SQL.contains("opduser"));
+        assert!(FETCH_OFFICER_SQL.contains("LEFT JOIN doctor d"));
+        assert!(FETCH_OFFICER_SQL.contains("d.name"));
         assert!(FETCH_OFFICER_SQL.contains("LIMIT 1"));
         assert!(!FETCH_OFFICER_SQL.contains(';'));
     }
