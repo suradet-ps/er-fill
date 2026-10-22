@@ -50,7 +50,7 @@ desk is the only control surface, and it states the window compactly
 | Marketing scale (16px body, 72px hero) | Tool scale (15px body, 28px display) | This is a once-a-day work tool, not a landing page; density wins. The display scale exists **only** on the login brand headline (34px at desktop). |
 | Testimonial orange | **Dropped** | No testimonial/marketing surfaces exist. The warm slot is filled by amber, which carries clinical meaning (attention), not emotion. |
 | `rgba(0,212,164,.08) 0 8px 24px` featured glow | Kept, retinted | The mint glow marks exactly one thing: the single accent CTA on an empty state. |
-| Photography/clouds/rockets | None | No illustrations. The only gradient art is the login brand panel. |
+| Photography/clouds/rockets | None | No photography or illustration sets. The login brand panel carries one custom requisition SVG; the app mark is a vector seal. |
 
 ## Colors
 
@@ -355,7 +355,7 @@ reason this card exists; the requisition never hides the window it covers.
 ### Signature Components
 
 **`login-gate`** - Full-height split surface before the document exists:
-- Left brand panel: the sky hero gradient, seal mark, the
+- Left brand panel: the sky hero gradient, the requisition-sheet seal mark, the
   "ใบเบิกยาห้องฉุกเฉิน" headline, and a custom paper-and-pills illustration
   (`app/assets/login-illustration.svg`) - no marketing copy or proof points.
 - Right panel: a single `rounded.lg` card focused on the `officer`
@@ -366,6 +366,11 @@ reason this card exists; the requisition never hides the window it covers.
 - The connection password is a DB credential and lives only in the settings
   dialog; the login password is never persisted. Both use the standard field
   and button components.
+
+**`app-icon`** - Green gradient rounded tile holding a white requisition sheet
+with a deep-green header and a green pill stamp. `icon-master.svg` is the
+source for every Tauri platform icon; `BrandMark` mirrors the same mark in the
+top bar and splash.
 
 **`command-bar`** - The only control surface, two rows tall when editing:
 - Row 1: a labelled date input · a `run-window` card (heading + badge over

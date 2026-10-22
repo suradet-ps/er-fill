@@ -13,6 +13,8 @@ All notable changes to ER-Refill are documented here. The format follows
 - Replaced the login brand copy and proof points with a custom requisition
   illustration, and trimmed the login/connection panels of the read-only and
   encryption explanatory paragraphs.
+- Redrew the app icon and top-bar mark as a requisition sheet with a pill
+  stamp, and regenerated every Tauri platform icon from `icon-master.svg`.
 - The top-bar name now falls back to `doctor.name` (via `officer_doctor_code`)
   when the officer name columns are blank, then to the login name.
 - จำนวนเบิก is now derived as whole packs from the จำนวน/Stock setting
