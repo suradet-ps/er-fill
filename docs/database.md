@@ -30,38 +30,48 @@ LIMIT 50
 ### A.2 `opitemrece` (usage in window)
 
 ```sql
--- Verified against the live Sra Bos instance on 2026-10-21 (section A.3).
+-- Verified against the live Sra Bos instance on 2026-10-21 and the 30-day
+-- ER audit on 2026-10-22 (sections A.3/A.5).
 SELECT o.icode AS icode, CAST(SUM(o.qty) AS DOUBLE) AS qty
 FROM opitemrece o
 JOIN drugitems d ON d.icode = o.icode
 WHERE o.icode IN (?, ?, ...)          -- one ? per configured catalog icode
   AND o.qty > 0
   AND (o.an IS NULL OR o.an = '')
-  AND (
-    EXISTS (SELECT 1 FROM er_regist e WHERE e.vn = o.vn)
-    OR EXISTS (SELECT 1 FROM ovst v WHERE v.vn = o.vn AND v.main_dep = '009')
-  )
-  AND (o.vstdate > ? OR (o.vstdate = ? AND o.vsttime >= ?))
-  AND (o.vstdate < ? OR (o.vstdate = ? AND o.vsttime < ?))
+  AND o.dep_code = '009'              -- ordered by the ER department
+  AND o.sub_type = '1'                -- drugitems only
+  AND IFNULL(o.item_type, '') <> 'A'  -- drop automatic charges
+  AND (o.rxdate > ? OR (o.rxdate = ? AND o.rxtime >= ?))
+  AND (o.rxdate < ? OR (o.rxdate = ? AND o.rxtime < ?))
 GROUP BY o.icode
 ORDER BY o.icode
 ```
 
-- The `drugitems` join is **mandatory**: `opitemrece` mixes drugs and
-  non-drug charge lines (6,822,872 rows total, only 3,160,622 drugs on the
-  surveyed instance). Without it the requisition quantities inflate ~2.2x.
-- ER visits are anchored on `er_regist.vn` (302,370 rows, primary key `vn`,
-  1:1 with `ovst`). `ovst.main_dep = '009'` ("ห้องอุบัติเหตุฉุกเฉิน") is a
-  fallback only. `ovst.spclty = '17'` had zero rows in 90 days and must never
-  be used to identify ER.
-- `opitemrece.dep_code = '009'` appears on only 66% of ER drug orders; it is
-  not used as a primary filter.
-- Window is half-open `[start, end)`; bounds are decomposed into
-  `(date, time)` pairs so `vstdate` index scans stay usable.
+- The `drugitems` join plus `sub_type = '1'` and `item_type <> 'A'` keep
+  non-drug and automatic charge lines out. The 30-day audit found 1,028
+  automatic-charge lines (`item_type = 'A'`) in ER; their `rxtime` equals
+  `vsttime`, so they would otherwise look like drug orders.
+- ER orders are the ones ordered by the ER department (`dep_code = '009'`);
+  the 30-day audit found 5,887 ER lines total and 1,901 drug lines. Do not
+  anchor usage on `er_regist.vn` or `ovst.main_dep` - those describe the
+  visit, not who ordered the drug. `ovst.spclty = '17'` had zero rows in 90
+  days and must never identify ER.
+- The window is timed by **`rxdate`/`rxtime`**, the order time written by the
+  ER screen (`ERDetailEntryU.RxBtnClick` sets `rxdate := date` and
+  `rxtime := now`). `vstdate`/`vsttime` is the visit/arrival time; only 1 of
+  1,901 ER drug lines had `rxtime = vsttime` in the audit. Bounds are
+  half-open `[start, end)` and decomposed into `(date, time)` pairs.
 - `qty > 0` drops billing corrections.
 - `an IS NULL OR an = ''` keeps inpatient-stay usage out of the ER
   requisition. On the surveyed instance 0 of 9,639 ER drug orders carry an
   `an`; if an ER patient is admitted, the lines move to the `an` side.
+- `opitemrece_log.station = 'ER'` covers only 1,531 rows / 756 visits, and
+  only 1,007 of 1,901 drug lines match a log within 60 seconds. It is a
+  supplementary audit trail, not a primary filter.
+- Do not use `last_modified` as the order time (it is the last edit time),
+  `recetime` (NULL on 7,698/7,698 rows), `er_iv_list.iv_time`,
+  `er_command.command_datetime`, `er_regist.triage_datetime`, or
+  `er_regist.doctor_tx_time`/`finish_time` (auto-filled +5/+10 minutes).
 - Aggregation is by `icode`, so the `vn + item_no` uniqueness problem does
   not affect the summed quantity. A future line-level feature must use
   `opitemrece.hos_guid`, not `vn + item_no` (duplicate on 10,945 of 44,948
@@ -73,14 +83,17 @@ ORDER BY o.icode
 - The `IN (...)` placeholder list is built by repeating `?` - values are always
   bound, never interpolated.
 
-### A.3 Verified survey (Sra Bos, 2026-10-21)
+### A.3 Verified surveys (Sra Bos, 2026-10-21 / 2026-10-22)
 
 | Area | Observed | Consequence for ER-Refill |
 |---|---|---|
-| `er_regist` | 302,370 rows (2005-11-26 to 2026-10-21), PK `vn`, joins `ovst.vn` 100% | Anchor ER usage on `er_regist.vn` |
+| `er_regist` | 302,370 rows (2005-11-26 to 2026-10-21), PK `vn`, joins `ovst.vn` 100% | Visit registry only; not used to filter usage |
 | `ovst.spclty = '17'` | 0 rows in 90 days | Never used to identify ER |
-| `ovst.main_dep = '009'` | 4,086 / 4,966 ER visits (82%) | Fallback anchor only |
-| `opitemrece.dep_code = '009'` | 6,402 / 9,637 ER drug orders (66%) | Supplemental signal, not a primary filter |
+| `ovst.main_dep = '009'` | 4,086 / 4,966 ER visits (82%) | Visit-level hint only; not used to filter usage |
+| `opitemrece.dep_code = '009'` | 5,887 / 7,698 ER lines (76%); 1,901 drug lines in 30 days | **Primary ER order filter** |
+| `opitemrece.sub_type = '1'` | 1,901 drug lines in 30 days | Drug filter alongside the `drugitems` join |
+| `opitemrece.item_type = 'A'` | 1,028 automatic charges in ER (30 days) | Exclude: not drugs |
+| `opitemrece.rxtime` | Equals `vsttime` on only 1 / 1,901 ER drug lines | **Use `rxdate`/`rxtime` as order time** |
 | `opitemrece` composition | 6,822,872 rows: 3,160,622 drugs, 3,661,892 non-drugs, 358 other | Always join `drugitems` |
 | `opitemrece` line key | `vn + item_no` duplicated on 10,945 of 44,948 rows in 30 days (`item_no` is `tinyint`) | Use `hos_guid` for line identity |
 | ER `an` | 0 / 9,639 ER drug orders have `an` | Keep the empty-`an` filter |
@@ -105,26 +118,57 @@ app: ER-Refill does not track stock, does not persist per-day requisitions,
 and never handles patient-level data. They belong to a separate system if
 the hospital decides to build one.
 
+### A.5 30-day ER time audit (2026-10-22)
+
+Verified against the live Sra Bos instance for 22 Sep - 22 Oct 2026, plus the
+HOSxP source (`ERDetailEntryU.RxBtnClick`):
+
+| Measurement | Result | Consequence |
+|---|---|---|
+| ER visits | 1,578 | - |
+| `opitemrece` lines under ER visits | 7,698 | - |
+| `dep_code = '009'` lines | 5,887 / 1,424 visits | Primary ER scope |
+| Drug lines (`sub_type = '1'`) | 1,901 / 642 visits | Usage candidates |
+| `rxtime = vsttime` on drug lines | 1 / 1,901 | Use `rxtime`, not `vsttime` |
+| `opitemrece_log.station = 'ER'` | 1,531 rows / 756 visits; 1,007 / 1,901 drug lines within 60 s | Supplementary audit only |
+
+- HOSxP source confirms the ER screen reads `vstdate`/`vsttime` from `ovst`
+  (arrival) and writes `rxdate := date`, `rxtime := now` when the drug order
+  is saved.
+- `last_modified` is later than `rxtime` on 5,437 / 7,698 lines, so it is an
+  edit timestamp, not the order time.
+
+Fields/tables found unusable for this app:
+
+| Field/table | Finding |
+|---|---|
+| `opitemrece.recetime` | NULL 100% (7,698/7,698) |
+| `er_iv_list.iv_time` | 0 rows in 30 days |
+| `er_command.command_datetime` | 0 rows |
+| `er_regist.triage_datetime` | NULL 100% |
+| `er_regist.doctor_tx_time` / `finish_time` | ~1,575/1,578 are `enter_er_time` + 5/10 minutes (auto-filled) |
+| `nurse_confirm_rx`, `pq_rxorder` | 0 rows |
+| `drugrequestsummary`, `drugrequestdetail` | 0 rows (no department requisition flow) |
+| `rx_queue_dispense_log`, `opitemrece_sticker_log` | 0 rows in ER |
+
 ## B. Open questions for the DBA (block M1)
 
 **B1. Table naming - resolved.** The live instance has `opitemrece`, not
 `opitemrace`; `er_regist`, `ovst`, `drugitems`, and `opd_allergy` also exist
 under those names (section A.3). The connector's constants are correct.
 
-**B2. `vsttime` reliability.** Is `vsttime` populated for every drug line on
-this instance? The 2026-10-21 survey did not test the null distribution. If
-not, the window query needs a `rxtime` fallback strategy.
+**B2. `vsttime` reliability - resolved.** The 30-day audit shows `rxtime`
+differs from `vsttime` on 1,900/1,901 drug lines, so visit time is the wrong
+clock. The query uses `rxdate`/`rxtime`.
 
-**B3. Visit time vs dispense time.** Which better reflects "drug left the ER
-cupboard" - `vstdate/vsttime` (visit) or `rxdate/rxtime` (dispense)? Current
-implementation uses visit time (consistent with AllerX); switching is a
-constant swap. `opi_dispense_dru` matches 98.6% of orders but joins by
-`vn + item_no`, which is not unique - any move to dispense time needs a safe
-line key first.
+**B3. Order time - resolved.** Use `rxdate`/`rxtime`, written by the ER order
+screen. `vstdate`/`vsttime` is arrival time; `last_modified` is an edit
+timestamp. `opi_dispense_dru` joins by `vn + item_no`, which is not unique, so
+dispense reconciliation remains out of scope.
 
-**B4. Indexes.** Existing index on `opitemrece(icode, vstdate)` (or an
-equivalent)? Daily-window queries must stay < 300 ms. Creating an index is
-data-safe and can be requested separately.
+**B4. Indexes.** Index on `opitemrece(icode, rxdate, rxtime)` (or an
+equivalent covering `dep_code`/`sub_type`) - daily-window queries must stay
+< 300 ms. Creating an index is data-safe and can be requested separately.
 
 **B5. Character encoding.** Older HOSxP instances may be TIS-620 rather than
 UTF-8 - affects Thai name search in the drug picker.
@@ -132,10 +176,10 @@ UTF-8 - affects Thai name search in the drug picker.
 **B6. Read-only account.** Confirm a dedicated `GRANT SELECT` user (e.g.
 `errefill_ro`) for the app; this is the real security boundary (`AGENTS.md` section 5).
 
-**B7. ER line scope.** The query counts every drug line under an ER visit,
-not only `dep_code = '009'` (which covers 66% of ER drug orders). Confirm
-with the pharmacist that this matches "what left the ER cupboard"; if not,
-the next candidate is `dep_code = '009'` as an additional predicate.
+**B7. ER line scope - resolved.** The query counts drugs ordered by the ER
+department (`dep_code = '009'`, `sub_type = '1'`, `item_type <> 'A'`), not
+every line under an ER visit. The 30-day audit confirms this is the
+order-source scope the pharmacist wants.
 
 ## C. Access-control layers (code side)
 

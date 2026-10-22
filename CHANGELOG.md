@@ -7,6 +7,10 @@ All notable changes to ER-Refill are documented here. The format follows
 
 ### Changed
 
+- ER usage is now scoped to `dep_code = '009'` drug orders (`sub_type = '1'`,
+  excluding `item_type = 'A'` automatic charges) and the out-of-hours window
+  is computed from `rxdate`/`rxtime` (ER order time) instead of
+  `vstdate`/`vsttime` (visit time).
 - The login gate now handles the `officer` sign-in only. HOSxP connection
   setup moved entirely into the settings dialog, opened from the login page;
   the connection form/status block is no longer embedded in the login card.

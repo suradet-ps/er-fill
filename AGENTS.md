@@ -77,22 +77,24 @@ Same layered approach as the sibling AllerX project:
 - Escape `\`, `%`, `_` in the operator's term before wrapping in `%...%` (contains match).
 
 ### 6.2 Usage window (`opitemrece`)
-- Fields used: `icode`, `qty`, `vstdate` (date), `vsttime` (time), `an` (admission number - empty/NULL for OPD visits; ER visits are OPD).
-- Always `JOIN drugitems` - `opitemrece` also stores non-drug charge lines (3.66M of 6.82M rows on the surveyed instance); without the join usage inflates ~2.2x.
-- Anchor ER on `er_regist.vn` (1:1 with `ovst`); `ovst.main_dep = '009'` is only a fallback. Never use `ovst.spclty = '17'` - it had zero rows in 90 days.
+- Fields used: `icode`, `qty`, `rxdate` (date), `rxtime` (time), `dep_code`, `sub_type`, `item_type`, `an` (admission number - empty/NULL for OPD visits; ER visits are OPD).
+- Always `JOIN drugitems` - `opitemrece` also stores non-drug charge lines; the join plus `sub_type = '1'` and `IFNULL(item_type, '') <> 'A'` keep automatic charges out.
+- ER lines are the ones ordered by the ER department: `dep_code = '009'`. Do not anchor usage on `er_regist.vn`/`ovst.main_dep`, and never use `ovst.spclty = '17'` (zero rows in 90 days).
 - Every query must filter `qty > 0` (zero/negative rows are billing corrections, not dispensing events).
 - Filter `(an IS NULL OR an = '')` - ER visits are OPD visits. On the surveyed instance 0 of 9,639 ER drug orders carry an `an`.
 - Time filtering is index-friendly decomposition, window `[start, end)`:
-  `(vstdate > d1 OR (vstdate = d1 AND vsttime >= t1)) AND (vstdate < d2 OR (vstdate = d2 AND vsttime < t2))`.
-- `vstdate`/`vsttime` (visit time) is used, consistent with AllerX; `rxdate`/`rxtime` (dispense time) is a candidate alternative - confirm with the DBA which better reflects "drug left the ER cupboard".
+  `(rxdate > d1 OR (rxdate = d1 AND rxtime >= t1)) AND (rxdate < d2 OR (rxdate = d2 AND rxtime < t2))`.
+- `rxdate`/`rxtime` is the **order time** written by the ER screen (`RxBtnClick`); `vstdate`/`vsttime` is the visit time. The 30-day audit found only 1 of 1,901 ER drug lines with `rxtime = vsttime`, so never use visit time for the usage window.
+- `opitemrece_log.station = 'ER'` covers only part of the orders (1,531 log rows / 756 visits; 1,007 of 1,901 drug lines within 60 s) - use it as a supplementary audit trail, never as the primary filter.
+- `last_modified` is not the order time (it changes on later edits); `recetime` is NULL 100%; `er_iv_list.iv_time` and `er_command.command_datetime` are empty - do not use them.
 - Use `hos_guid` for line identity if a line-level feature is ever added - `vn + item_no` is not unique (`item_no` is `tinyint`).
 
 ### 6.3 Open questions for the DBA (docs/database.md section B)
 - ~~Confirm `opitemrece` vs `opitemrace` naming~~ - resolved: the live instance uses `opitemrece`.
-- Confirm `vsttime` reliability (populated for all drug lines?).
-- Confirm the ER line scope: all drug lines under an ER `vn` vs only `dep_code = '009'` (66% of ER drug orders).
+- ~~Confirm visit time vs order time~~ - resolved: use `rxdate`/`rxtime` (order time), not `vstdate`/`vsttime`.
+- ~~Confirm the ER line scope~~ - resolved: `dep_code = '009'` plus `sub_type = '1'` and `item_type <> 'A'` (30-day audit).
 - Confirm drug-type filter for the picker (`icode LIKE '1%'` vs `drugitems.istype`).
-- Existing indexes on `opitemrece(icode, vstdate)` - daily window queries should stay < 300 ms.
+- Index on `opitemrece(icode, rxdate, rxtime)` (or equivalent) - daily window queries should stay < 300 ms.
 
 ### 6.4 Authentication (`officer`)
 - Read one row by `officer_login_name`; check `officer_active = 'Y'`, `IFNULL(officer_authentication_type_id, 1) = 1`, and `MD5(password) = officer_login_password_md5` (case-insensitive).

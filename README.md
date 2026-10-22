@@ -83,8 +83,9 @@ Four crates, one hard law: HOSxP is read-only, without exceptions.
 - **Reads** - `er-refill-hosxp-connector` talks to MySQL/MariaDB through
   `sqlx`: one grouped `SELECT` sums `opitemrece.qty` inside the window for
   every configured icode, joined to `drugitems` (so non-drug charge lines
-  never inflate the count) and anchored to `er_regist.vn` (with
-  `ovst.main_dep = '009'` as fallback). The drug picker searches `drugitems`
+  never inflate the count), filtered to ER orders (`dep_code = '009'`,
+  `sub_type = '1'`, no `item_type = 'A'` automatic charges), and timed by the
+  ER order time (`rxdate`/`rxtime`). The drug picker searches `drugitems`
   and brings `strength`/`units` (e.g. "500 mg") along. Every SQL constant
   carries a guard test asserting it is a single read statement - no writes
   of any kind.
@@ -151,7 +152,7 @@ catalog ▸ 6 หมวด + drugitems picker (strength joined) ─────�
 usage   ▸ one grouped, ER-anchored opitemrece read per run ──────── ▸ sealed
 print   ▸ A4 ใบเบิก + Thai/BE labels + signatures ───────────────── ▸ sealed
 travel  ▸ JSON export/import of schedule, catalog, report ──────── ▸ sealed
-schema  ▸ DBA sign-off: opitemrece columns, vsttime, indexes ────── ▸ ahead
+schema  ▸ DBA sign-off: opitemrece columns, rxdate/rxtime, indexes ─ ▸ ahead
 pilot   ▸ pharmacy department, real mornings, feedback ─────────── ▸ ahead
 ```
 

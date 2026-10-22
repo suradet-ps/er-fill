@@ -57,9 +57,9 @@ LIMIT 1";
 /// Head of the usage query; the `IN` list is `?` repeated by
 /// [`usage_in_window_sql`].
 ///
-/// `opitemrece` mixes drugs and non-drug charge lines (6.8M rows on the
-/// surveyed instance, of which only 3.16M are drugs), so the `drugitems`
-/// join is mandatory - never count an `opitemrece` line without it.
+/// `opitemrece` mixes drugs, automatic charges, and non-drug lines, so the
+/// `drugitems` join and the `sub_type`/`item_type` filters are mandatory -
+/// never count an `opitemrece` line without them.
 const USAGE_SELECT: &str = "\
 SELECT o.icode AS icode, CAST(SUM(o.qty) AS DOUBLE) AS qty
 FROM opitemrece o
@@ -72,22 +72,23 @@ WHERE o.icode IN (";
 /// - `an IS NULL OR an = ''` keeps inpatient-stay usage out of the ER
 ///   requisition (0 of 9,639 ER drug orders carry an `an` on the surveyed
 ///   instance).
-/// - ER visits are anchored on `er_regist.vn` (the registry is 1:1 with
-///   `ovst`); `ovst.main_dep = '009'` is only a fallback for a missing
-///   registry row. `ovst.spclty = '17'` is never used - it had zero rows in
-///   90 days.
-/// - The time predicate is the index-friendly decomposition of
-///   `vstdate/vsttime ∈ [start, end)`.
+/// - ER orders are identified by the ordering department
+///   (`o.dep_code = '009'`); the 30-day audit found 5,887 ER lines, of which
+///   1,901 are drug lines.
+/// - `o.sub_type = '1'` keeps drugitems rows; `item_type = 'A'` rows are
+///   automatic charges (1,028 in the audit) and are excluded.
+/// - The time predicate uses `rxdate/rxtime` - the order time written by the
+///   ER screen - not `vstdate/vsttime` (the visit time; only 1 of 1,901 drug
+///   lines shared the same value). The half-open window is `[start, end)`.
 const USAGE_FILTER: &str = "\
 )
   AND o.qty > 0
   AND (o.an IS NULL OR o.an = '')
-  AND (
-    EXISTS (SELECT 1 FROM er_regist e WHERE e.vn = o.vn)
-    OR EXISTS (SELECT 1 FROM ovst v WHERE v.vn = o.vn AND v.main_dep = '009')
-  )
-  AND (o.vstdate > ? OR (o.vstdate = ? AND o.vsttime >= ?))
-  AND (o.vstdate < ? OR (o.vstdate = ? AND o.vsttime < ?))
+  AND o.dep_code = '009'
+  AND o.sub_type = '1'
+  AND IFNULL(o.item_type, '') <> 'A'
+  AND (o.rxdate > ? OR (o.rxdate = ? AND o.rxtime >= ?))
+  AND (o.rxdate < ? OR (o.rxdate = ? AND o.rxtime < ?))
 GROUP BY o.icode
 ORDER BY o.icode";
 
@@ -103,10 +104,11 @@ ORDER BY o.icode";
 /// assert!(sql.contains("IN (?, ?, ?)"));
 /// assert!(sql.starts_with("SELECT"));
 /// ```
-// Verified against the live Sra Bos instance on 2026-10-21: `opitemrece`,
-// `er_regist`, `ovst`, and `drugitems` are the real table names and the
-// columns used here exist (docs/database.md section A.3). The DBA sign-off
-// for indexes and timing is still tracked in section B.
+// Verified against the live Sra Bos instance on 2026-10-21 and the 30-day ER
+// audit on 2026-10-22: `opitemrece` + `drugitems` are the real tables and the
+// rxdate/rxtime, dep_code, sub_type, and item_type columns exist
+// (docs/database.md sections A.2/A.5). The DBA sign-off for indexes and timing
+// is still tracked in section B.
 pub fn usage_in_window_sql(icodes_len: usize) -> String {
     let placeholders = std::iter::repeat_n("?", icodes_len)
         .collect::<Vec<_>>()
@@ -150,27 +152,40 @@ mod tests {
         assert!(sql.contains("IN (?, ?)"));
         assert!(sql.contains("o.qty > 0"));
         assert!(sql.contains("(o.an IS NULL OR o.an = '')"));
+        assert!(sql.contains("o.dep_code = '009'"));
+        assert!(sql.contains("o.sub_type = '1'"));
+        assert!(sql.contains("IFNULL(o.item_type, '') <> 'A'"));
+        assert!(sql.contains("o.rxdate"));
+        assert!(sql.contains("o.rxtime"));
         assert!(sql.contains("GROUP BY o.icode"));
     }
 
     #[test]
-    fn usage_query_requires_drug_master_and_er_anchor() {
+    fn usage_query_requires_drug_master_and_er_department() {
         let sql = usage_in_window_sql(2);
         assert!(
             sql.contains("JOIN drugitems d ON d.icode = o.icode"),
             "opitemrece also holds non-drug charge lines: {sql}"
         );
         assert!(
-            sql.contains("FROM er_regist e WHERE e.vn = o.vn"),
-            "ER visits must be anchored on er_regist.vn: {sql}"
+            sql.contains("o.dep_code = '009'"),
+            "ER lines must be the ones ordered by the ER department: {sql}"
         );
         assert!(
-            sql.contains("v.main_dep = '009'"),
-            "main_dep '009' is the fallback ER anchor: {sql}"
+            !sql.contains("er_regist"),
+            "ER usage must not be anchored on the visit registry: {sql}"
+        );
+        assert!(
+            !sql.contains("main_dep"),
+            "main_dep is not the ER usage scope: {sql}"
         );
         assert!(
             !sql.contains("spclty"),
             "spclty '17' had zero rows and must never identify ER: {sql}"
+        );
+        assert!(
+            !sql.contains("vstdate") && !sql.contains("vsttime"),
+            "usage must use the order time (rxdate/rxtime), not visit time: {sql}"
         );
     }
 
