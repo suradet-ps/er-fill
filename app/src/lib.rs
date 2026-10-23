@@ -26,7 +26,7 @@ use components::empty_state::{CatalogEmpty, NoDataHint};
 use components::login_screen::{LoginScreen, StartupSplash};
 use components::requisition_dialogs::RequisitionDialogs;
 use components::settings_modal::SettingsModal;
-use components::top_bar::TopBar;
+use components::top_bar::{BrandMarkDefs, TopBar};
 use state::{AppState, Banner};
 
 /// How often the frontend polls the backend's live health state.
@@ -82,6 +82,7 @@ fn App() -> impl IntoView {
     let shell_state = state.clone();
     view! {
         <div class="app">
+            <BrandMarkDefs />
             {move || {
                 let state = shell_state.clone();
                 if !state.auth_checked.get() {

@@ -189,6 +189,14 @@ button {
     display: block;
 }
 
+.brand-mark-defs {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+
 /* Status dot */
 
 .status-dot {
@@ -2031,6 +2039,16 @@ button:disabled {
     .sheet__logo {
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
+    }
+
+    /* Drop the SVG emboss filter when printing so the mark stays crisp
+       vector art at the printer's own resolution. */
+    .sheet__logo .brand-mark {
+        shape-rendering: geometricPrecision;
+    }
+
+    .sheet__logo .brand-mark [filter] {
+        filter: none;
     }
 }
 

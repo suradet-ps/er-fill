@@ -19,7 +19,12 @@ All notable changes to ER-Refill are documented here. The format follows
   encryption explanatory paragraphs.
 - Redrew the app icon and top-bar mark as a nurse bear with a nurse cap and a
   medical heart, regenerated every Tauri platform icon from `icon-master.svg`,
-  and re-themed the UI to the rose/bear-gold palette.
+  and re-themed the UI to the rose/bear-gold palette. The printed sheet's
+  nurse-bear mark drops the SVG emboss filter so it stays crisp vector art at
+  the printer's native resolution.
+- The nurse-bear SVG paint servers now live in one root-level defs block, so
+  the gold/brown gradient still resolves on printed sheets when the top bar is
+  hidden in print media.
 - The top-bar name now falls back to `doctor.name` (via `officer_doctor_code`)
   when the officer name columns are blank, then to the login name.
 - The printed requisition now fills the ผู้เบิก signature block with the

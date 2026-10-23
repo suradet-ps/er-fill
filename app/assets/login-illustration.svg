@@ -9,7 +9,7 @@
       <stop stop-color="#F472B6" />
       <stop offset="1" stop-color="#DB2777" />
     </linearGradient>
-    <linearGradient id="lr-bear" x1="418" y1="126" x2="418" y2="298" gradientUnits="userSpaceOnUse">
+    <linearGradient id="lr-bear">
       <stop stop-color="#FDE047" />
       <stop offset="0.5" stop-color="#F59E0B" />
       <stop offset="1" stop-color="#B45309" />

@@ -396,12 +396,13 @@ reason this card exists; the requisition never hides the window it covers.
   dialog; the login password is never persisted. Both use the standard field
   and button components.
 
-**`app-icon`** - Pastel-pink gradient rounded tile holding the nurse bear:
+**`app-icon`** - Flat soft-rose (`#FCE7F3`) rounded tile holding the nurse bear:
 gold-gradient head and ears, white nurse cap with a rose cross, a cream
 muzzle, hugging paws, and a white medical heart with a rose cross.
 `icon-master.svg` is the source for every Tauri platform icon; `BrandMark`
 mirrors the same bear in the top bar and splash at 28px, and at 15mm in the
-top-left corner of every printed sheet page.
+top-left corner of every printed sheet page. Print drops the SVG emboss
+filter so the 15mm mark stays crisp vector art at the printer's resolution.
 
 **`command-bar`** - The only control surface; it stacks below 1280px:
 - Row 1: a labelled date input · a `run-window` card (heading + badge over

@@ -80,45 +80,62 @@ pub fn TopBar(state: AppState) -> impl IntoView {
     }
 }
 
+/// Shared SVG paint servers for [`BrandMark`]. Rendered once at the app root
+/// (not inside the top bar, which print hides) so every mark - including the
+/// printed sheet - can resolve the bear gradient, emboss filter, and clip.
+#[component]
+pub fn BrandMarkDefs() -> impl IntoView {
+    view! {
+        <svg class="brand-mark-defs" width="0" height="0" aria-hidden="true">
+            <defs>
+                <linearGradient id="errefill-bear">
+                    <stop offset="0" stop-color="#FDE047" />
+                    <stop offset="0.5" stop-color="#F59E0B" />
+                    <stop offset="1" stop-color="#B45309" />
+                </linearGradient>
+                <filter id="errefill-emboss" x="-30%" y="-30%" width="160%" height="160%">
+                    <feDropShadow dx="0" dy="0.47" stdDeviation="0.56" flood-color="#000000" flood-opacity="0.3" />
+                    <feDropShadow dx="0" dy="-0.28" stdDeviation="0.38" flood-color="#FFFFFF" flood-opacity="0.4" />
+                </filter>
+                <clipPath id="errefill-clip">
+                    <rect width="48" height="48" rx="12.75" />
+                </clipPath>
+            </defs>
+        </svg>
+    }
+}
+
 /// The bear mark: a nurse bear hugging a medical heart - a compact
 /// version of `icon-master.svg` for the top bar and splash.
 #[component]
 pub fn BrandMark() -> impl IntoView {
     view! {
         <svg class="brand-mark" viewBox="0 0 48 48" width="28" height="28" aria-hidden="true">
-            <defs>
-                <linearGradient id="errefill-bg" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
-                    <stop offset="0" stop-color="#FBCFE8" />
-                    <stop offset="1" stop-color="#F472B6" />
-                </linearGradient>
-                <linearGradient id="errefill-bear" x1="24" y1="6" x2="24" y2="44" gradientUnits="userSpaceOnUse">
-                    <stop offset="0" stop-color="#FDE047" />
-                    <stop offset="0.5" stop-color="#F59E0B" />
-                    <stop offset="1" stop-color="#B45309" />
-                </linearGradient>
-                <clipPath id="errefill-clip">
-                    <rect width="48" height="48" rx="12.75" />
-                </clipPath>
-            </defs>
-            <rect width="48" height="48" rx="12.75" fill="url(#errefill-bg)" />
+            <rect width="48" height="48" rx="12.75" fill="#FCE7F3" />
             <g clip-path="url(#errefill-clip)">
-                <circle cx="11.6" cy="13.1" r="8.1" fill="url(#errefill-bear)" />
-                <circle cx="36.4" cy="13.1" r="8.1" fill="url(#errefill-bear)" />
-                <circle cx="11.6" cy="13.1" r="4" fill="#FEF08A" />
-                <circle cx="36.4" cy="13.1" r="4" fill="#FEF08A" />
-                <circle cx="24" cy="24" r="16.5" fill="url(#errefill-bear)" />
-                <path d="M15.4 10.9Q24 6.75 32.6 10.9L30.6 2.6Q24 0.94 17.4 2.6Z" fill="#FFFFFF" />
-                <rect x="21.4" y="3.75" width="5.25" height="7.9" rx="1.3" fill="#F43F5E" />
-                <rect x="19.1" y="5.6" width="9.75" height="3.9" rx="1.3" fill="#F43F5E" />
-                <ellipse cx="24" cy="27.2" rx="6.75" ry="4.9" fill="#FEF3C7" />
-                <ellipse cx="24" cy="25.7" rx="3" ry="2.06" fill="#451A03" />
-                <path d="M21.2 28.9Q24 31.7 26.8 28.9" stroke="#451A03" stroke-width="1.5" fill="none" stroke-linecap="round" />
-                <circle cx="16.1" cy="19.9" r="1.97" fill="#451A03" />
-                <circle cx="31.9" cy="19.9" r="1.97" fill="#451A03" />
-                <circle cx="12.75" cy="37.7" r="6.2" fill="url(#errefill-bear)" />
-                <circle cx="35.25" cy="37.7" r="6.2" fill="url(#errefill-bear)" />
-                <path d="M24 44.06C13.13 35.63 14.06 29.25 18.94 29.25C21.19 29.25 24 32.63 24 32.63C24 32.63 26.8 29.25 29.06 29.25C33.94 29.25 34.88 35.63 24 44.06Z" fill="#FFFFFF" />
-                <path d="M24 35.4V40M21.7 37.7H26.3" stroke="#F43F5E" stroke-width="1.8" stroke-linecap="round" />
+                <g fill="url(#errefill-bear)" filter="url(#errefill-emboss)">
+                    <circle cx="11.625" cy="13.125" r="8.0625" />
+                    <circle cx="36.375" cy="13.125" r="8.0625" />
+                </g>
+                <circle cx="11.625" cy="13.125" r="4.03125" fill="#FEF08A" />
+                <circle cx="36.375" cy="13.125" r="4.03125" fill="#FEF08A" />
+                <circle cx="24" cy="24" r="16.5" fill="url(#errefill-bear)" filter="url(#errefill-emboss)" />
+                <g filter="url(#errefill-emboss)">
+                    <path d="M15.375 10.875Q24 6.75 32.625 10.875L30.5625 2.625Q24 0.9375 17.4375 2.625Z" fill="#FFFFFF" />
+                    <rect x="21.375" y="3.75" width="5.25" height="7.875" rx="1.3125" fill="#F43F5E" />
+                    <rect x="19.125" y="5.625" width="9.75" height="3.9375" rx="1.3125" fill="#F43F5E" />
+                </g>
+                <ellipse cx="24" cy="27.1875" rx="6.75" ry="4.875" fill="#FEF3C7" />
+                <ellipse cx="24" cy="25.6875" rx="3" ry="2.0625" fill="#451A03" />
+                <path d="M21.1875 28.875Q24 31.6875 26.8125 28.875" stroke="#451A03" stroke-width="1.5" fill="none" stroke-linecap="round" />
+                <circle cx="16.125" cy="19.875" r="1.96875" fill="#451A03" />
+                <circle cx="31.875" cy="19.875" r="1.96875" fill="#451A03" />
+                <circle cx="12.75" cy="37.6875" r="6.1875" fill="url(#errefill-bear)" filter="url(#errefill-emboss)" />
+                <circle cx="35.25" cy="37.6875" r="6.1875" fill="url(#errefill-bear)" filter="url(#errefill-emboss)" />
+                <g filter="url(#errefill-emboss)">
+                    <path d="M24 44.0625C13.125 35.625 14.0625 29.25 18.9375 29.25C21.1875 29.25 24 32.625 24 32.625C24 32.625 26.8125 29.25 29.0625 29.25C33.9375 29.25 34.875 35.625 24 44.0625Z" fill="#FFFFFF" />
+                </g>
+                <path d="M24 34.3125V39.9375M20.8125 37.125H27.1875" stroke="#F43F5E" stroke-width="2.0625" stroke-linecap="round" />
             </g>
         </svg>
     }
