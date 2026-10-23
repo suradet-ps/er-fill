@@ -574,7 +574,7 @@ pub fn CatalogPanel(state: AppState) -> impl IntoView {
                     "ยกเลิกการแก้ไข"
                 </button>
                 <button
-                    class="button-accent-mint"
+                    class="button-accent"
                     disabled=move || busy.get() || !dirty.get()
                     on:click=on_save
                 >

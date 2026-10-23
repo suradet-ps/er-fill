@@ -24,7 +24,7 @@ pub fn CatalogEmpty(state: AppState) -> impl IntoView {
             <p class="empty-card__text">
                 "เพิ่มรายการยาประจำห้องฉุกเฉินแยกตามหมวดจากบัญชียา HOSxP เพื่อให้ระบบดึงยอดใช้ยาและสร้างใบเบิกได้"
             </p>
-            <button class="button-accent-mint" on:click=open_catalog>
+            <button class="button-accent" on:click=open_catalog>
                 "ไปที่ตั้งค่ารายการยา"
             </button>
         </div>

@@ -6,8 +6,8 @@ ER-Refill is used by a pharmacist once a day, in the morning, to produce one
 paper: the ER drug requisition form. The interface therefore borrows two
 things from the Mintlify language - **cinematic atmosphere on the rare empty
 states** (gradient hero bands) and **documentation-grade density everywhere
-work actually happens** - but re-anchors the palette on Thai clinical paper
-work.
+work actually happens** - but re-anchors the palette on the nurse-bear mark:
+pastel rose for the working system, warm bear gold for the mascot.
 
 **The signature element is the sheet** - the A4 requisition itself, staged on
 a soft desk surface as a live preview: hospital header, the window sentence
@@ -17,18 +17,21 @@ cells, and the ผู้เบิก/ผู้จ่าย signature blocks. The
 share one DOM and one stylesheet - what the pharmacist verifies is exactly
 what prints; there is no separate preview mode. The command bar above the
 desk is the only control surface, and it states the window compactly
-(mint = auto, amber = overridden - never silent).
+(rose = auto, amber = overridden - never silent).
 
 **Key characteristics:**
 
 - **Atmospheric gradient hero bands, used once**: the login gate gets the
-  sky-gradient brand panel; that is the only marketing-grade surface in the
-  app. Working surfaces are flat and dense.
-- **Signature mint green** ({colors.brand-green}) reserved for accent CTAs,
-  the auto window chip, active states, and feature confirmations - never body
-  text or large surfaces.
+  blush-gradient brand panel with the nurse-bear mascot; that is the only
+  marketing-grade surface in the app. Working surfaces are flat and dense.
+- **Signature rose pink** ({colors.brand-pink}) reserved for accent CTAs,
+  the auto window chip, active states, focus rings, and feature confirmations -
+  never body text or large surfaces.
 - **Black-pill primary buttons** ({colors.primary} + `{rounded.full}`) for the
-  dominant action (พิมพ์ใบเบิก); one mint accent CTA per viewport at most.
+  dominant action (พิมพ์ใบเบิก); one rose accent CTA per viewport at most.
+- **Bear gold is illustration, not UI**: the amber mascot gradient
+  (`#FDE047 → #F59E0B → #B45309`) belongs to `icon-master.svg` and the login
+  illustration; it is never used for buttons, status, or meaning.
 - **Inter for UI prose, IBM Plex Sans Thai for Thai text, IBM Plex Mono for
   codes and quantities** - numbers must align in columns.
 - **Command bar + paper stage, not a sidebar**: the run controls (date,
@@ -45,29 +48,35 @@ desk is the only control surface, and it states the window compactly
 
 | Reference token | ER-Refill token | Why |
 |---|---|---|
-| Mintlify mint `#00D4A4`-family | `{colors.brand-green}` `#00A87E` ("เขียวตราประทับ" seal green) | Same role; deepened one step so it holds WCAG AA on white for accent text and reads as ink-stamp green, not neon. |
+| Mintlify mint `#00D4A4`-family | `{colors.brand-pink}` `#DB2777` ("กุหลาบตราประทับ" seal rose) | Same role; deepened so white button text holds WCAG AA, while the pastel pinks stay decorative. |
 | Inter + Geist Mono only | Inter + **IBM Plex Sans Thai** + IBM Plex Mono | The app is Thai-first; Inter has no Thai glyphs. Plex Thai pairs with Plex Mono and matches the sibling AllerX system. |
 | Marketing scale (16px body, 72px hero) | Tool scale (15px body, 28px display) | This is a once-a-day work tool, not a landing page; density wins. The display scale exists **only** on the login brand headline (34px at desktop). |
 | Testimonial orange | **Dropped** | No testimonial/marketing surfaces exist. The warm slot is filled by amber, which carries clinical meaning (attention), not emotion. |
-| `rgba(0,212,164,.08) 0 8px 24px` featured glow | Kept, retinted | The mint glow marks exactly one thing: the single accent CTA on an empty state. |
-| Photography/clouds/rockets | None | No photography or illustration sets. The login brand panel carries one custom requisition SVG; the app mark is a vector seal. |
+| `rgba(0,212,164,.08) 0 8px 24px` featured glow | Kept, retinted | The rose glow marks exactly one thing: the single accent CTA on an empty state. |
+| Photography/clouds/rockets | None | No photography or illustration sets. The login brand panel carries one custom nurse-bear illustration (`app/assets/login-illustration.svg`); the app mark is the same bear from `icon-master.svg`. |
 
 ## Colors
 
 ### Brand & Accent
 
-- **Seal Mint** ({colors.brand-green}): `#00A87E` - brand seal and accent CTAs,
-  auto window chip border, green checkmarks in confirmation lists, active
-  tab underline, sidebar active indicator. Never for body text.
-- **Deep Mint** ({colors.brand-green-deep}): `#00795B` - pressed/active variant;
-  success text on soft mint backgrounds.
-- **Soft Mint** ({colors.brand-green-soft}): `#E4F7F0` - success tint, auto
-  auto window chip background, the sheet window sentence tint.
-- **Seal Glow** ({colors.brand-glow}): `rgba(0, 168, 126, 0.08)` - the single
+- **Seal Rose** ({colors.brand-pink}): `#DB2777` - brand seal and accent CTAs,
+  auto window chip border, focus rings, active tab underline, sidebar active
+  indicator. Holds WCAG AA with white button text; never for body text.
+- **Deep Rose** ({colors.brand-pink-deep}): `#9D174D` - pressed/active variant;
+  text on soft rose backgrounds.
+- **Soft Rose** ({colors.brand-pink-soft}): `#FCE7F3` - auto window chip
+  background, the sheet window sentence tint, playful section tint.
+- **Seal Glow** ({colors.brand-glow}): `rgba(219, 39, 119, 0.10)` - the single
   featured shadow, reserved for one brand accent; not used in the current UI.
+- **Bear Gold** (`#F59E0B` / `#B45309`): the mascot gradient only - artwork in
+  `icon-master.svg` and the login illustration; never a UI token and never
+  load-bearing for meaning.
 
 ### Semantic
 
+- **Success Green** ({colors.success}): `#059669` on {colors.success-soft}
+  `#ECFDF5` - the connected status dot and saved confirmations. This is the
+  only green in the system; it carries state, not brand.
 - **Alert Red** ({colors.error}): `#D92D20` - required-field labels, validation
   messages, destructive confirmations. Never decorative.
 - **Alert Soft** ({colors.error-soft}): `#FEECEB` - error field background tint.
@@ -83,37 +92,39 @@ desk is the only control surface, and it states the window compactly
 
 - **Canvas** ({colors.canvas}): `#FFFFFF` - the printable sheet's color and
   the stage.
-- **Surface** ({colors.surface}): `#F6F6F4` - section backgrounds, search
+- **Surface** ({colors.surface}): `#FDF7FA` - section backgrounds, search
   pill rest, sheet table header rows, the command-bar stat strip.
-- **Surface Soft** ({colors.surface-soft}): `#FAFAF8` - quieter section
+- **Surface Soft** ({colors.surface-soft}): `#FEFBFD` - quieter section
   bands, zebra striping off (we keep rows flat; this is for framing).
-- **Hairline** ({colors.hairline}): `#E6E6E3` - 1px borders and dividers.
-- **Hairline Soft** ({colors.hairline-soft}): `#EFEFEC` - table row
+- **Hairline** ({colors.hairline}): `#F2E2EA` - 1px borders and dividers.
+- **Hairline Soft** ({colors.hairline-soft}): `#F8EDF2` - table row
   dividers, secondary breaks.
 - **Canvas Dark** ({colors.canvas-dark}): `#17181C` - reserved (no dark
   surfaces in v1; kept named so a future variant doesn't rename tokens).
 
 ### Hero Atmospheric
 
-- **Hero Sky From / To** ({colors.hero-sky-from} `#EAF4FF` → {colors.hero-sky-to}
-  `#FFFBF2`): the login brand-panel gradient, 180° top-to-bottom.
-- **Hero Dark From / To** ({colors.hero-dark-from} `#0E3D33` → {colors.hero-dark-to}
-  `#12B58A`): reserved for the About/upgrade band if one ever ships; not used
+- **Hero Blush From / To** ({colors.hero-from} `#FDF2F8` → {colors.hero-to}
+  `#FFF7ED`): the login brand-panel gradient, 165° top-to-bottom, warmed by a
+  rose radial glow at the top and a bear-gold glow at the bottom edge.
+- **Hero Dark From / To** ({colors.hero-dark-from} `#3B0A22` → {colors.hero-dark-to}
+  `#DB2777`): reserved for the About/upgrade band if one ever ships; not used
   in v1 (documented so the token set is complete).
 
 ### Text
 
-- **Ink** ({colors.ink}): `#111113` - headlines, primary text, table data.
-- **Charcoal** ({colors.charcoal}): `#37373E` - body text.
-- **Slate** ({colors.slate}): `#5E5E68` - secondary text, metadata.
-- **Steel** ({colors.steel}): `#8B8B95` - tertiary text, table headers,
+- **Ink** ({colors.ink}): `#241016` - headlines, primary text, table data.
+- **Charcoal** ({colors.charcoal}): `#432C37` - body text.
+- **Slate** ({colors.slate}): `#6F5863` - secondary text, metadata.
+- **Steel** ({colors.steel}): `#967F89` - tertiary text, table headers,
   sidebar inactive items.
-- **Stone** ({colors.stone}): `#A9A9B2` - captions, placeholders.
-- **Muted** ({colors.muted}): `#C7C7CE` - disabled text.
+- **Stone** ({colors.stone}): `#B9A5AE` - captions, placeholders.
+- **Muted** ({colors.muted}): `#DACBD2` - disabled text.
 - **On Dark** ({colors.on-dark}) `#FFFFFF` / **On Dark Muted**
   ({colors.on-dark-muted} `rgba(255,255,255,0.72)`) - text on dark surfaces
   (reserved; see Canvas Dark).
-- **On Primary** ({colors.on-primary}): `#FFFFFF` - text on black pills.
+- **On Primary** ({colors.on-primary}): `#FFFFFF` - text on black pills and
+  on the rose accent pill.
 
 ## Typography
 
@@ -270,9 +281,9 @@ sheet is paper and takes no radius at all.
 - Pressed: background `{colors.charcoal}`. Disabled: background
   `{colors.hairline}`, text `{colors.muted}`, no pointer events.
 
-**`button-accent-mint`** - Seal-mint pill, used **once per viewport** on an
+**`button-accent`** - Seal-rose pill, used **once per viewport** on an
 empty-state or catalog CTA.
-- Background `{colors.brand-green}`, text `#072A21`, typography
+- Background `{colors.brand-pink}`, text `{colors.on-primary}`, typography
   `{typography.button}`, padding `10px 20px`, rounded `{rounded.full}`, plus
   an optional `{elevation.4}` glow.
 
@@ -306,14 +317,14 @@ a border).
 **`text-input`** - Background `{colors.canvas}`, text `{colors.ink}`, border
 `1px solid {colors.hairline}`, rounded `{rounded.md}`, padding
 `{spacing.sm} {spacing.md}`, 40px height. Focus: `2px solid
-{colors.brand-green}` (mint is the activation signal).
+{colors.brand-pink}` (rose is the activation signal).
 
 **`text-input-error`** - Border `1px solid {colors.error}`; helper line in
 `{typography.caption}` + `{colors.error}`.
 
 **`sheet-request-input`** - The editable จำนวนเบิก box *on the paper*: centered
 `{typography.code-md}` in a borderless in-cell input, no spinners, focus
-ring mint inset (`outline-offset: -2px`). It prints as a plain filled
+ring rose inset (`outline-offset: -2px`). It prints as a plain filled
 number.
 
 **`text-input--compact`** - 34px variant for the command bar (date and the
@@ -328,9 +339,9 @@ manual window editors).
 **`settings-nav__item`** + **`settings-nav__item--active`** - The settings
 modal's vertical navigation rail (icon + label per panel, on a
 `{colors.surface-soft}` column): inactive text `{colors.steel}` with a stone
-icon; active: `{colors.canvas}` background, ink text, and a 3px mint left
+icon; active: `{colors.canvas}` background, ink text, and a 3px rose left
 border. Below 960px the rail turns into a horizontal scrolling strip
-(mint bottom border on the active item). The rail exists because the
+(rose bottom border on the active item). The rail exists because the
 catalog panel needs the modal's full width for its three-field drug rows.
 
 ### Badges & Status
@@ -343,21 +354,22 @@ catalog panel needs the modal's full width for its three-field drug rows.
 `{colors.error}`, text `{colors.on-dark}`, `{typography.micro-uppercase}`,
 rounded `{rounded.sm}`, `2px 6px`.
 
-**`status-dot`** - 8px dot + text: `{colors.brand-green}` connected,
+**`status-dot`** - 8px dot + text: `{colors.success}` connected,
 `{colors.warn-text}` degraded, `{colors.error}` disconnected, `{colors.stone}`
 unconfigured. Applied with a soft halo (`box-shadow: 0 0 0 3px soft`).
 
 **`run-window` card** - The command-bar window state: a compact card with a
-"ช่วงเวลาเบิก" heading and badge ("อัตโนมัติ" mint, "แก้ไขเอง" amber) above
+"ช่วงเวลาเบิก" heading and badge ("อัตโนมัติ" rose, "แก้ไขเอง" amber) above
 the two short Thai/BE datetimes (mono, tabular). The amber state is the
 reason this card exists; the requisition never hides the window it covers.
 
 ### Signature Components
 
 **`login-gate`** - Full-height split surface before the document exists:
-- Left brand panel: the sky hero gradient, the requisition-sheet seal mark, the
-  "ใบเบิกยาห้องฉุกเฉิน" headline, and a custom paper-and-pills illustration
-  (`app/assets/login-illustration.svg`) - no marketing copy or proof points.
+- Left brand panel: the blush hero gradient, the nurse-bear mark, the
+  "ใบเบิกยาห้องฉุกเฉิน" headline, and a custom bear-and-requisition
+  illustration (`app/assets/login-illustration.svg`) - no marketing copy or
+  proof points.
 - Right panel: a single `rounded.lg` card focused on the `officer`
   username/password, with a "ตั้งค่า" button in the page toolbar. Until a
   connection is configured, a warn-toned notice inside the card points at the
@@ -367,10 +379,11 @@ reason this card exists; the requisition never hides the window it covers.
   dialog; the login password is never persisted. Both use the standard field
   and button components.
 
-**`app-icon`** - Green gradient rounded tile holding a white requisition sheet
-with a deep-green header and a green pill stamp. `icon-master.svg` is the
-source for every Tauri platform icon; `BrandMark` mirrors the same mark in the
-top bar and splash.
+**`app-icon`** - Pastel-pink gradient rounded tile holding the nurse bear:
+gold-gradient head and ears, white nurse cap with a rose cross, a cream
+muzzle, hugging paws, and a white medical heart with a rose cross.
+`icon-master.svg` is the source for every Tauri platform icon; `BrandMark`
+mirrors the same bear in the top bar and splash at 28px.
 
 **`command-bar`** - The only control surface, two rows tall when editing:
 - Row 1: a labelled date input · a `run-window` card (heading + badge over
@@ -429,7 +442,7 @@ diverge from the printout.
 backdrop, `{rounded.lg}`, max-width 960px. A 200px vertical `settings-nav`
 rail (icons + การเชื่อมต่อ · เวลาทำการ · รายการยา · หัวใบเบิก) beside a
 scrolling `settings-content` area. Each panel keeps its own action row
-(mint accent or black pill for save). The catalog panel uses two-line drug
+(rose accent or black pill for save). The catalog panel uses two-line drug
 rows - identity line (name, icode chip, ↑/↓/remove) over a labeled field
 line (ความแรง, จำนวน/Stock) - so the three inputs never fight for width.
 The modal footer is a `{colors.surface-soft}` strip with
@@ -454,16 +467,16 @@ drug's `strengthText`, and the printed sheet trims the Thai unit suffix.
 
 ### Do
 
-- Reserve `{colors.brand-green}` for accent CTAs, the auto window chip,
-  active tab indicator, and confirmation checks - if it appears on a large
-  generic surface, it did not earn that role.
-- Use `{colors.primary}` black pills for the dominant action; exactly one mint
+- Reserve `{colors.brand-pink}` for accent CTAs, the auto window chip,
+  active tab indicator, focus rings, and confirmation checks - if it appears
+  on a large generic surface, it did not earn that role.
+- Use `{colors.primary}` black pills for the dominant action; exactly one rose
   accent CTA per viewport.
 - Apply `{rounded.full}` to every button and pill; cards are always
   `{rounded.lg}`; the sheet is paper and stays square.
 - Put every number that appears in a column into `{typography.code-*}` (mono,
   tabular) - quantities must align on the paper.
-- Keep the run-window chip's two states visually distinct at a glance (mint =
+- Keep the run-window chip's two states visually distinct at a glance (rose =
   auto, amber = overridden); never make the override silent.
 - Render strength beside the drug name everywhere (catalog, sheet, paper) so
   same-name drugs (Paracetamol 325 vs 500) never blur.
@@ -472,9 +485,9 @@ drug's `strengthText`, and the printed sheet trims the Thai unit suffix.
 
 ### Don't
 
-- Don't use `{colors.brand-green}` on body text or large surfaces.
-- Don't add a second accent hue beyond mint, info-blue, warn-amber, and error
-  red.
+- Don't use `{colors.brand-pink}` on body text or large surfaces.
+- Don't add a second accent hue beyond rose, info-blue, warn-amber, and error
+  red. Bear gold belongs to the mascot artwork only.
 - Don't use amber for "error" or red for "attention" - they are different
   signals and the pharmacist must distinguish them instantly.
 - Don't add gradients anywhere except the login brand panel - the desk and
@@ -506,7 +519,7 @@ This is a mouse-class desktop app; there is no mobile layout.
 
 - State transitions: `background-color 150ms ease-out` (chips, buttons), focus
   borders 150ms.
-- The run-window chip never animates between mint and amber - the color *is*
+- The run-window chip never animates between rose and amber - the color *is*
   the message; a cross-fade would slow reading it.
 - No bounce/elastic easing anywhere; `prefers-reduced-motion` disables all
   transitions.
@@ -529,5 +542,5 @@ This is a mouse-class desktop app; there is no mobile layout.
 - Dark mode is out of scope (no dark values defined; token names support it).
 - The animated cloud/rocket aesthetic of the reference is deliberately not
   ported - only its gradient treatment survives, once, on the login brand panel.
-- Print-color fidelity is assumed (mint/amber bands print as ink-saving text
+- Print-color fidelity is assumed (rose/amber bands print as ink-saving text
   only; the sheet is black-on-white by design).
