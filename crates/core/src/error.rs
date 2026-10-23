@@ -1,4 +1,28 @@
-//! Errors from catalog operations ([`crate::catalog_ops`]).
+//! Errors from catalog operations ([`crate::catalog_ops`]) and manual
+//! requisition changes ([`crate::requisition`]).
+
+/// A manual requisition change was rejected.
+#[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
+pub enum RequisitionError {
+    /// Only drugs configured in the catalog may be added to the sheet.
+    #[error("drug {0} is not configured in the catalog")]
+    DrugNotConfigured(String),
+    /// The same icode cannot appear twice in the report.
+    #[error("drug {0} is already in the requisition")]
+    DrugAlreadyInReport(String),
+    /// The row to edit no longer exists in the report.
+    #[error("drug {0} was not found in the requisition")]
+    RowNotFound(String),
+    /// Every manual add or quantity change must explain itself.
+    #[error("a reason is required for every manual change")]
+    MissingReason,
+    /// Requested quantities are whole, non-negative numbers.
+    #[error("the requested quantity must be a non-negative whole number")]
+    InvalidRequested,
+    /// The configured drug points at a category that no longer exists.
+    #[error("category {0} was not found")]
+    CategoryNotFound(String),
+}
 
 /// A catalog mutation was rejected.
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]

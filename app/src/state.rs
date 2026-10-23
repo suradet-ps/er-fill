@@ -7,7 +7,7 @@
 
 use chrono::{Local, NaiveDate, NaiveDateTime};
 use er_refill_models::{
-    AppSettings, ConnectionSummary, ReportSection, RequisitionWindow, SessionUser,
+    AppSettings, ConnectionSummary, ReportMeta, ReportSection, RequisitionWindow, SessionUser,
 };
 use leptos::prelude::*;
 
@@ -102,6 +102,37 @@ impl Banner {
     }
 }
 
+/// The data set the operator confirmed before printing. Printing is gated on
+/// this snapshot; any report edit clears it.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ConfirmedRequisition {
+    /// Rows (including their reasons) exactly as confirmed.
+    pub sections: Vec<ReportSection>,
+    /// The requisition window shown on the sheet.
+    pub window: RequisitionWindow,
+    /// The printed header block at confirmation time.
+    pub report: ReportMeta,
+    /// When the operator pressed "ยืนยันข้อมูลเบิก".
+    pub confirmed_at: NaiveDateTime,
+}
+
+/// A pending quantity edit waiting for its reason.
+#[derive(Debug, Clone, PartialEq)]
+pub struct PendingEdit {
+    /// HOSxP icode - the row identity.
+    pub icode: String,
+    /// Display name shown in the dialog.
+    pub name: String,
+    /// Strength label shown beside the name in the dialog.
+    pub strength_text: String,
+    /// The quantity before the edit.
+    pub old_requested: f64,
+    /// The quantity the operator wants.
+    pub new_requested: f64,
+    /// The stock ceiling carried by the row, if any.
+    pub max_requested: Option<f64>,
+}
+
 /// All shared UI state.
 #[derive(Clone)]
 pub struct AppState {
@@ -134,6 +165,14 @@ pub struct AppState {
     /// Built report sections (`None` before the first fetch / after edits
     /// that invalidate them).
     pub sections: RwSignal<Option<Vec<ReportSection>>>,
+    /// The confirmed print snapshot; `None` disables the print button.
+    pub confirmed: RwSignal<Option<ConfirmedRequisition>>,
+    /// A quantity edit waiting for its reason.
+    pub pending_edit: RwSignal<Option<PendingEdit>>,
+    /// The "add configured drug" dialog is open.
+    pub add_drug_open: RwSignal<bool>,
+    /// The pre-print confirmation dialog is open.
+    pub confirm_open: RwSignal<bool>,
     /// A fetch is in flight.
     pub loading: RwSignal<bool>,
     /// Dismissible message strip.
@@ -166,6 +205,10 @@ impl AppState {
             window_custom: RwSignal::new(false),
             window_edit_open: RwSignal::new(false),
             sections: RwSignal::new(None),
+            confirmed: RwSignal::new(None),
+            pending_edit: RwSignal::new(None),
+            add_drug_open: RwSignal::new(false),
+            confirm_open: RwSignal::new(false),
             loading: RwSignal::new(false),
             banner: RwSignal::new(None),
             printed_at: RwSignal::new(None),
@@ -200,10 +243,94 @@ impl AppState {
     /// Clears the session UI (backend logout is performed by the caller).
     pub fn clear_session(&self) {
         self.session.set(None);
-        self.sections.set(None);
+        self.clear_requisition();
         self.banner.set(None);
         self.settings_open.set(false);
         self.window_edit_open.set(false);
+    }
+
+    /// Drops the current document (rows, print confirmation, dialogs) because
+    /// the date, window, or catalog changed and a new fetch is required.
+    pub fn clear_requisition(&self) {
+        self.sections.set(None);
+        self.confirmed.set(None);
+        self.pending_edit.set(None);
+        self.add_drug_open.set(false);
+        self.confirm_open.set(false);
+        self.printed_at.set(None);
+    }
+
+    /// Invalidates the confirmed print snapshot without discarding the rows.
+    /// Called after a manual add/quantity change; the operator must confirm
+    /// again before printing.
+    pub fn invalidate_confirmation(&self) {
+        let had_confirmation = self.confirmed.get_untracked().is_some();
+        self.confirmed.set(None);
+        self.printed_at.set(None);
+        self.confirm_open.set(false);
+        if had_confirmation {
+            self.banner
+                .set(Some(Banner::warn("ข้อมูลเปลี่ยนแล้ว กรุณายืนยันข้อมูลเบิกใหม่ก่อนพิมพ์")));
+        }
+    }
+
+    /// Snapshots the current rows, window, and header for printing.
+    ///
+    /// Returns `false` when there is no sheet or window to confirm.
+    pub fn confirm_requisition(&self) -> bool {
+        let Some(sections) = self.sections.get_untracked() else {
+            return false;
+        };
+        let Some(window) = self.window.get_untracked() else {
+            return false;
+        };
+        let Some(report) = self
+            .settings
+            .get_untracked()
+            .map(|settings| settings.report)
+        else {
+            return false;
+        };
+        if sections.iter().all(|section| section.rows.is_empty()) {
+            return false;
+        }
+        self.confirmed.set(Some(ConfirmedRequisition {
+            sections,
+            window,
+            report,
+            confirmed_at: Local::now().naive_local(),
+        }));
+        self.printed_at.set(None);
+        self.set_info_banner("ยืนยันข้อมูลเบิกแล้ว พร้อมพิมพ์ใบเบิก");
+        true
+    }
+
+    /// Shows a success/information banner. `SheetBanner` auto-dismisses info
+    /// banners after a few seconds (warnings/errors stay until dismissed).
+    pub fn set_info_banner(&self, message: impl Into<String>) {
+        self.banner.set(Some(Banner::info(message)));
+    }
+
+    /// True when the current rows, window, and header are exactly the set the
+    /// operator confirmed. The print action refuses to run otherwise.
+    pub fn print_snapshot_matches(&self) -> bool {
+        let Some(confirmed) = self.confirmed.get_untracked() else {
+            return false;
+        };
+        let Some(sections) = self.sections.get_untracked() else {
+            return false;
+        };
+        let Some(window) = self.window.get_untracked() else {
+            return false;
+        };
+        let Some(report) = self
+            .settings
+            .get_untracked()
+            .map(|settings| settings.report)
+        else {
+            return false;
+        };
+        sections == confirmed.sections && window == confirmed.window && report == confirmed.report
     }
 
     /// True when the catalog exists but has no drugs configured.
@@ -237,11 +364,15 @@ impl AppState {
         let state = self.clone();
         state.loading.set(true);
         state.banner.set(None);
+        state.confirmed.set(None);
+        state.printed_at.set(None);
         leptos::task::spawn_local(async move {
             match crate::api::fetch_usage(&window).await {
                 Ok(usage) => {
                     let sections = er_refill_core::build_report(&settings.catalog, &usage);
                     state.sections.set(Some(sections));
+                    state.confirmed.set(None);
+                    state.printed_at.set(None);
                 }
                 Err(err) => {
                     let banner = if err.kind == crate::api::ApiErrorKind::NotConfigured {
@@ -315,5 +446,49 @@ mod tests {
         assert_eq!(window.start.to_string(), "2026-10-18 16:00:00");
         assert_eq!(window.end.to_string(), "2026-10-19 08:30:00");
         assert!(!state.window_custom.get_untracked());
+    }
+
+    #[test]
+    fn confirmation_snapshots_the_sheet_and_edits_invalidate_it() {
+        let state = AppState::new();
+        state.settings.set(Some(AppSettings::default()));
+        state.window.set(Some(
+            RequisitionWindow::new(
+                chrono::NaiveDate::from_ymd_opt(2026, 10, 18)
+                    .and_then(|date| date.and_hms_opt(16, 0, 0))
+                    .expect("invariant: static test date"),
+                chrono::NaiveDate::from_ymd_opt(2026, 10, 19)
+                    .and_then(|date| date.and_hms_opt(8, 30, 0))
+                    .expect("invariant: static test date"),
+            )
+            .expect("valid window"),
+        ));
+        state.sections.set(Some(vec![ReportSection {
+            category_id: "cat-1".into(),
+            category_name: "ยาเม็ด".into(),
+            rows: vec![er_refill_models::ReportRow {
+                icode: "1001".into(),
+                name: "Paracetamol".into(),
+                strength_text: "500 mg".into(),
+                stock_text: "10/20".into(),
+                usage: 6.0,
+                requested: 1.0,
+                max_requested: Some(20.0),
+                added: false,
+                reason: String::new(),
+            }],
+        }]));
+
+        assert!(state.confirm_requisition());
+        assert!(state.confirmed.get_untracked().is_some());
+        assert!(state.print_snapshot_matches());
+
+        let mut edited = state.sections.get_untracked().expect("sections");
+        edited[0].rows[0].requested = 2.0;
+        state.sections.set(Some(edited));
+        assert!(!state.print_snapshot_matches());
+
+        state.invalidate_confirmation();
+        assert!(state.confirmed.get_untracked().is_none());
     }
 }

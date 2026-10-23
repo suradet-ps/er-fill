@@ -46,7 +46,7 @@ Dependency direction: `app` → `er-refill-core` → `er-refill-models`, and `er
 - `Catalog { categories: Vec<DrugCategory>, drugs: Vec<ErDrug> }` - `DrugCategory { id, name, sort_order }`, `ErDrug { icode, name, strength_text, stock_text, category_id, sort_order }`. Seeded with the six categories of the approved ER list (see `docs/reference/er-drug-list.md`); drugs are added from HOSxP `drugitems` search, which prefills `strength_text` from `strength`/`units` (e.g. "500 mg") so same-name drugs stay distinguishable. The printed sheet hides the Thai unit suffix. `stock_text` is `units-per-pack/stock-packs` ("10/20" = 10 tablets per pack, 20 packs on hand); leading numbers are parsed, units after them are ignored.
 - `DrugItem { icode, name, strength, units }` - a `drugitems` search hit.
 - `UsageRow { icode, qty }` - one grouped usage result from HOSxP.
-- `ReportSection { category_id, category_name, rows: Vec<ReportRow> }`, `ReportRow { icode, name, strength_text, stock_text, usage, requested, max_requested }` - the printable table. `requested` starts as `ceil(usage / units-per-pack)`, capped at the stock pack count (`max_requested`); it is editable in whole packs before printing. A stock label without a slash falls back to whole usage with no cap.
+- `ReportSection { category_id, category_name, rows: Vec<ReportRow> }`, `ReportRow { icode, name, strength_text, stock_text, usage, requested, max_requested, added, reason }` - the printable table. `build_report` includes **only drugs with `usage > 0`**, so a quiet night does not print the whole catalog. `requested` starts as `ceil(usage / units-per-pack)`, capped at the stock pack count (`max_requested`); it is editable in whole packs before printing. `added` marks an operator-added configured drug (usage 0) and `reason` records why the row was added or its requested quantity changed; `has_adjustment()` identifies the rows that feed the printed reason table. A stock label without a slash falls back to whole usage with no cap.
 - `ReportMeta { hospital_name, document_title, department_name }` - the printed header block; defaults for Sra Bos Hospital.
 - `OfficerAccount` (backend-only) - one `officer` row: login name, MD5 hash, active flag, auth type, doctor code, display name. `SessionUser` - the sanitized login result (id, login name, display name, doctor code, role) sent over IPC. `ConnectionSummary` - host/port/database/user used to prefill the connection editor; never the password and never displayed on the login summary.
 
@@ -144,20 +144,30 @@ by screen and print.
 2. "ดึงข้อมูล" reads usage for **all configured icodes at once** (one grouped
    query) for the window.
 3. `er-refill-core::build_report` joins catalog + usage into category sections;
-   drugs with no usage show `0` (the pharmacy sees they were not used);
-   each row carries the drug's `strength_text` beside its name and derives
-   "จำนวนเบิก" as whole packs (`ceil(usage / units-per-pack)`, capped at the
-   stock pack count).
-4. Operator may edit each row's "จำนวนเบิก" directly on the sheet; edits are
-   rounded to whole packs and clamped to the same stock cap.
-5. "พิมพ์ใบเบิก" calls `window.print()` on the on-screen sheet - the preview
-   IS the printed output (grouped by category, with the window sentence,
+   **only drugs with `usage > 0` appear** (items that were not used do not
+   clutter the paper); each row carries the drug's `strength_text` beside its
+   name and derives "จำนวนเบิก" as whole packs (`ceil(usage / units-per-pack)`,
+   capped at the stock pack count).
+4. The operator can add configured catalog drugs that had no usage (a row with
+   usage 0) and may change any row's "จำนวนเบิก". **Every manual add or
+   quantity change requires a reason** (`er-refill-core::add_configured_drug`
+   / `adjust_requested`); the values are rounded to whole packs and clamped to
+   the same stock cap. The sheet prints a final
+   **"ยาที่ขอเพิ่มหรือขอแก้ไขจำนวนเบิก"** table (drug name + reason only) on the
+   last page, after the main table and before the signatures.
+5. Printing is gated: "ยืนยันข้อมูลเบิก" opens a confirmation dialog and
+   snapshots the rows, reasons, window, and printed header. The print button
+   stays disabled until that snapshot exists, and the print action re-checks
+   that the current data is identical. "พิมพ์ใบเบิก" then calls
+   `window.print()` on the on-screen sheet - the preview IS the printed output
+   (bear mark at the top-left, grouped by category, with the window sentence,
    hospital header, and ผู้เบิก/ผู้จ่าย signature blocks). The ผู้เบิก
    parentheses use the signed-in officer's display name; the ผู้จ่าย line is
    left blank for the pharmacy. The sheet paginates at **40 drug rows per A4
-   page** (`er-refill-core::paginate_sections`) so the 69-item pilot list
-   prints on two sheets; split categories continue with "(ต่อ)" and the
-   signatures render on the last page only.
+   page** (`er-refill-core::paginate_sections`); split categories continue with
+   "(ต่อ)" and the signatures/adjustment table render on the last page only.
+   Any later edit invalidates the confirmation and disables printing until the
+   operator confirms again.
 
 ## 9. Performance
 
@@ -207,14 +217,16 @@ by screen and print.
 
 - `er-refill-core` + `er-refill-models`: the default suite (`cargo test` at root) -
   window algorithm (all seven example days + custom hours + invalid input),
-  catalog operations, report building, Thai formatting, MD5 verification.
+  catalog operations, report building (usage-only rows, catalog-order additions,
+  required reasons, stock caps), Thai formatting, MD5 verification.
   No DB required.
 - `er-refill-hosxp-connector`: unit tests for the guard and encrypted config run in
   the default suite; live-DB checks are gated behind
   `--features integration-tests` (never production).
 - Every SQL constant gets a guard assertion test.
-- `app/`: host tests for pure logic; `wasm-bindgen-test` for the IPC mock
-  contract (separate workspace - run explicitly).
+- `app/`: host tests for pure logic and the print-confirmation snapshot
+  (`state.rs`); `wasm-bindgen-test` for the IPC mock contract (separate
+  workspace - run explicitly).
 
 ## 14. Style and conventions
 

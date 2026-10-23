@@ -10,14 +10,15 @@ work actually happens** - but re-anchors the palette on the nurse-bear mark:
 pastel rose for the working system, warm bear gold for the mascot.
 
 **The signature element is the sheet** - the A4 requisition itself, staged on
-a soft desk surface as a live preview: hospital header, the window sentence
-in full Thai ("วันอาทิตย์ที่ 18 ตุลาคม 2569 เวลา 16:00 น. ถึง วันจันทร์ที่ 19
-ตุลาคม 2569 เวลา 08:30 น."), the grouped drug table with editable จำนวนเบิก
-cells, and the ผู้เบิก/ผู้จ่าย signature blocks. The screen and the printer
-share one DOM and one stylesheet - what the pharmacist verifies is exactly
-what prints; there is no separate preview mode. The command bar above the
-desk is the only control surface, and it states the window compactly
-(rose = auto, amber = overridden - never silent).
+a soft desk surface as a live preview: the bear mark at the top-left, hospital
+header, the window sentence in full Thai ("วันอาทิตย์ที่ 18 ตุลาคม 2569 เวลา
+16:00 น. ถึง วันจันทร์ที่ 19 ตุลาคม 2569 เวลา 08:30 น."), the grouped drug
+table with click-to-edit จำนวนเบิก numbers, the reason table, and the
+ผู้เบิก/ผู้จ่าย signature blocks. The screen and the printer share one DOM and
+one stylesheet - what the pharmacist verifies is exactly what prints; there is
+no separate preview mode. The command bar above the desk is the only control
+surface, and it states the window compactly (rose = auto, amber = overridden -
+never silent).
 
 **Key characteristics:**
 
@@ -29,14 +30,24 @@ desk is the only control surface, and it states the window compactly
   never body text or large surfaces.
 - **Black-pill primary buttons** ({colors.primary} + `{rounded.full}`) for the
   dominant action (พิมพ์ใบเบิก); one rose accent CTA per viewport at most.
+- **Usage-only rows, plus deliberate additions**: the sheet shows only drugs
+  with usage in the window. A configured drug that had no usage can be added
+  manually (usage 0) when the pharmacy knows it is needed.
+- **Every manual change has a reason**: adding a drug or changing จำนวนเบิก
+  opens a reason dialog, and the reasons print as a final
+  "ยาที่ขอเพิ่มหรือขอแก้ไขจำนวนเบิก" table (drug name + reason only).
+- **Confirmed print gate**: the print button stays disabled until the operator
+  confirms the sheet. Confirmation snapshots rows, reasons, window, and header;
+  any later edit invalidates the snapshot and disables printing again.
 - **Bear gold is illustration, not UI**: the amber mascot gradient
-  (`#FDE047 → #F59E0B → #B45309`) belongs to `icon-master.svg` and the login
-  illustration; it is never used for buttons, status, or meaning.
+  (`#FDE047 → #F59E0B → #B45309`) belongs to `icon-master.svg`, the login
+  illustration, and the printed sheet's mark; it is never used for buttons,
+  status, or meaning.
 - **Inter for UI prose, IBM Plex Sans Thai for Thai text, IBM Plex Mono for
   codes and quantities** - numbers must align in columns.
 - **Command bar + paper stage, not a sidebar**: the run controls (date,
-  window, fetch, stats, print) live in one toolbar; the stage below shows
-  the paper. The job is producing a document, not looking something up.
+  window, fetch, add, confirm, print) live in one toolbar; the stage below
+  shows the paper. The job is producing a document, not looking something up.
 - **Tightly-controlled radius scale**: the sheet is paper (no radius); cards
   `{rounded.lg}` (12px), compact UI `{rounded.md}` (8px), all buttons and
   pills `{rounded.full}`.
@@ -196,18 +207,21 @@ the logout action beside the connection status.
 ┌──────────────────────────────────────────────────────────────────────┐
 │ Top bar (48px: mark · ER-Refill · ระบบใบเบิกยาห้องฉุกเฉิน · status · ตั้งค่า) │
 ├──────────────────────────────────────────────────────────────────────┤
-│ COMMAND BAR (the only control surface; two rows when editing)        │
+│ COMMAND BAR (the only control surface; stacks under 1280px)          │
 │  วันที่เบิก [date] │ ช่วงเวลา 20 ต.ค. 20:30 → 21 ต.ค. 08:30 [อัตโนมัติ]   │
-│  [แก้ไขช่วงเวลา]        รายการยา 69 · ใช้ 12 · เบิกรวม 34 [ดึงใหม่] [พิมพ์ใบเบิก] │
+│  [แก้ไขช่วงเวลา]   ในใบเบิก 12 · ใช้ 10 · ขอเพิ่ม/แก้ไข 2 · เบิกรวม 34      │
+│  [เพิ่มรายการยา] [ดึงใหม่] [ยืนยันข้อมูลเบิก] [พิมพ์ใบเบิก]              │
 ├──────────────────────────────────────────────────────────────────────┤
 │ STAGE (desk surface, scrollable)                                     │
 │                                                                      │
 │        ┌─────────────────────────────┐  ← THE SHEET (A4 preview)    │
-│        │  โรงพยาบาลสระโบสถ์           │    = the printed output:      │
+│        │ [bear] โรงพยาบาลสระโบสถ์      │    = the printed output:      │
 │        │  ใบเบิกยาประจำห้องฉุกเฉินรายวัน │      one DOM, one CSS        │
 │        │  ช่วงเวลาเบิก: ...            │                               │
 │        │  [table: ลำดับ ชื่อยา+ความแรง │                               │
 │        │   จำนวน/Stock จำนวนใช้ จำนวนเบิก]│                             │
+│        │  ยาที่ขอเพิ่มหรือขอแก้ไขจำนวนเบิก │                             │
+│        │  [ชื่อยา │ เหตุผล]            │                               │
 │        │  ลงชื่อ ผู้เบิก │ ลงชื่อ ผู้จ่าย │                               │
 │        └─────────────────────────────┘                              │
 └──────────────────────────────────────────────────────────────────────┘
@@ -218,8 +232,9 @@ pattern of the sibling AllerX tool); it is "verify a document, then print
 it". Established document tools teach the same lesson: the print preview
 must reuse the same DOM and CSS as the print output, or the preview lies.
 So the sheet is rendered once, on screen, exactly as it prints - the
-operator corrects จำนวนเบิก directly on the paper they will sign, and the
-command bar above holds the few run controls. No second layout exists.
+operator corrects จำนวนเบิก on the paper they will sign, explains each change
+in a dialog, then confirms the print snapshot before printing. No second
+layout exists.
 
 ### Grid & Container
 
@@ -233,7 +248,9 @@ command bar above holds the few run controls. No second layout exists.
   `64px` จำนวนใช้ / `76px` จำนวนเบิก.
 - จำนวนเบิก starts as whole packs: `ceil(usage / units-per-pack)` from the
   จำนวน/Stock setting, capped at the stock pack count; the operator can
-  adjust it on the sheet.
+  adjust it on the sheet with a required reason.
+- The reason table uses the same table chrome with two columns:
+  `34%` ชื่อยา / `66%` เหตุผล.
 
 ## Elevation & Depth
 
@@ -256,7 +273,7 @@ print.
 
 | Token | Value | Use |
 |---|---|---|
-| `{rounded.xs}` | 4px | Inline code chips (`icode`), the จำนวนเบิก input |
+| `{rounded.xs}` | 4px | Inline code chips (`icode`), the จำนวนเบิก cell |
 | `{rounded.sm}` | 6px | Category nav items, badges, status chips |
 | `{rounded.md}` | 8px | Inputs, search pill, picker cards |
 | `{rounded.lg}` | 12px | Settings modal, login card |
@@ -383,42 +400,57 @@ reason this card exists; the requisition never hides the window it covers.
 gold-gradient head and ears, white nurse cap with a rose cross, a cream
 muzzle, hugging paws, and a white medical heart with a rose cross.
 `icon-master.svg` is the source for every Tauri platform icon; `BrandMark`
-mirrors the same bear in the top bar and splash at 28px.
+mirrors the same bear in the top bar and splash at 28px, and at 15mm in the
+top-left corner of every printed sheet page.
 
-**`command-bar`** - The only control surface, two rows tall when editing:
+**`command-bar`** - The only control surface; it stacks below 1280px:
 - Row 1: a labelled date input · a `run-window` card (heading + badge over
   the short Thai/BE times) · ghost "แก้ไขช่วงเวลา" on the left. On the right:
-  one segmented `stat-strip` (รายการยา / มีการใช้ / เบิกรวม, mono numbers) ·
+  one segmented `stat-strip` (ในใบเบิก / มีการใช้ / ขอเพิ่ม/แก้ไข / เบิกรวม,
+  mono numbers).
+- Actions: **เพิ่มรายการยา** (secondary, opens the configured-catalog picker) ·
   ดึงข้อมูล (primary when the sheet is empty, secondary "ดึงใหม่" after) ·
-  **พิมพ์ใบเบิก** (black pill, disabled until the sheet exists).
+  **ยืนยันข้อมูลเบิก** (rose accent; replaced by a success `confirm-chip` with
+  the confirmation time) · **พิมพ์ใบเบิก** (black pill, disabled until the sheet
+  is confirmed; any edit disables it again).
 - Row 2 (collapsed by default): an inset surface card with the manual window
   editors (`datetime-local` × 2) + ghost "กลับเป็นอัตโนมัติ".
 - Background `{colors.canvas}`, bottom hairline - chrome, not content.
 
 **`sheet`** - The document itself: the A4 paper staged on the desk.
-- Header: hospital name (`{typography.heading-2}` centered), document title,
-  department line - all from `ReportMeta`.
-- Window sentence in full Thai, then the table.
+- Header: the bear `BrandMark` at the top-left (15mm), hospital name
+  (`{typography.heading-2}` centered), document title, and department line -
+  the text comes from `ReportMeta`.
+- Window sentence in full Thai, then the table. Only drugs with usage in the
+  window are present; configured drugs with no usage stay hidden unless the
+  operator adds them (usage 0).
 - Table: header row `{typography.caption}` on `{colors.surface-soft}`,
   `1px solid {colors.hairline}` cells (print: `#999`); category rows bold,
   `{colors.surface-soft}`; name cell = name (600) + strength label
   (`{typography.code-sm}` `{colors.slate}`) so same-name drugs never blur
   together. The printed strength hides the Thai dispensing-unit suffix and no
-  icode is printed; the settings picker still shows both. จำนวนใช้
-  right-aligned mono, จำนวนเบิก the `sheet-request-input`.
+  icode is printed; the settings picker still shows both. จำนวนใช้ is
+  right-aligned mono; จำนวนเบิก is a click-to-edit number button
+  (`sheet__request-button`) that looks like plain printed text.
+- **Reason table**: when any drug was added or its quantity changed, the last
+  page carries "ยาที่ขอเพิ่มหรือขอแก้ไขจำนวนเบิก" after the main table and
+  before the signatures - exactly two columns, ชื่อยา and เหตุผล. The reasons
+  are part of the confirmed print snapshot.
 - Signature blocks (ลงชื่อ ผู้เบิก / ผู้จ่าย + date lines) are visible on
   screen too - the preview is the paper, and they render on the **last
   page only**. The ผู้เบิก line prints the signed-in officer's display name
   in parentheses; the ผู้จ่าย line stays blank for the pharmacy.
 - **Pagination is explicit**: one `<article class="sheet">` per A4 page,
-  at most **40 drug rows per page** (`er-refill-core::ROWS_PER_PAGE`), so the
-  69-item pilot list always prints on two sheets. Every page repeats the
-  header block, the window sentence, and the column headers; a split
-  category continues with "(ต่อ)"; the footer carries หน้า X / Y (and the
-  print stamp on the last page). Row metrics (11.5px text, `2px 6px` cell
-  padding, 20px input) are tuned to this budget - do not loosen them
-  without redoing the math.
-- Ordering is the catalog order - never re-sorted by quantity.
+  at most **40 drug rows per page** (`er-refill-core::ROWS_PER_PAGE`); the
+  reason table shares the last page. Every page repeats the header block, the
+  window sentence, and the column headers; a split category continues with
+  "(ต่อ)"; the footer carries หน้า X / Y (and the print stamp on the last
+  page). Row metrics (11.5px text, `2px 6px` cell padding, 20px number button)
+  are tuned to this budget - do not loosen them without redoing the math.
+- An empty report still renders one sheet page with the header and an "add a
+  drug" hint, so the operator can start from a quiet night.
+- Ordering is the catalog order - never re-sorted by quantity; added drugs are
+  inserted in catalog order.
 
 **`signature-block`** - Always visible at the sheet's foot (the screen
 previews the paper): two columns "ลงชื่อ .................................. ผู้เบิก" /
@@ -433,10 +465,31 @@ A4 portrait 12mm margins own it now), and shadow. The `@page` block also
 declares empty top/bottom margin boxes, which suppresses Chromium's automatic
 title/URL header and footer while keeping the 12mm paper margin. Cell borders
 darken to `#999`, header/category backgrounds go transparent, and the
-จำนวนเบิก input prints its value plainly. Every sheet after the first starts
-a new printed page (`break-before: page`), and rows are `break-inside: avoid`
-so nothing is ever sliced. One DOM, one stylesheet - the preview cannot
-diverge from the printout.
+จำนวนเบิก number prints plainly. Every sheet after the first starts a new
+printed page (`break-before: page`), and rows are `break-inside: avoid` so
+nothing is ever sliced. One DOM, one stylesheet - the preview cannot diverge
+from the printout.
+
+**`add-drug-dialog`** - `dialog dialog--wide` opened by "เพิ่มรายการยา". It
+lists **configured catalog drugs only** (excluding rows already on the sheet),
+grouped in catalog order with name, icode, category, strength, and stock; a
+search field filters locally. Selecting a drug reveals จำนวนเบิก and a required
+reason. Confirming inserts the row with usage 0 in catalog order and records
+the reason; the print confirmation is invalidated.
+
+**`adjust-reason-dialog`** - Opened by clicking a จำนวนเบิก number on the
+sheet. It shows the drug, the old → new quantity, the stock ceiling, and a
+required reason. Confirming applies the rounded/clamped quantity and updates
+the row's reason; cancelling changes nothing. Both this dialog and the add
+dialog invalidate the print confirmation.
+
+**`confirm-dialog`** - The print gate. It summarises the window, number of
+rows, total requested, and the count of added/edited rows. Confirming snapshots
+rows + reasons + window + header into `ConfirmedRequisition`; the print button
+only becomes enabled for that snapshot, and the print action re-checks that the
+current data is identical. Any later fetch, date/window change, catalog/schedule
+edit, add, or quantity change clears the snapshot and disables printing until
+the operator confirms again.
 
 **`settings-modal`** - `{elevation.3}` dialog over a `rgba(17,17,19,0.4)`
 backdrop, `{rounded.lg}`, max-width 960px. A 200px vertical `settings-nav`
@@ -452,7 +505,8 @@ connection credentials.
 
 **`banner`** - Degraded-connection / save-failure strip at the top of the
 stage: amber pair (`{colors.warn-bg}`/`{colors.warn-text}`) with a dismiss
-ghost button. Error banners use the red pair.
+ghost button. Error banners use the red pair. Success/info strips auto-dismiss
+after 5 seconds; warning/error strips stay until dismissed.
 
 **`category-list` / `drug-picker`** - Catalog manager: left mini-list of
 categories (`{typography.body-sm-medium}`), right list of drugs with
@@ -480,6 +534,10 @@ drug's `strengthText`, and the printed sheet trims the Thai unit suffix.
   auto, amber = overridden); never make the override silent.
 - Render strength beside the drug name everywhere (catalog, sheet, paper) so
   same-name drugs (Paracetamol 325 vs 500) never blur.
+- Require a reason for every manual add or จำนวนเบิก change; show it in the
+  reason table and keep it in the confirmed snapshot.
+- Keep the print gate explicit: print is disabled until confirmation, and any
+  edit invalidates the confirmation.
 - Use `150-200ms ease` for state transitions; `{prefers-reduced-motion}`
   disables them.
 
@@ -495,8 +553,13 @@ drug's `strengthText`, and the printed sheet trims the Thai unit suffix.
 - Don't build a second layout for printing: the stage sheet IS the print
   output (same DOM, same stylesheet); a separate hidden sheet is a bug
   waiting to happen.
+- Don't add a drug that is not in the configured catalog, and don't add a row
+  twice - additions are catalog-only and uniqued by icode.
+- Don't print without a valid confirmation snapshot; don't let an edit leave
+  the print button enabled.
 - Don't re-sort the requisition table by usage - the order mirrors the
-  physical form and the pharmacy's pick route.
+  physical form and the pharmacy's pick route; manual additions follow catalog
+  order.
 - Don't render Thai text in a Latin-only stack or Latin codes in the Thai
   face - the assignment is the brand voice.
 - Don't reduce table text below 12.5px - legibility at arm's length beats
@@ -508,9 +571,9 @@ A fixed-purpose desktop window (Tauri), 1120×800 default, min 900×620:
 
 | Window width | Behavior |
 |---|---|
-| < 1100px | Command bar stacks into two intentional rows (run context, then stats + actions); the sheet goes full-width with reduced padding; the settings nav rail turns horizontal and the catalog collapses to one column. |
-| 1100-1279px | Command bar on one row; the sheet stays at `min(210mm, 100%)`. |
-| ≥ 1280px | Full command bar; the sheet centered on the desk with breathing room. |
+| < 960px | The sheet goes full-width with reduced padding; the settings nav rail turns horizontal and the catalog collapses to one column. |
+| < 1280px | Command bar stacks into two intentional rows (run context, then stats + actions); the action buttons wrap rather than overflow. |
+| ≥ 1280px | Full command bar; the sheet stays at `min(210mm, 100%)` and is centered on the desk with breathing room. |
 
 Touch targets: buttons 40px effective height, icon-circular 32px desktop.
 This is a mouse-class desktop app; there is no mobile layout.
@@ -544,3 +607,5 @@ This is a mouse-class desktop app; there is no mobile layout.
   ported - only its gradient treatment survives, once, on the login brand panel.
 - Print-color fidelity is assumed (rose/amber bands print as ink-saving text
   only; the sheet is black-on-white by design).
+- The reason table shares the last A4 page with the signatures; a very large
+  number of manual adjustments may need a manual page review before printing.

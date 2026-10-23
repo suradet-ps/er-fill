@@ -240,7 +240,7 @@ pub fn CatalogPanel(state: AppState) -> impl IntoView {
                                 settings.catalog = catalog;
                             }
                         });
-                        state.sections.set(None);
+                        state.clear_requisition();
                         dirty.set(false);
                         status.set(Some(StatusMessage::ok("บันทึกรายการยาแล้ว")));
                     }

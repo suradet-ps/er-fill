@@ -41,6 +41,10 @@ pub fn ReportPanel(state: AppState) -> impl IntoView {
                                 settings.report = report;
                             }
                         });
+                        if let Some(sections) = state.sections.get_untracked() {
+                            state.sections.set(Some(sections));
+                        }
+                        state.invalidate_confirmation();
                         status.set(Some(StatusMessage::ok("บันทึกหัวใบเบิกแล้ว")));
                     }
                     Err(err) => status.set(Some(StatusMessage::error(err.message))),

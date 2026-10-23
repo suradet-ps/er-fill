@@ -17,8 +17,9 @@ All notable changes to ER-Refill are documented here. The format follows
 - Replaced the login brand copy and proof points with a custom requisition
   illustration, and trimmed the login/connection panels of the read-only and
   encryption explanatory paragraphs.
-- Redrew the app icon and top-bar mark as a requisition sheet with a pill
-  stamp, and regenerated every Tauri platform icon from `icon-master.svg`.
+- Redrew the app icon and top-bar mark as a nurse bear with a nurse cap and a
+  medical heart, regenerated every Tauri platform icon from `icon-master.svg`,
+  and re-themed the UI to the rose/bear-gold palette.
 - The top-bar name now falls back to `doctor.name` (via `officer_doctor_code`)
   when the officer name columns are blank, then to the login name.
 - The printed requisition now fills the ผู้เบิก signature block with the
@@ -30,9 +31,17 @@ All notable changes to ER-Refill are documented here. The format follows
   (`units-per-pack/stock-packs`): `ceil(usage / units-per-pack)`, capped at
   the stock pack count; manual edits are rounded and clamped the same way.
 - Narrowed the จำนวน/Stock, จำนวนใช้, and จำนวนเบิก columns on the sheet.
+- The requisition now shows only drugs with usage in the window; configured
+  drugs with no usage can be added manually (usage 0) from the catalog-only
+  picker. Every add or จำนวนเบิก change requires a reason, printed in a final
+  "ยาที่ขอเพิ่มหรือขอแก้ไขจำนวนเบิก" table (drug name + reason).
+- Printing is gated by an explicit confirmation snapshot of the rows, reasons,
+  window, and header. The print button stays disabled until confirmation, and
+  any later edit invalidates it. The nurse-bear mark now sits at the top-left
+  of every printed sheet page.
 - Reworked the command bar: labelled date control, compact window card with
-  short Thai/BE times and badge, segmented stat strip, and a deliberate
-  two-row layout below 1100px.
+  short Thai/BE times and badge, segmented stat strip, a confirmation chip /
+  add-drug action, and a deliberate two-row layout below 1280px.
 - Redrew the UI icon set as a custom monoline family (1.8px stroke) with new
   pencil, refresh, printer, calendar, clipboard, file, trash, and database
   glyphs.
@@ -55,6 +64,9 @@ All notable changes to ER-Refill are documented here. The format follows
 
 ### Fixed
 
+- Saving an edited จำนวนเบิก now closes the reason dialog before the sheet
+  refresh, and success/info strips auto-dismiss after 5 seconds, so a saved
+  edit no longer leaves a lingering popup/banner.
 - Printed sheets no longer carry the browser's automatic title/URL header and
   footer: empty `@page` margin boxes suppress them while the A4 12mm margins
   remain.

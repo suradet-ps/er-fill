@@ -8,6 +8,7 @@ pub mod empty_state;
 pub mod icons;
 pub mod login_screen;
 pub mod report_panel;
+pub mod requisition_dialogs;
 pub mod schedule_panel;
 pub mod settings_modal;
 pub mod top_bar;

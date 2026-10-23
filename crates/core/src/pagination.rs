@@ -76,6 +76,8 @@ pub struct SheetPage {
 ///     usage: i as f64,
 ///     requested: i as f64,
 ///     max_requested: None,
+///     added: false,
+///     reason: String::new(),
 /// };
 /// let section = ReportSection {
 ///     category_id: "cat-1".into(),
@@ -155,6 +157,8 @@ mod tests {
             usage: 1.0,
             requested: 1.0,
             max_requested: None,
+            added: false,
+            reason: String::new(),
         }
     }
 

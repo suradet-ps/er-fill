@@ -8,12 +8,15 @@
 //! continues with "(ต่อ)"; the signature blocks and print stamp render on
 //! the last page only. 69 items therefore always print on two sheets.
 
+use std::time::Duration;
+
 use er_refill_core::{ROWS_PER_PAGE, SheetPage, paginate_sections};
 use er_refill_models::{ReportSection, format_qty, format_thai_datetime_full};
 use leptos::prelude::*;
 
 use crate::components::icons::IconX;
-use crate::state::AppState;
+use crate::components::top_bar::BrandMark;
+use crate::state::{AppState, BannerKind, PendingEdit};
 
 /// The printed sheet shows the strength only. HOSxP's `units` column (the
 /// dispensing unit, e.g. "เม็ด (Cat B)") is appended to the catalog strength
@@ -37,13 +40,34 @@ pub fn DocumentSheet(state: AppState, sections: Vec<ReportSection>) -> impl Into
         .get()
         .map(|settings| settings.report)
         .unwrap_or_default();
-    let pages = paginate_sections(&sections, ROWS_PER_PAGE);
+    let adjustments: Vec<(String, String)> = sections
+        .iter()
+        .flat_map(|section| section.rows.iter())
+        .filter(|row| row.has_adjustment())
+        .map(|row| (row.name.clone(), row.reason.trim().to_string()))
+        .collect();
+    let mut pages = paginate_sections(&sections, ROWS_PER_PAGE);
+    if pages.is_empty() {
+        pages.push(SheetPage {
+            number: 1,
+            count: 1,
+            is_last: true,
+            sections: Vec::new(),
+        });
+    }
 
     view! {
         {pages
             .into_iter()
             .map(|page| {
-                view! { <SheetPageView state=state.clone() page=page meta=meta.clone() /> }
+                view! {
+                    <SheetPageView
+                        state=state.clone()
+                        page=page
+                        meta=meta.clone()
+                        adjustments=adjustments.clone()
+                    />
+                }
             })
             .collect_view()}
     }
@@ -55,17 +79,24 @@ fn SheetPageView(
     state: AppState,
     page: SheetPage,
     meta: er_refill_models::ReportMeta,
+    adjustments: Vec<(String, String)>,
 ) -> impl IntoView {
     let is_last = page.is_last;
     let page_label = format!("หน้า {} / {}", page.number, page.count);
     let sections = page.sections;
+    let has_sections = !sections.is_empty();
 
     view! {
         <article class="sheet">
             <header class="sheet__header">
-                <h1 class="sheet__hospital">{meta.hospital_name.clone()}</h1>
-                <h2 class="sheet__title">{meta.document_title.clone()}</h2>
-                <p class="sheet__department">{meta.department_name.clone()}</p>
+                <div class="sheet__logo">
+                    <BrandMark />
+                </div>
+                <div class="sheet__heading">
+                    <h1 class="sheet__hospital">{meta.hospital_name.clone()}</h1>
+                    <h2 class="sheet__title">{meta.document_title.clone()}</h2>
+                    <p class="sheet__department">{meta.department_name.clone()}</p>
+                </div>
             </header>
             <p class="sheet__window">
                 "ช่วงเวลาเบิก: "
@@ -117,34 +148,26 @@ fn SheetPageView(
                                     .rows
                                     .into_iter()
                                     .map(|placed| {
-                                        let section_index = placed.section_index;
                                         let row_index = placed.row_index;
                                         let row = placed.row;
-                                        let max_requested = row.max_requested;
                                         let strength =
                                             printed_strength(&row.strength_text).to_string();
-                                        let on_request = {
+                                        let edit_icode = row.icode.clone();
+                                        let edit_name = row.name.clone();
+                                        let edit_strength = row.strength_text.clone();
+                                        let edit_requested = row.requested;
+                                        let edit_max = row.max_requested;
+                                        let on_edit = {
                                             let state = state.clone();
-                                            move |ev| {
-                                                let raw = event_target_value(&ev);
-                                                let Ok(value) = raw.parse::<f64>() else {
-                                                    return;
-                                                };
-                                                if !(value.is_finite() && value >= 0.0) {
-                                                    return;
-                                                }
-                                                let value = value.round();
-                                                let value = max_requested
-                                                    .map_or(value, |max| value.min(max));
-                                                state.sections.update(|sections| {
-                                                    if let Some(row) = sections
-                                                        .as_mut()
-                                                        .and_then(|sections| sections.get_mut(section_index))
-                                                        .and_then(|section| section.rows.get_mut(row_index))
-                                                    {
-                                                        row.requested = value;
-                                                    }
-                                                });
+                                            move |_| {
+                                                state.pending_edit.set(Some(PendingEdit {
+                                                    icode: edit_icode.clone(),
+                                                    name: edit_name.clone(),
+                                                    strength_text: edit_strength.clone(),
+                                                    old_requested: edit_requested,
+                                                    new_requested: edit_requested,
+                                                    max_requested: edit_max,
+                                                }));
                                             }
                                         };
                                         view! {
@@ -164,16 +187,15 @@ fn SheetPageView(
                                                 <td class="sheet__stock-cell">{row.stock_text.clone()}</td>
                                                 <td class="sheet__num">{format_qty(row.usage)}</td>
                                                 <td class="sheet__request-cell">
-                                                    <input
-                                                        class="sheet__request-input"
-                                                        type="number"
-                                                        min="0"
-                                                        step="1"
-                                                        max=row.max_requested.map(format_qty).unwrap_or_default()
-                                                        value=format_qty(row.requested)
-                                                        on:change=on_request
-                                                        aria-label=format!("จำนวนเบิก {}", row.name)
-                                                    />
+                                                    <button
+                                                        type="button"
+                                                        class="sheet__request-button"
+                                                        title="แก้ไขจำนวนเบิก (ต้องระบุเหตุผล)"
+                                                        aria-label=format!("แก้ไขจำนวนเบิก {}", row.name)
+                                                        on:click=on_edit
+                                                    >
+                                                        {format_qty(row.requested)}
+                                                    </button>
                                                 </td>
                                             </tr>
                                         }
@@ -183,10 +205,54 @@ fn SheetPageView(
                         }
                     })
                     .collect_view()}
+                {(!has_sections)
+                    .then(|| {
+                        view! {
+                            <tbody>
+                                <tr class="sheet__empty-row">
+                                    <td colspan="5">
+                                        "ยังไม่มีรายการยาในช่วงเวลานี้ — กด \"เพิ่มรายการยา\" เพื่อขอเบิก"
+                                    </td>
+                                </tr>
+                            </tbody>
+                        }
+                    })}
             </table>
             {is_last
                 .then(|| {
                     view! {
+                        {(!adjustments.is_empty())
+                            .then(|| {
+                                let rows = adjustments
+                                    .into_iter()
+                                    .map(|(name, reason)| {
+                                        view! {
+                                            <tr class="sheet__row">
+                                                <td class="sheet__adjustment-name">{name}</td>
+                                                <td class="sheet__adjustment-reason">{reason}</td>
+                                            </tr>
+                                        }
+                                    })
+                                    .collect_view();
+                                view! {
+                                    <h3 class="sheet__adjustments-title">
+                                        "ยาที่ขอเพิ่มหรือขอแก้ไขจำนวนเบิก"
+                                    </h3>
+                                    <table class="sheet__table sheet__adjustments">
+                                        <colgroup>
+                                            <col class="sheet__col-adjust-name" />
+                                            <col class="sheet__col-adjust-reason" />
+                                        </colgroup>
+                                        <thead>
+                                            <tr>
+                                                <th>"ชื่อยา"</th>
+                                                <th>"เหตุผล"</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>{rows}</tbody>
+                                    </table>
+                                }
+                            })}
                         <div class="sheet__signatures">
                             <div class="sheet__signature">
                                 <div class="sheet__signature-inner">
@@ -235,10 +301,34 @@ fn SheetPageView(
     }
 }
 
-/// Small dismissible strip used above the sheet (errors, warnings).
+/// Small dismissible strip used above the sheet. Success/info strips dismiss
+/// themselves; warnings and errors stay until the operator closes them.
 #[component]
 pub fn SheetBanner(state: AppState) -> impl IntoView {
     let banner_state = state.clone();
+    let auto_dismiss_state = state.clone();
+    Effect::new(move |_| {
+        let Some(banner) = auto_dismiss_state.banner.get() else {
+            return;
+        };
+        if banner.kind != BannerKind::Info {
+            return;
+        }
+        let message = banner.message.clone();
+        let state = auto_dismiss_state.clone();
+        let _ = set_timeout_with_handle(
+            move || {
+                let still_same = state.banner.get_untracked().is_some_and(|current| {
+                    current.kind == BannerKind::Info && current.message == message
+                });
+                if still_same {
+                    state.banner.set(None);
+                }
+            },
+            Duration::from_secs(5),
+        );
+    });
+
     view! {
         {move || {
             banner_state
@@ -246,9 +336,9 @@ pub fn SheetBanner(state: AppState) -> impl IntoView {
                 .get()
                 .map(|banner| {
                     let class = match banner.kind {
-                        crate::state::BannerKind::Error => "banner banner--error",
-                        crate::state::BannerKind::Warn => "banner banner--warn",
-                        crate::state::BannerKind::Info => "banner banner--info",
+                        BannerKind::Error => "banner banner--error",
+                        BannerKind::Warn => "banner banner--warn",
+                        BannerKind::Info => "banner banner--info",
                     };
                     let close_state = banner_state.clone();
                     view! {

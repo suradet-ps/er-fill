@@ -84,7 +84,7 @@ pub fn SchedulePanel(state: AppState) -> impl IntoView {
                             }
                         });
                         state.recompute_window();
-                        state.sections.set(None);
+                        state.clear_requisition();
                         status.set(Some(StatusMessage::ok("บันทึกเวลาทำการแล้ว")));
                     }
                     Err(err) => status.set(Some(StatusMessage::error(err.message))),

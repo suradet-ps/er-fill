@@ -34,9 +34,10 @@ web-sys = { version = "0.3", features = [
     "Event",
     "File",              # imported settings file
     "FileList",          # picker output
-    "HtmlAnchorElement", # download anchor
-    "HtmlElement",       # window.print() + anchor click
-    "HtmlInputElement",  # hidden file input
+    "HtmlAnchorElement",   # download anchor
+    "HtmlElement",         # window.print() + anchor click
+    "HtmlInputElement",    # hidden file input
+    "HtmlTextAreaElement", # reason fields in the requisition dialogs
     "MouseEvent",
     "Node",              # append/remove the anchor
     "SubmitEvent",

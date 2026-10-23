@@ -9,7 +9,7 @@ use chrono::{NaiveDate, NaiveDateTime};
 use er_refill_models::{RequisitionWindow, format_qty, format_thai_datetime_short};
 use leptos::prelude::*;
 
-use crate::components::icons::{IconPencil, IconPrinter, IconRefresh, IconX};
+use crate::components::icons::{IconCheck, IconPencil, IconPlus, IconPrinter, IconRefresh, IconX};
 use crate::state::{AppState, Banner};
 
 /// Buffer before `window.print()` so the sheet reflects the latest state
@@ -36,7 +36,7 @@ pub fn CommandBar(state: AppState) -> impl IntoView {
             if let Ok(date) = NaiveDate::parse_from_str(&raw, "%Y-%m-%d") {
                 state.selected_date.set(date);
                 state.recompute_window();
-                state.sections.set(None);
+                state.clear_requisition();
             }
         }
     };
@@ -72,7 +72,7 @@ pub fn CommandBar(state: AppState) -> impl IntoView {
                 Ok(window) => {
                     state.window.set(Some(window));
                     state.window_custom.set(true);
-                    state.sections.set(None);
+                    state.clear_requisition();
                     state.banner.set(None);
                 }
                 Err(_) => state
@@ -83,6 +83,7 @@ pub fn CommandBar(state: AppState) -> impl IntoView {
     };
     let on_start_change = {
         let state = state.clone();
+        let apply_manual = apply_manual.clone();
         move |ev| {
             let raw = event_target_value(&ev);
             let end = state
@@ -109,7 +110,7 @@ pub fn CommandBar(state: AppState) -> impl IntoView {
         let state = state.clone();
         move |_| {
             state.recompute_window();
-            state.sections.set(None);
+            state.clear_requisition();
         }
     };
 
@@ -121,6 +122,14 @@ pub fn CommandBar(state: AppState) -> impl IntoView {
     let on_print = {
         let state = state.clone();
         move |_| {
+            if !state.print_snapshot_matches() {
+                state.confirmed.set(None);
+                state.printed_at.set(None);
+                state
+                    .banner
+                    .set(Some(Banner::warn("ข้อมูลเปลี่ยนแล้ว กรุณายืนยันข้อมูลเบิกใหม่ก่อนพิมพ์")));
+                return;
+            }
             state
                 .printed_at
                 .set(Some(chrono::Local::now().naive_local()));
@@ -132,6 +141,20 @@ pub fn CommandBar(state: AppState) -> impl IntoView {
                 },
                 PRINT_DELAY,
             );
+        }
+    };
+    let on_open_add = {
+        let state = state.clone();
+        move |_| {
+            state.banner.set(None);
+            state.add_drug_open.set(true);
+        }
+    };
+    let on_open_confirm = {
+        let state = state.clone();
+        move |_| {
+            state.banner.set(None);
+            state.confirm_open.set(true);
         }
     };
     let toggle_edit = {
@@ -207,33 +230,35 @@ pub fn CommandBar(state: AppState) -> impl IntoView {
 
                 <div class="command-bar__actions">
                     {move || {
-                        let drugs = stats_state.catalog_drug_count();
-                        let (used, requested) = stats_state
+                        let (rows, used, adjusted, requested) = stats_state
                             .sections
                             .get()
                             .map(|sections| {
-                                let used = sections
+                                let rows: Vec<&er_refill_models::ReportRow> = sections
                                     .iter()
                                     .flat_map(|section| section.rows.iter())
-                                    .filter(|row| row.usage > 0.0)
-                                    .count();
-                                let requested: f64 = sections
-                                    .iter()
-                                    .flat_map(|section| section.rows.iter())
-                                    .map(|row| row.requested)
-                                    .sum();
-                                (used, requested)
+                                    .collect();
+                                let used = rows.iter().filter(|row| row.usage > 0.0).count();
+                                let adjusted =
+                                    rows.iter().filter(|row| row.has_adjustment()).count();
+                                let requested: f64 =
+                                    rows.iter().map(|row| row.requested).sum();
+                                (rows.len(), used, adjusted, requested)
                             })
-                            .unwrap_or((0, 0.0));
+                            .unwrap_or((0, 0, 0, 0.0));
                         view! {
                             <div class="stat-strip">
                                 <span class="stat">
-                                    <span class="stat__label">"รายการยา"</span>
-                                    <span class="stat__value">{drugs}</span>
+                                    <span class="stat__label">"ในใบเบิก"</span>
+                                    <span class="stat__value">{rows}</span>
                                 </span>
                                 <span class="stat">
                                     <span class="stat__label">"มีการใช้"</span>
                                     <span class="stat__value">{used}</span>
+                                </span>
+                                <span class="stat">
+                                    <span class="stat__label">"ขอเพิ่ม/แก้ไข"</span>
+                                    <span class="stat__value">{adjusted}</span>
                                 </span>
                                 <span class="stat">
                                     <span class="stat__label">"เบิกรวม"</span>
@@ -243,6 +268,14 @@ pub fn CommandBar(state: AppState) -> impl IntoView {
                         }
                     }}
                     <div class="command-bar__buttons">
+                        <button
+                            class="button-secondary"
+                            disabled=move || state.sections.get().is_none() || state.loading.get()
+                            on:click=on_open_add
+                        >
+                            <IconPlus class="icon" />
+                            "เพิ่มรายการยา"
+                        </button>
                         <button
                             class=move || {
                                 if state.sections.get().is_none() {
@@ -265,9 +298,50 @@ pub fn CommandBar(state: AppState) -> impl IntoView {
                                 }
                             }}
                         </button>
+                        {move || {
+                            state.sections.get()?;
+                            if let Some(confirmed) = state.confirmed.get() {
+                                Some(
+                                    view! {
+                                        <span class="confirm-chip" title="ยืนยันข้อมูลเบิกแล้ว">
+                                            <IconCheck class="icon" />
+                                            "ยืนยันแล้ว "
+                                            {confirmed.confirmed_at.format("%H:%M").to_string()}
+                                        </span>
+                                    }
+                                        .into_any(),
+                                )
+                            } else {
+                                let has_rows = state
+                                    .sections
+                                    .get()
+                                    .is_some_and(|sections| {
+                                        sections.iter().any(|section| !section.rows.is_empty())
+                                    });
+                                let busy = state.loading.get();
+                                Some(
+                                    view! {
+                                        <button
+                                            class="button-accent"
+                                            disabled=!has_rows || busy
+                                            on:click=on_open_confirm
+                                        >
+                                            <IconCheck class="icon" />
+                                            "ยืนยันข้อมูลเบิก"
+                                        </button>
+                                    }
+                                        .into_any(),
+                                )
+                            }
+                        }}
                         <button
                             class="button-primary"
-                            disabled=move || state.sections.get().is_none()
+                            disabled=move || {
+                                state.sections.get().is_none()
+                                    || state.confirmed.get().is_none()
+                                    || state.loading.get()
+                            }
+                            title="ต้องยืนยันข้อมูลเบิกก่อนพิมพ์"
                             on:click=on_print
                         >
                             <IconPrinter class="icon" />
@@ -280,6 +354,8 @@ pub fn CommandBar(state: AppState) -> impl IntoView {
             {move || {
                 state.window_edit_open.get().then(|| {
                     let reset_auto = reset_auto.clone();
+                    let on_start_change = on_start_change.clone();
+                    let on_end_change = on_end_change.clone();
                     view! {
                         <div class="command-bar__edit">
                             <span class="command-bar__edit-label">"กำหนดช่วงเวลาเอง"</span>

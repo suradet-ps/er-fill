@@ -24,6 +24,7 @@ use components::command_bar::CommandBar;
 use components::document_sheet::{DocumentSheet, SheetBanner};
 use components::empty_state::{CatalogEmpty, NoDataHint};
 use components::login_screen::{LoginScreen, StartupSplash};
+use components::requisition_dialogs::RequisitionDialogs;
 use components::settings_modal::SettingsModal;
 use components::top_bar::TopBar;
 use state::{AppState, Banner};
@@ -119,6 +120,7 @@ fn App() -> impl IntoView {
                         .into_any()
                 }
             }}
+            <RequisitionDialogs state=state.clone() />
             <SettingsModal state=state.clone() />
         </div>
     }

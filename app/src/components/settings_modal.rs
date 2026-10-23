@@ -338,7 +338,7 @@ async fn persist_import(
         .map_err(|err| err.message)?;
     state.settings.set(Some(settings.clone()));
     state.recompute_window();
-    state.sections.set(None);
+    state.clear_requisition();
     Ok(format!(
         "นำเข้าการตั้งค่าแล้ว: {} หมวด, {} รายการยา",
         settings.catalog.categories.len(),

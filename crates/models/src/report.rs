@@ -62,6 +62,22 @@ pub struct ReportRow {
     /// Highest whole pack count allowed by the configured stock; `None` when
     /// the stock label is not in `units/stock` form.
     pub max_requested: Option<f64>,
+    /// True when the operator added this row manually because it had no
+    /// usage in the window. Added rows always carry a [`Self::reason`].
+    #[serde(default)]
+    pub added: bool,
+    /// Why the operator added this row or changed its requested quantity.
+    /// Empty for rows the report derived automatically.
+    #[serde(default)]
+    pub reason: String,
+}
+
+impl ReportRow {
+    /// True when the row must appear in the printed adjustment table: it was
+    /// added manually or its requested quantity was edited with a reason.
+    pub fn has_adjustment(&self) -> bool {
+        self.added || !self.reason.trim().is_empty()
+    }
 }
 
 /// A category section of the requisition.
@@ -129,6 +145,31 @@ mod tests {
         let json = serde_json::to_string(&row)?;
         assert_eq!(json, r#"{"icode":"1001","qty":2.5}"#);
         Ok(())
+    }
+
+    #[test]
+    fn report_row_adjustment_detection_covers_added_and_reasoned_rows() {
+        let mut row = ReportRow {
+            icode: "1001".into(),
+            name: "Paracetamol".into(),
+            strength_text: "500 mg".into(),
+            stock_text: "10/20".into(),
+            usage: 2.0,
+            requested: 1.0,
+            max_requested: Some(20.0),
+            added: false,
+            reason: String::new(),
+        };
+        assert!(!row.has_adjustment());
+
+        row.reason = "ผู้ป่วยใช้มากกว่าปกติ".into();
+        assert!(row.has_adjustment());
+
+        row.reason = "   ".into();
+        assert!(!row.has_adjustment());
+
+        row.added = true;
+        assert!(row.has_adjustment());
     }
 
     #[test]

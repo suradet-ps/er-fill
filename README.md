@@ -93,11 +93,17 @@ Four crates, one hard law: HOSxP is read-only, without exceptions.
   of any kind.
 - **Prints** - `app` is the Leptos frontend, document-first: the command bar
   holds the run controls, and the stage shows the A4 sheet itself - the
-  same DOM and stylesheet that print. The sheet states the window as a Thai
-  sentence (Buddhist-era), shows จำนวนใช้ next to an editable จำนวนเบิก
+  same DOM and stylesheet that print. Only drugs with usage in the window are
+  on the sheet; a configured drug that was not used can be added manually
+  (usage 0). Every add or จำนวนเบิก change requires a reason and appears in a
+  final "ยาที่ขอเพิ่มหรือขอแก้ไขจำนวนเบิก" table (name + reason). The bear mark
+  sits at the top-left of every page. The sheet states the window as a Thai
+  sentence (Buddhist-era), shows จำนวนใช้ next to the click-to-edit จำนวนเบิก
   (auto-derived as whole packs, capped at stock), and carries the
-  ผู้เบิก/ผู้จ่าย signature blocks; พิมพ์ใบเบิก just calls
-  `window.print()` on what is already on screen.
+  ผู้เบิก/ผู้จ่าย signature blocks. Printing is gated: the operator confirms a
+  snapshot of the rows, reasons, window, and header; only then does
+  พิมพ์ใบเบิก become available, and it calls `window.print()` on exactly that
+  snapshot. Any later edit disables printing until re-confirmation.
 - **Seals** - read-only is enforced in layers: a dedicated user with
   `GRANT SELECT` only, `SET SESSION TRANSACTION READ ONLY` on every pooled
   connection, an application-level guard rejecting anything but a single
@@ -125,13 +131,17 @@ Four crates, one hard law: HOSxP is read-only, without exceptions.
    fetches itself - Sunday 16:00 → Monday 08:30 for a Monday, with the
    "อัตโนมัติ" chip on the window.
 2. The sheet is already staged: one grouped read returned every configured
-   drug's out-of-hours usage, with strength beside each name and จำนวนเบิก
-   derived as whole packs from the จำนวน/Stock setting.
+   drug's out-of-hours usage - only the drugs actually used appear, with
+   strength beside each name and จำนวนเบิก derived as whole packs from the
+   จำนวน/Stock setting.
 3. Review the paper grouped by หมวด; where reality differs from the record,
-   adjust จำนวนเบิก directly in its box - the preview is exactly what prints.
-4. กด "พิมพ์ใบเบิก": the A4 pages (40 items per page, so the 69-item list
-   prints on two sheets, "(ต่อ)" where a category continues) go to the ER
-   to sign and back to the pharmacy to fill.
+   click the จำนวนเบิก number, enter the new quantity and its reason. Configured
+   drugs that had no usage can be added with a reason (their usage stays 0).
+   The preview is exactly what prints, including the reason table.
+4. Confirm the requisition snapshot, then กด "พิมพ์ใบเบิก": the A4 pages (at
+   most 40 drug rows per page, "(ต่อ)" where a category continues, with the
+   reason table and signatures on the last page) go to the ER to sign and back
+   to the pharmacy to fill.
 
 **The ceremony of the honest window** - the printed form always shows the
 window it was built from, as a full Thai sentence. A manual override turns

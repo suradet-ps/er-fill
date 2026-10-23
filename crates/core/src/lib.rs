@@ -26,9 +26,9 @@ pub use auth::{md5_hex, verify_password};
 pub use catalog_ops::{
     add_category, add_drug, move_drug, remove_category, remove_drug, rename_category, update_drug,
 };
-pub use error::CatalogOpsError;
+pub use error::{CatalogOpsError, RequisitionError};
 pub use mock::MockRepository;
 pub use pagination::{PageRow, PageSection, ROWS_PER_PAGE, SheetPage, paginate_sections};
 pub use repository::{HosxRepository, RepositoryError};
-pub use requisition::build_report;
+pub use requisition::{add_configured_drug, adjust_requested, build_report};
 pub use schedule::window_for;
