@@ -1102,9 +1102,9 @@ checksum = "4ef6b89e5b37196644d8796de5268852ff179b44e96276cf4290264843743bb7"
 
 [[package]]
 name = "encryptman"
-version = "0.3.1"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f733c08d7e1a8900f61b29b2e4fe71e47a3d45f0e0f4b3242d4d30fddeb9b34c"
+checksum = "36aff0ba34008b358148dfc333695fd0a5a3ae505ad74c7c0272b09f1ecde6ca"
 dependencies = [
  "aes-gcm",
  "base64 0.23.1",
@@ -1117,9 +1117,9 @@ dependencies = [
 
 [[package]]
 name = "encryptman"
-version = "0.4.0"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "36aff0ba34008b358148dfc333695fd0a5a3ae505ad74c7c0272b09f1ecde6ca"
+checksum = "2af2d062571f0b6e505ce44c752b7d45b693b373a90833ff799b2dc570134008"
 dependencies = [
  "aes-gcm",
  "base64 0.23.1",
@@ -1194,7 +1194,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "chrono",
- "encryptman 0.3.1",
+ "encryptman 0.5.0",
  "encryptman-keyring",
  "er-refill-core",
  "er-refill-models",
