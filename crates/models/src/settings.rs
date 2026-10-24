@@ -1,20 +1,19 @@
-//! The complete set of operator-configurable settings: schedule, catalog,
-//! and report header - shared by the backend (persistence) and the frontend
-//! (editing). Credentials are deliberately **not** here; they live in the
-//! encrypted config file handled by `er-refill-hosxp-connector` (AGENTS.md section 10).
+//! The complete set of operator-configurable settings: catalog and report
+//! header - shared by the backend (persistence) and the frontend (editing).
+//! The run date and time range are deliberately **not** configurable:
+//! the app always uses today and one of the four fixed overnight ranges.
+//! Credentials are not here either; they live in the encrypted config file
+//! handled by `er-refill-hosxp-connector` (AGENTS.md section 10).
 
 use serde::{Deserialize, Serialize};
 
 use crate::catalog::Catalog;
 use crate::report::ReportMeta;
-use crate::schedule::BusinessSchedule;
 
 /// Everything the operator configures besides the connection.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct AppSettings {
-    /// Business hours (the requisition window ends at opening time).
-    pub schedule: BusinessSchedule,
     /// The ER drug list (categories + drugs).
     pub catalog: Catalog,
     /// Printed header block.
@@ -24,7 +23,6 @@ pub struct AppSettings {
 impl Default for AppSettings {
     fn default() -> Self {
         Self {
-            schedule: BusinessSchedule::default(),
             catalog: Catalog::seed_default(),
             report: ReportMeta::default(),
         }
@@ -40,7 +38,6 @@ mod tests {
         let settings = AppSettings::default();
         assert_eq!(settings.catalog.categories.len(), 6);
         assert!(settings.catalog.is_empty());
-        assert_eq!(settings.schedule, BusinessSchedule::default());
         assert_eq!(settings.report, ReportMeta::default());
     }
 
@@ -53,6 +50,19 @@ mod tests {
 
         let partial: AppSettings = serde_json::from_str("{}")?;
         assert_eq!(partial, AppSettings::default());
+        Ok(())
+    }
+
+    #[test]
+    fn legacy_schedule_field_is_ignored() -> Result<(), Box<dyn std::error::Error>> {
+        let json = r#"{
+            "schedule": {
+                "weekday": { "start": "08:30", "end": "20:30" },
+                "weekend": { "start": "08:00", "end": "16:00" }
+            }
+        }"#;
+        let settings: AppSettings = serde_json::from_str(json)?;
+        assert_eq!(settings, AppSettings::default());
         Ok(())
     }
 }

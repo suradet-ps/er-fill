@@ -48,7 +48,6 @@ pub fn run() {
             commands::current_session,
             commands::test_connection,
             commands::load_settings,
-            commands::save_schedule,
             commands::save_catalog,
             commands::save_report,
             commands::search_drugs,

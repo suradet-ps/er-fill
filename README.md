@@ -17,11 +17,12 @@ Operators sign in with their HOSxP **`officer`** account after the database
 connection is verified. ER-Refill then reads the hospital's
 [HOSxP](https://hosxp.org/) record, strictly read-only, and sums how much of
 the configured emergency drug list was used
-**outside business hours** - Sunday 16:00 to Monday 08:30 for a Monday run -
-then prints the Thai requisition sheet (ใบเบิกยาประจำห้องฉุกเฉินรายวัน) for
-the ผู้เบิก / ผู้จ่าย signatures. The window is computed for the operator,
-stated on the paper, and overridable; HOSxP is never written, nothing is
-cached, and no patient appears anywhere - only aggregated quantities.
+**overnight** - for a run on 24 Oct, a chosen range covers 23 Oct's start
+time through 24 Oct's end time - then prints the Thai requisition sheet
+(ใบเบิกยาประจำห้องฉุกเฉินรายวัน) for the ผู้เบิก / ผู้จ่าย signatures. The
+run date is always today (read-only) and the operator must choose one of four
+fixed ranges before fetching; HOSxP is never written, nothing is cached, and
+no patient appears anywhere - only aggregated quantities.
 
 | M0 scaffold ▣ | M1 schema ☐ | M2 catalog ▣ | M3 usage ▣ | M4 print ◐ | M5 pilot ☐ |
 |---|---|---|---|---|---|
@@ -76,10 +77,10 @@ The release artifact: `⟫ cargo tauri build` - output lands in
 Four crates, one hard law: HOSxP is read-only, without exceptions.
 
 - **Decides** - `er-refill-core` is pure Rust with the morning ritual in it:
-  the out-of-hours window algorithm (previous closing to today's opening),
-  catalog operations, and the report builder that joins the configured drug
-  list with usage into category sections. Tested against a mock repository -
-  no live database in the default suite, ever.
+  the overnight window algorithm (previous day's chosen start to today's
+  chosen end), catalog operations, and the report builder that joins the
+  configured drug list with usage into category sections. Tested against a
+  mock repository - no live database in the default suite, ever.
 - **Reads** - `er-refill-hosxp-connector` talks to MySQL/MariaDB through
   `sqlx`: one grouped `SELECT` sums `opitemrece.qty` inside the window for
   every configured icode, joined to `drugitems` (so non-drug charge lines
@@ -110,8 +111,8 @@ Four crates, one hard law: HOSxP is read-only, without exceptions.
   read statement, parameterized queries everywhere. Credentials rest
   AES-256-GCM-encrypted with the key in the OS keychain; the password is a
   `secrecy::SecretString` end to end, zeroized on drop, `Debug`-redacted.
-  The rest of the settings - schedule, catalog, report header - live in a
-  plain JSON file and leave the machine only when the operator exports them.
+  The rest of the settings - catalog and report header - live in a plain JSON
+  file and leave the machine only when the operator exports them.
 - **Signs in** - the login gate verifies the encrypted HOSxP connection,
   reads one `officer` row, checks active/auth type, and compares
   `MD5(password)` with `officer_login_password_md5`. The plaintext hash
@@ -127,13 +128,13 @@ Four crates, one hard law: HOSxP is read-only, without exceptions.
 **The core ceremony** - the morning requisition:
 
 1. Open the app on the run morning: verify the HOSxP connection, sign in
-   with the `officer` account, then the window is computed and the usage
-   fetches itself - Sunday 16:00 → Monday 08:30 for a Monday, with the
-   "อัตโนมัติ" chip on the window.
-2. The sheet is already staged: one grouped read returned every configured
-   drug's out-of-hours usage - only the drugs actually used appear, with
-   strength beside each name and จำนวนเบิก derived as whole packs from the
-   จำนวน/Stock setting.
+   with the `officer` account, then pick one of the four overnight ranges -
+   20:30-08:00, 20:30-08:30, 16:00-08:00, or 16:00-08:30. The date is
+   always today and never editable.
+2. Press "ดึงข้อมูลการใช้ยา": one grouped read returns every configured
+   drug's usage in the chosen window - only the drugs actually used appear,
+   with strength beside each name and จำนวนเบิก derived as whole packs from
+   the จำนวน/Stock setting.
 3. Review the paper grouped by หมวด; where reality differs from the record,
    click the จำนวนเบิก number, enter the new quantity and its reason. Configured
    drugs that had no usage can be added with a reason (their usage stays 0).
@@ -144,9 +145,9 @@ Four crates, one hard law: HOSxP is read-only, without exceptions.
    to the pharmacy to fill.
 
 **The ceremony of the honest window** - the printed form always shows the
-window it was built from, as a full Thai sentence. A manual override turns
-the command-bar chip amber; the requisition never hides which hours it
-covers.
+window it was built from, as a full Thai sentence. The range picker spells out
+the actual previous-day → run-day window before fetching, so the requisition
+never hides which hours it covers.
 
 **The ceremony of restraint** - the app reads a record and prints a paper.
 It stores no patient data and keeps no per-day history that could become a
@@ -159,11 +160,11 @@ second version of the truth. The signed paper is the record of the morning.
 **Where this artifact is heading**
 
 ```
-window  ▸ out-of-hours algorithm, overridable, amber-marked ────── ▸ sealed
+window  ▸ fixed today + 4 overnight range presets, explicit ─────── ▸ sealed
 catalog ▸ 6 หมวด + drugitems picker (strength joined) ───────────── ▸ sealed
 usage   ▸ one grouped, ER-anchored opitemrece read per run ──────── ▸ sealed
 print   ▸ A4 ใบเบิก + Thai/BE labels + signatures ───────────────── ▸ sealed
-travel  ▸ JSON export/import of schedule, catalog, report ──────── ▸ sealed
+travel  ▸ JSON export/import of catalog, report ────────────────── ▸ sealed
 schema  ▸ DBA sign-off: opitemrece columns, rxdate/rxtime, indexes ─ ▸ ahead
 pilot   ▸ pharmacy department, real mornings, feedback ─────────── ▸ ahead
 ```

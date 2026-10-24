@@ -45,8 +45,8 @@ pub fn run() {
 fn App() -> impl IntoView {
     let state = AppState::new();
 
-    // Initial load: connection status + settings, then the window and the
-    // first fetch (opening the app is the morning request).
+    // Initial load: connection status + settings + session. The operator
+    // then chooses one of the four ranges before the first fetch.
     let load_state = state.clone();
     leptos::task::spawn_local(async move {
         load_initial_state(load_state).await;
@@ -161,8 +161,6 @@ async fn load_initial_state(state: AppState) {
         state.connection_error.set(None);
         state.health.set(state::ConnectionHealth::Unconfigured);
     }
-
-    state.recompute_window();
 
     if let Ok(Some(user)) = api::current_session().await {
         state.finish_login(user);

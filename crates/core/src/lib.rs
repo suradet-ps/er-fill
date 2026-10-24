@@ -3,7 +3,7 @@
 //!
 //! Module map:
 //! - `auth`: [`verify_password`], HOSxP officer MD5 verification.
-//! - `schedule`: [`window_for`], the out-of-hours requisition window.
+//! - `window`: [`window_for`], the overnight requisition window.
 //! - `catalog_ops`: add/rename/remove/reorder catalog entries.
 //! - `requisition`: [`build_report`], join catalog + usage into sections.
 //! - `pagination`: [`paginate_sections`], split the report into A4 pages.
@@ -20,7 +20,7 @@ mod mock;
 mod pagination;
 mod repository;
 mod requisition;
-mod schedule;
+mod window;
 
 pub use auth::{md5_hex, verify_password};
 pub use catalog_ops::{
@@ -31,4 +31,4 @@ pub use mock::MockRepository;
 pub use pagination::{PageRow, PageSection, ROWS_PER_PAGE, SheetPage, paginate_sections};
 pub use repository::{HosxRepository, RepositoryError};
 pub use requisition::{add_configured_drug, adjust_requested, build_report};
-pub use schedule::window_for;
+pub use window::window_for;

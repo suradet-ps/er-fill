@@ -1,14 +1,12 @@
-//! Plain (unencrypted) application settings persistence: schedule, catalog,
-//! and the report header (AGENTS.md section 10). The [`AppSettings`] type itself
-//! lives in `er-refill-models` (shared with the frontend); these are **not
-//! secrets** - credentials live in the encrypted config file handled by
+//! Plain (unencrypted) application settings persistence: catalog and the
+//! report header (AGENTS.md section 10). The [`AppSettings`] type itself lives
+//! in `er-refill-models` (shared with the frontend); these are **not**
+//! secrets - credentials live in the encrypted config file handled by
 //! `er-refill-hosxp-connector`.
 
 use std::path::Path;
 
-use chrono::NaiveTime;
 pub use er_refill_models::AppSettings;
-use er_refill_models::{BusinessSchedule, TimeRange};
 use serde::{Deserialize, Serialize};
 
 /// File name of the settings file, inside the app config dir.
@@ -16,10 +14,11 @@ pub const SETTINGS_FILE_NAME: &str = "er-refill.settings.json";
 
 /// Version of the on-disk settings format. Bump (with migration) if the
 /// layout changes.
-const SETTINGS_VERSION: u32 = 2;
+const SETTINGS_VERSION: u32 = 3;
 
-/// Version 1 stored a `schedule.cutoff` and weekday hours ending at 16:30.
-const PREVIOUS_SETTINGS_VERSION: u32 = 1;
+/// Versions still readable. Their extra `schedule` field is ignored by serde:
+/// the run date and time range are no longer configurable.
+const LEGACY_SETTINGS_VERSIONS: [u32; 2] = [1, 2];
 
 /// Errors around reading and writing the settings file.
 #[derive(Debug, thiserror::Error)]
@@ -42,8 +41,8 @@ struct SettingsFile {
 
 /// Loads the settings file.
 ///
-/// A missing file is **not** an error: the defaults (seeded catalog, default
-/// schedule and report header) are returned - the first save writes the file.
+/// A missing file is **not** an error: the defaults (seeded catalog and
+/// default report header) are returned - the first save writes the file.
 ///
 /// # Errors
 ///
@@ -58,39 +57,14 @@ pub async fn load(path: &Path) -> Result<AppSettings, SettingsError> {
         .map_err(|e| SettingsError::Io(e.to_string()))?;
     let file: SettingsFile =
         serde_json::from_str(&raw).map_err(|e| SettingsError::Corrupt(e.to_string()))?;
-    match file.version {
-        SETTINGS_VERSION => Ok(file.settings),
-        PREVIOUS_SETTINGS_VERSION => Ok(migrate_v1(file.settings)),
-        version => Err(SettingsError::Corrupt(format!(
-            "unsupported settings version {version}"
-        ))),
+    if file.version == SETTINGS_VERSION || LEGACY_SETTINGS_VERSIONS.contains(&file.version) {
+        Ok(file.settings)
+    } else {
+        Err(SettingsError::Corrupt(format!(
+            "unsupported settings version {}",
+            file.version
+        )))
     }
-}
-
-/// Version 1 shipped weekday hours ending at 16:30. Upgrade only the exact
-/// old default; an operator's custom schedule is preserved.
-fn migrate_v1(mut settings: AppSettings) -> AppSettings {
-    let old_default = BusinessSchedule {
-        weekday: TimeRange {
-            start: at(8, 30),
-            end: at(16, 30),
-        },
-        weekend: TimeRange {
-            start: at(8, 0),
-            end: at(16, 0),
-        },
-    };
-    if settings.schedule == old_default {
-        settings.schedule = BusinessSchedule::default();
-    }
-    settings
-}
-
-/// Builds a [`NaiveTime`] from literal hours/minutes. The fallback is
-/// unreachable for the compile-time-valid values used here; it keeps the
-/// no-panic rule (AGENTS-RUST.md section 5.5).
-fn at(hour: u32, minute: u32) -> NaiveTime {
-    NaiveTime::from_hms_opt(hour, minute, 0).unwrap_or(NaiveTime::MIN)
 }
 
 /// Writes the settings file (pretty JSON), creating parent directories.
@@ -119,7 +93,7 @@ pub async fn save(path: &Path, settings: &AppSettings) -> Result<(), SettingsErr
 #[cfg(test)]
 mod tests {
     use super::*;
-    use er_refill_models::{BusinessSchedule, ReportMeta};
+    use er_refill_models::ReportMeta;
     use tempfile::tempdir;
 
     #[tokio::test]
@@ -127,7 +101,6 @@ mod tests {
         let dir = tempdir().expect("tempdir in test");
         let path = dir.path().join(SETTINGS_FILE_NAME);
         let settings = load(&path).await.expect("load succeeds");
-        assert_eq!(settings.schedule, BusinessSchedule::default());
         assert_eq!(settings.catalog.categories.len(), 6);
         assert_eq!(settings.report, ReportMeta::default());
     }
@@ -154,53 +127,23 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn v1_legacy_default_schedule_is_upgraded() {
+    async fn legacy_schedule_file_still_loads() {
         let dir = tempdir().expect("tempdir in test");
         let path = dir.path().join(SETTINGS_FILE_NAME);
         tokio::fs::write(
             &path,
             r#"{
-                "version": 1,
+                "version": 2,
                 "schedule": {
-                    "weekday": { "start": "08:30", "end": "16:30" },
-                    "weekend": { "start": "08:00", "end": "16:00" },
-                    "cutoff": "08:00"
+                    "weekday": { "start": "08:30", "end": "20:30" },
+                    "weekend": { "start": "08:00", "end": "16:00" }
                 }
             }"#,
         )
         .await
         .expect("write in test");
         let settings = load(&path).await.expect("load succeeds");
-        assert_eq!(settings.schedule, BusinessSchedule::default());
-    }
-
-    #[tokio::test]
-    async fn v1_custom_schedule_is_preserved() -> Result<(), Box<dyn std::error::Error>> {
-        let dir = tempdir().expect("tempdir in test");
-        let path = dir.path().join(SETTINGS_FILE_NAME);
-        tokio::fs::write(
-            &path,
-            r#"{
-                "version": 1,
-                "schedule": {
-                    "weekday": { "start": "08:30", "end": "18:00" },
-                    "weekend": { "start": "08:00", "end": "16:00" },
-                    "cutoff": "08:00"
-                }
-            }"#,
-        )
-        .await
-        .expect("write in test");
-        let settings = load(&path).await.expect("load succeeds");
-        assert_eq!(
-            settings.schedule.weekday.end,
-            chrono::NaiveTime::from_hms_opt(18, 0, 0).ok_or("valid")?
-        );
-        assert_eq!(
-            settings.schedule.weekday.start,
-            chrono::NaiveTime::from_hms_opt(8, 30, 0).ok_or("valid")?
-        );
-        Ok(())
+        assert_eq!(settings, AppSettings::default());
     }
 
     #[tokio::test]

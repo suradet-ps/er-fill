@@ -17,8 +17,8 @@ table with click-to-edit จำนวนเบิก numbers, the reason table, 
 ผู้เบิก/ผู้จ่าย signature blocks. The screen and the printer share one DOM and
 one stylesheet - what the pharmacist verifies is exactly what prints; there is
 no separate preview mode. The command bar above the desk is the only control
-surface, and it states the window compactly (rose = auto, amber = overridden -
-never silent).
+surface: today's date is fixed and read-only, and the operator picks one of
+four clearly labelled overnight ranges before fetching.
 
 **Key characteristics:**
 
@@ -26,8 +26,8 @@ never silent).
   blush-gradient brand panel with the nurse-bear mascot; that is the only
   marketing-grade surface in the app. Working surfaces are flat and dense.
 - **Signature rose pink** ({colors.brand-pink}) reserved for accent CTAs,
-  the auto window chip, active states, focus rings, and feature confirmations -
-  never body text or large surfaces.
+  the selected range option, active states, focus rings, and feature
+  confirmations - never body text or large surfaces.
 - **Black-pill primary buttons** ({colors.primary} + `{rounded.full}`) for the
   dominant action (พิมพ์ใบเบิก); one rose accent CTA per viewport at most.
 - **Usage-only rows, plus deliberate additions**: the sheet shows only drugs
@@ -45,15 +45,16 @@ never silent).
   status, or meaning.
 - **Inter for UI prose, IBM Plex Sans Thai for Thai text, IBM Plex Mono for
   codes and quantities** - numbers must align in columns.
-- **Command bar + paper stage, not a sidebar**: the run controls (date,
-  window, fetch, add, confirm, print) live in one toolbar; the stage below
-  shows the paper. The job is producing a document, not looking something up.
+- **Command bar + paper stage, not a sidebar**: the fixed date, four range
+  options, and the document actions (fetch, add, confirm, print) live in one
+  toolbar; the stage below shows the paper. The job is producing a document,
+  not looking something up.
 - **Tightly-controlled radius scale**: the sheet is paper (no radius); cards
   `{rounded.lg}` (12px), compact UI `{rounded.md}` (8px), all buttons and
   pills `{rounded.full}`.
 - **One warm alert tone**: amber ({colors.warn-*}) for "this needs attention"
-  (custom window, degraded connection, unmapped drug) - deliberately distinct
-  from the error red used for required-field validation.
+  (degraded connection, unmapped drug) - deliberately distinct from the error
+  red used for required-field validation.
 
 ### Adaptation Notes - what changed from the Mintlify reference
 
@@ -71,11 +72,11 @@ never silent).
 ### Brand & Accent
 
 - **Seal Rose** ({colors.brand-pink}): `#DB2777` - brand seal and accent CTAs,
-  auto window chip border, focus rings, active tab underline, sidebar active
-  indicator. Holds WCAG AA with white button text; never for body text.
+  selected range-option border, focus rings, active tab underline, sidebar
+  active indicator. Holds WCAG AA with white button text; never for body text.
 - **Deep Rose** ({colors.brand-pink-deep}): `#9D174D` - pressed/active variant;
   text on soft rose backgrounds.
-- **Soft Rose** ({colors.brand-pink-soft}): `#FCE7F3` - auto window chip
+- **Soft Rose** ({colors.brand-pink-soft}): `#FCE7F3` - selected range-option
   background, the sheet window sentence tint, playful section tint.
 - **Seal Glow** ({colors.brand-glow}): `rgba(219, 39, 119, 0.10)` - the single
   featured shadow, reserved for one brand accent; not used in the current UI.
@@ -92,8 +93,8 @@ never silent).
   messages, destructive confirmations. Never decorative.
 - **Alert Soft** ({colors.error-soft}): `#FEECEB` - error field background tint.
 - **Warn Amber** ({colors.warn-text} `#8A6420` on {colors.warn-bg} `#FFF8E1`,
-  border {colors.warn-border} `#FFE082`) - system attention states: overridden
-  run-window chip, degraded HOSxP connection banner, drug not yet mapped. This
+  border {colors.warn-border} `#FFE082`) - system attention states: degraded
+  HOSxP connection banner, drug not yet mapped. This
   amber is a *system* warning; it never means "answer found/not found" (there
   is no such verdict in this app).
 - **Info Blue** ({colors.tag-blue}): `#3772CF` on {colors.tag-bg}
@@ -208,9 +209,10 @@ the logout action beside the connection status.
 │ Top bar (48px: mark · ER-Refill · ระบบใบเบิกยาห้องฉุกเฉิน · status · ตั้งค่า) │
 ├──────────────────────────────────────────────────────────────────────┤
 │ COMMAND BAR (the only control surface; stacks under 1280px)          │
-│  วันที่เบิก [date] │ ช่วงเวลา 20 ต.ค. 20:30 → 21 ต.ค. 08:30 [อัตโนมัติ]   │
-│  [แก้ไขช่วงเวลา]   ในใบเบิก 12 · ใช้ 10 · ขอเพิ่ม/แก้ไข 2 · เบิกรวม 34      │
-│  [เพิ่มรายการยา] [ดึงใหม่] [ยืนยันข้อมูลเบิก] [พิมพ์ใบเบิก]              │
+│  วันที่เบิก 24 ตุลาคม 2569 [วันนี้ · แก้ไขไม่ได้]                     │
+│  ช่วงเวลาเบิก  [20:30→08:00] [20:30→08:30] [16:00→08:00] [16:00→08:30]│
+│  ดึงข้อมูล 23 ต.ค. 2569 20:30 → 24 ต.ค. 2569 08:00                    │
+│  [เพิ่มรายการยา] [ดึงข้อมูลการใช้ยา] [ยืนยันข้อมูลเบิก] [พิมพ์ใบเบิก]   │
 ├──────────────────────────────────────────────────────────────────────┤
 │ STAGE (desk surface, scrollable)                                     │
 │                                                                      │
@@ -307,8 +309,8 @@ empty-state or catalog CTA.
 **`button-secondary`** - Outlined pill: transparent background, text
 `{colors.ink}`, border `1px solid {colors.hairline}`, padding `10px 20px`.
 
-**`button-ghost`** - Quiet rectangular action (command bar "แก้ไขช่วงเวลา",
-settings close): transparent, text `{colors.ink}`, padding `8px 12px`,
+**`button-ghost`** - Quiet rectangular action (top-bar "ออกจากระบบ" /
+"ตั้งค่า"): transparent, text `{colors.ink}`, padding `8px 12px`,
 rounded `{rounded.md}`.
 
 **`button-icon-circular`** - 32×32px circular utility (close, ↑/↓ in the
@@ -344,8 +346,7 @@ a border).
 ring rose inset (`outline-offset: -2px`). It prints as a plain filled
 number.
 
-**`text-input--compact`** - 34px variant for the command bar (date and the
-manual window editors).
+**`text-input--compact`** - 34px variant for dense command-bar inputs.
 
 **`search-pill`** - Drug-picker / search: background `{colors.surface}`, text
 `{colors.steel}`, typography `{typography.body-sm}`, rounded `{rounded.md}`,
@@ -375,10 +376,18 @@ rounded `{rounded.sm}`, `2px 6px`.
 `{colors.warn-text}` degraded, `{colors.error}` disconnected, `{colors.stone}`
 unconfigured. Applied with a soft halo (`box-shadow: 0 0 0 3px soft`).
 
-**`run-window` card** - The command-bar window state: a compact card with a
-"ช่วงเวลาเบิก" heading and badge ("อัตโนมัติ" rose, "แก้ไขเอง" amber) above
-the two short Thai/BE datetimes (mono, tabular). The amber state is the
-reason this card exists; the requisition never hides the window it covers.
+**`run-date` card** - The fixed run date: an uppercase "วันที่เบิก" label,
+"24 ตุลาคม 2569" in ink, and a quiet "วันนี้ · แก้ไขไม่ได้" caption. It is a
+display card, never an input - the date can not drift from the morning run.
+
+**`range-picker` / `range-option`** - The four fixed overnight ranges as
+radio-style chips (20:30-08:00, 20:30-08:30, 16:00-08:00, 16:00-08:30).
+Each option stacks a mono time pair over a "เมื่อวาน → วันนี้" caption; the
+selected option takes the rose border and soft-rose fill. A heading status
+switches from "เลือก 1 ช่วงก่อนดึงข้อมูล" (steel) to "เลือกแล้ว" (green), and
+the preview line spells out the actual window in Thai/BE, e.g. "ดึงข้อมูล
+ศ. 23 ต.ค. 2569 20:30 → ส. 24 ต.ค. 2569 08:00". The fetch action stays
+disabled until one chip is selected.
 
 ### Signature Components
 
@@ -405,17 +414,16 @@ top-left corner of every printed sheet page. Print drops the SVG emboss
 filter so the 15mm mark stays crisp vector art at the printer's resolution.
 
 **`command-bar`** - The only control surface; it stacks below 1280px:
-- Row 1: a labelled date input · a `run-window` card (heading + badge over
-  the short Thai/BE times) · ghost "แก้ไขช่วงเวลา" on the left. On the right:
-  one segmented `stat-strip` (ในใบเบิก / มีการใช้ / ขอเพิ่ม/แก้ไข / เบิกรวม,
-  mono numbers).
-- Actions: **เพิ่มรายการยา** (secondary, opens the configured-catalog picker) ·
-  ดึงข้อมูล (primary when the sheet is empty, secondary "ดึงใหม่" after) ·
+- Left: the read-only `run-date` card beside the `range-picker` (heading +
+  four `range-option` chips + the actual-window preview).
+- Right: the document actions - **เพิ่มรายการยา** (secondary, opens the
+  configured-catalog picker) · **ดึงข้อมูลการใช้ยา** (primary when the sheet is
+  empty, secondary "ดึงใหม่" after; disabled until a range is selected) ·
   **ยืนยันข้อมูลเบิก** (rose accent; replaced by a success `confirm-chip` with
   the confirmation time) · **พิมพ์ใบเบิก** (black pill, disabled until the sheet
   is confirmed; any edit disables it again).
-- Row 2 (collapsed by default): an inset surface card with the manual window
-  editors (`datetime-local` × 2) + ghost "กลับเป็นอัตโนมัติ".
+- There is no date input, no manual window editor, and no summary stat strip:
+  the run context is the fixed date plus the chosen range, nothing else.
 - Background `{colors.canvas}`, bottom hairline - chrome, not content.
 
 **`sheet`** - The document itself: the A4 paper staged on the desk.
@@ -488,21 +496,21 @@ dialog invalidate the print confirmation.
 rows, total requested, and the count of added/edited rows. Confirming snapshots
 rows + reasons + window + header into `ConfirmedRequisition`; the print button
 only becomes enabled for that snapshot, and the print action re-checks that the
-current data is identical. Any later fetch, date/window change, catalog/schedule
-edit, add, or quantity change clears the snapshot and disables printing until
+current data is identical. Any later fetch, range change, catalog/report edit,
+add, or quantity change clears the snapshot and disables printing until
 the operator confirms again.
 
 **`settings-modal`** - `{elevation.3}` dialog over a `rgba(17,17,19,0.4)`
 backdrop, `{rounded.lg}`, max-width 960px. A 200px vertical `settings-nav`
-rail (icons + การเชื่อมต่อ · เวลาทำการ · รายการยา · หัวใบเบิก) beside a
+rail (icons + การเชื่อมต่อ · รายการยา · หัวใบเบิก) beside a
 scrolling `settings-content` area. Each panel keeps its own action row
 (rose accent or black pill for save). The catalog panel uses two-line drug
 rows - identity line (name, icode chip, ↑/↓/remove) over a labeled field
 line (ความแรง, จำนวน/Stock) - so the three inputs never fight for width.
 The modal footer is a `{colors.surface-soft}` strip with
 `ส่งออกการตั้งค่า` / `นำเข้าการตั้งค่า` secondary pills + a status line -
-the exported JSON carries the schedule, catalog, and report header, never
-connection credentials.
+the exported JSON carries the catalog and report header, never connection
+credentials.
 
 **`banner`** - Degraded-connection / save-failure strip at the top of the
 stage: amber pair (`{colors.warn-bg}`/`{colors.warn-text}`) with a dismiss
@@ -522,7 +530,7 @@ drug's `strengthText`, and the printed sheet trims the Thai unit suffix.
 
 ### Do
 
-- Reserve `{colors.brand-pink}` for accent CTAs, the auto window chip,
+- Reserve `{colors.brand-pink}` for accent CTAs, the selected range option,
   active tab indicator, focus rings, and confirmation checks - if it appears
   on a large generic surface, it did not earn that role.
 - Use `{colors.primary}` black pills for the dominant action; exactly one rose
@@ -531,8 +539,9 @@ drug's `strengthText`, and the printed sheet trims the Thai unit suffix.
   `{rounded.lg}`; the sheet is paper and stays square.
 - Put every number that appears in a column into `{typography.code-*}` (mono,
   tabular) - quantities must align on the paper.
-- Keep the run-window chip's two states visually distinct at a glance (rose =
-  auto, amber = overridden); never make the override silent.
+- Keep the range selection explicit: one rose-selected chip, a green "เลือกแล้ว"
+  status, and the actual Thai/BE window spelled out below; fetch stays disabled
+  until the operator picks one.
 - Render strength beside the drug name everywhere (catalog, sheet, paper) so
   same-name drugs (Paracetamol 325 vs 500) never blur.
 - Require a reason for every manual add or จำนวนเบิก change; show it in the
@@ -573,7 +582,7 @@ A fixed-purpose desktop window (Tauri), 1120×800 default, min 900×620:
 | Window width | Behavior |
 |---|---|
 | < 960px | The sheet goes full-width with reduced padding; the settings nav rail turns horizontal and the catalog collapses to one column. |
-| < 1280px | Command bar stacks into two intentional rows (run context, then stats + actions); the action buttons wrap rather than overflow. |
+| < 1280px | Command bar stacks into two intentional rows (fixed date + range picker, then actions); the action buttons wrap rather than overflow. |
 | ≥ 1280px | Full command bar; the sheet stays at `min(210mm, 100%)` and is centered on the desk with breathing room. |
 
 Touch targets: buttons 40px effective height, icon-circular 32px desktop.
@@ -583,8 +592,8 @@ This is a mouse-class desktop app; there is no mobile layout.
 
 - State transitions: `background-color 150ms ease-out` (chips, buttons), focus
   borders 150ms.
-- The run-window chip never animates between rose and amber - the color *is*
-  the message; a cross-fade would slow reading it.
+- The selected range chip's rose state appears instantly - the color *is* the
+  message; a cross-fade would slow reading it.
 - No bounce/elastic easing anywhere; `prefers-reduced-motion` disables all
   transitions.
 
@@ -595,8 +604,8 @@ This is a mouse-class desktop app; there is no mobile layout.
 2. Default body is `{typography.body-md}`; anything numeric-in-a-column is
    `{typography.code-*}`.
 3. New states should first be expressible as weight/border/spacing changes;
-   new named colors need a semantic role (auto/custom/attention/error) to
-   exist at all.
+   new named colors need a semantic role (selected/attention/error) to exist
+   at all.
 4. Re-check every new surface against "quiet except for the sheet and its window sentence".
 5. Keep screen table and print table column-order identical - the screen is a
    proof of what prints.

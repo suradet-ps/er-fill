@@ -31,12 +31,11 @@ pub fn CatalogEmpty(state: AppState) -> impl IntoView {
     }
 }
 
-/// Configured, catalog ready, but nothing fetched for this window yet
-/// (or the first fetch is still in flight - opening the app fetches
-/// automatically, so this state is brief).
+/// Configured, catalog ready, but no range selected or nothing fetched yet.
 #[component]
 pub fn NoDataHint(state: AppState) -> impl IntoView {
     let loading = state.loading;
+    let has_range = move || state.window_preset.get().is_some();
     view! {
         <div class="empty-card empty-card--quiet">
             <span class="empty-card__icon">
@@ -44,15 +43,23 @@ pub fn NoDataHint(state: AppState) -> impl IntoView {
             </span>
             <h2 class="empty-card__title">
                 {move || {
-                    if loading.get() { "กำลังดึงข้อมูล..." } else { "พร้อมสร้างใบเบิก" }
+                    if loading.get() {
+                        "กำลังดึงข้อมูล..."
+                    } else if has_range() {
+                        "พร้อมดึงข้อมูล"
+                    } else {
+                        "เลือกช่วงเวลาเบิก"
+                    }
                 }}
             </h2>
             <p class="empty-card__text">
                 {move || {
                     if loading.get() {
                         "กำลังอ่านยอดใช้ยานอกเวลาราชการจาก HOSxP"
-                    } else {
+                    } else if has_range() {
                         "กด \"ดึงข้อมูลการใช้ยา\" ที่แถบด้านบนเพื่อดึงยอดใช้ยาจาก HOSxP"
+                    } else {
+                        "เลือกช่วงเวลา 20:30–08:00, 20:30–08:30, 16:00–08:00 หรือ 16:00–08:30 ที่แถบด้านบนก่อนดึงข้อมูล"
                     }
                 }}
             </p>
