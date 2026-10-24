@@ -37,6 +37,9 @@ All notable changes to ER-Refill are documented here. The format follows
 - Redesigned the drug-catalog settings panel: category tabs on top, the
   HOSxP search next, and a scannable single-line drug table below. Search
   results disappear as soon as a drug is added.
+- The login illustration now uses the master nurse-bear mascot from
+  `icon-master.svg` instead of the older hand-drawn bear. The hospital and
+  pharmacy footer line was removed from the login panel.
 - ER usage is now scoped to `dep_code = '009'` drug orders (`sub_type = '1'`,
   excluding `item_type = 'A'` automatic charges) and the out-of-hours window
   is computed from `rxdate`/`rxtime` (ER order time) instead of

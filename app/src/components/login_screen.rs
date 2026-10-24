@@ -85,10 +85,6 @@ pub fn LoginScreen(state: AppState) -> impl IntoView {
                         inner_html=include_str!("../../assets/login-illustration.svg")
                     ></div>
                 </div>
-
-                <p class="login__brand-foot">
-                    "โรงพยาบาลสระโบสถ์ · กลุ่มงานเภสัชกรรม"
-                </p>
             </aside>
 
             <main class="login__main">

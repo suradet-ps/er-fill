@@ -28,6 +28,10 @@
     <filter id="lr-soft" x="-40%" y="-40%" width="180%" height="200%">
       <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#9D174D" flood-opacity="0.16" />
     </filter>
+    <filter id="lr-bear-emboss" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#000000" flood-opacity="0.3" />
+      <feDropShadow dx="0" dy="-3" stdDeviation="4" flood-color="#FFFFFF" flood-opacity="0.4" />
+    </filter>
     <clipPath id="lr-paper-clip">
       <rect x="88" y="54" width="250" height="340" rx="20" />
     </clipPath>
@@ -39,12 +43,9 @@
   <circle cx="268" cy="216" r="190" fill="#FFFFFF" fill-opacity="0.32" />
   <circle cx="268" cy="216" r="134" fill="#FFFFFF" fill-opacity="0.2" />
   <path d="M70 268C48 136 190 36 338 58C462 76 512 182 478 302" stroke="#FFFFFF" stroke-opacity="0.62" stroke-width="2" stroke-linecap="round" stroke-dasharray="2 11" />
-  <circle cx="92" cy="320" r="5" fill="#F59E0B" />
   <circle cx="472" cy="192" r="4" fill="#EC4899" fill-opacity="0.7" />
   <circle cx="76" cy="176" r="3" fill="#FFFFFF" fill-opacity="0.9" />
   <circle cx="448" cy="270" r="3" fill="#FFFFFF" fill-opacity="0.85" />
-  <path d="M104 356v20M94 366h20" stroke="#EC4899" stroke-opacity="0.45" stroke-width="3" stroke-linecap="round" />
-  <path d="M484 148v12M478 154h12" stroke="#F59E0B" stroke-opacity="0.55" stroke-width="2.6" stroke-linecap="round" />
 
   <g transform="rotate(-11 213 224)" opacity="0.5">
     <rect x="100" y="68" width="250" height="340" rx="20" fill="#FFFFFF" fill-opacity="0.55" />
@@ -105,31 +106,31 @@
     </g>
   </g>
 
-  <g filter="url(#lr-soft)">
-    <circle cx="356" cy="144" r="42" fill="url(#lr-bear)" />
-    <circle cx="480" cy="144" r="42" fill="url(#lr-bear)" />
-    <circle cx="356" cy="144" r="21" fill="#FEF08A" />
-    <circle cx="480" cy="144" r="21" fill="#FEF08A" />
-    <circle cx="418" cy="212" r="86" fill="url(#lr-bear)" />
-    <path d="M356 130Q418 92 480 130L462 58Q418 44 374 58Z" fill="#FFFFFF" />
-    <rect x="403" y="56" width="30" height="46" rx="8" fill="#F43F5E" />
-    <rect x="391" y="67" width="54" height="24" rx="8" fill="#F43F5E" />
-    <circle cx="385" cy="188" r="10" fill="#451A03" />
-    <circle cx="451" cy="188" r="10" fill="#451A03" />
-    <ellipse cx="418" cy="244" rx="35" ry="25" fill="#FEF3C7" />
-    <ellipse cx="418" cy="234" rx="15.5" ry="11" fill="#451A03" />
-    <path d="M403 253Q418 267 433 253" stroke="#451A03" stroke-width="7" fill="none" stroke-linecap="round" />
+  <g transform="translate(306 120) scale(0.45)">
+    <g fill="url(#lr-bear)" filter="url(#lr-bear-emboss)">
+      <circle cx="124" cy="140" r="86" />
+      <circle cx="388" cy="140" r="86" />
+    </g>
+    <circle cx="124" cy="140" r="43" fill="#FEF08A" />
+    <circle cx="388" cy="140" r="43" fill="#FEF08A" />
+    <circle cx="256" cy="256" r="176" fill="url(#lr-bear)" filter="url(#lr-bear-emboss)" />
+    <g filter="url(#lr-bear-emboss)">
+      <path d="M 164 116 Q 256 72 348 116 L 326 28 Q 256 10 186 28 Z" fill="#FFFFFF" />
+      <rect x="228" y="40" width="56" height="84" rx="14" fill="#F43F5E" />
+      <rect x="204" y="60" width="104" height="42" rx="14" fill="#F43F5E" />
+    </g>
+    <ellipse cx="256" cy="290" rx="72" ry="52" fill="#FEF3C7" />
+    <ellipse cx="256" cy="274" rx="32" ry="22" fill="#451A03" />
+    <path d="M 226 308 Q 256 338 286 308" stroke="#451A03" stroke-width="16" fill="none" stroke-linecap="round" />
+    <circle cx="172" cy="212" r="21" fill="#451A03" />
+    <circle cx="340" cy="212" r="21" fill="#451A03" />
+    <circle cx="136" cy="402" r="66" fill="url(#lr-bear)" filter="url(#lr-bear-emboss)" />
+    <circle cx="376" cy="402" r="66" fill="url(#lr-bear)" filter="url(#lr-bear-emboss)" />
+    <g filter="url(#lr-bear-emboss)">
+      <path d="M 256 470 C 140 380, 150 312, 202 312 C 226 312, 256 348, 256 348 C 256 348, 286 312, 310 312 C 362 312, 372 380, 256 470 Z" fill="#FFFFFF" />
+    </g>
+    <path d="M 256 366 V 426 M 222 396 H 290" stroke="#F43F5E" stroke-width="22" stroke-linecap="round" />
   </g>
-
-  <g filter="url(#lr-soft)">
-    <circle cx="362" cy="342" r="30" fill="url(#lr-bear)" />
-    <circle cx="474" cy="342" r="30" fill="url(#lr-bear)" />
-  </g>
-
-  <g filter="url(#lr-soft)">
-    <path d="M418 424C340 358 346 314 382 314C401 314 418 334 418 334C418 334 435 314 454 314C490 314 496 358 418 424Z" fill="#FFFFFF" />
-  </g>
-  <path d="M418 350V394M392 372H444" stroke="#F43F5E" stroke-width="15" stroke-linecap="round" />
 
   <g transform="rotate(-28 79 127)" filter="url(#lr-soft)">
     <rect x="58" y="88" width="42" height="78" rx="21" fill="url(#lr-capsule)" />
