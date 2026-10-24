@@ -34,6 +34,9 @@ All notable changes to ER-Refill are documented here. The format follows
   connection state is a compact green/red dot with a readable tooltip beside
   the subtitle, and the right side shows only the signed-in name and a
   prominent logout pill.
+- Redesigned the drug-catalog settings panel: category tabs on top, the
+  HOSxP search next, and a scannable single-line drug table below. Search
+  results disappear as soon as a drug is added.
 - ER usage is now scoped to `dep_code = '009'` drug orders (`sub_type = '1'`,
   excluding `item_type = 'A'` automatic charges) and the out-of-hours window
   is computed from `rxdate`/`rxtime` (ER order time) instead of

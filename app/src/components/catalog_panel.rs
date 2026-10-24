@@ -162,6 +162,7 @@ pub fn CatalogPanel(state: AppState) -> impl IntoView {
             Some(message) => status.set(Some(StatusMessage::error(message))),
             None => {
                 dirty.set(true);
+                results.update(|items| items.retain(|candidate| candidate.icode != item.icode));
                 status.set(Some(StatusMessage::ok(format!(
                     "เพิ่ม {} แล้ว อย่าลืมกดบันทึก",
                     item.name
@@ -275,9 +276,29 @@ pub fn CatalogPanel(state: AppState) -> impl IntoView {
     view! {
         <div class="panel panel--catalog">
             <div class="catalog">
-                <div class="catalog__sidebar">
-                    <h3 class="catalog__subtitle">"หมวด"</h3>
-                    <ul class="category-list">
+                <section class="catalog__categories">
+                    <div class="catalog__section-head">
+                        <div>
+                            <h3 class="catalog__subtitle">"หมวดยา"</h3>
+                            <p class="catalog__hint">
+                                "เลือกหมวดเพื่อดูและแก้ไขรายการยา"
+                            </p>
+                        </div>
+                        <form class="catalog__add" on:submit=on_add_category>
+                            <input
+                                class="text-input text-input--compact"
+                                type="text"
+                                placeholder="เพิ่มหมวดใหม่"
+                                prop:value=move || new_category.get()
+                                on:input=move |ev| new_category.set(event_target_value(&ev))
+                            />
+                            <button class="button-secondary catalog__add-button" type="submit">
+                                <IconPlus class="icon" />
+                                "เพิ่มหมวด"
+                            </button>
+                        </form>
+                    </div>
+                    <div class="category-tabs" role="tablist" aria-label="หมวดยา">
                         {move || {
                             let catalog = draft.get();
                             let mut categories = catalog.categories.clone();
@@ -286,96 +307,132 @@ pub fn CatalogPanel(state: AppState) -> impl IntoView {
                                 .into_iter()
                                 .map(|category| {
                                     let category_id = category.id.clone();
-                                    let is_selected = Memo::new({
-                                        let category_id = category_id.clone();
-                                        move |_| selected.get().as_deref() == Some(category_id.as_str())
-                                    });
-                                    let count = draft
-                                        .get()
+                                    let count = catalog
                                         .drugs
                                         .iter()
                                         .filter(|drug| drug.category_id == category_id)
                                         .count();
-                                    let has_drugs = count > 0;
+                                    let is_selected = Memo::new({
+                                        let category_id = category_id.clone();
+                                        move |_| {
+                                            selected.get().as_deref() == Some(category_id.as_str())
+                                        }
+                                    });
                                     let on_select = {
                                         let category_id = category_id.clone();
                                         move |_| selected.set(Some(category_id.clone()))
                                     };
-                                    let on_remove = {
-                                        let remove_id = category_id.clone();
-                                        move |_: web_sys::MouseEvent| {
-                                            on_remove_category(remove_id.clone())
-                                        }
-                                    };
                                     view! {
-                                        <li class="category-list__item">
-                                            <button
-                                                class=move || if is_selected.get() {
-                                                    "category-list__button category-list__button--active"
-                                                } else {
-                                                    "category-list__button"
-                                                }
-                                                on:click=on_select
-                                            >
-                                                <span class="category-list__name">{category.name}</span>
-                                                <span class="category-list__count">{count}</span>
-                                            </button>
-                                            <button
-                                                class="button-icon-circular button-icon-circular--small"
-                                                aria-label="ลบหมวด"
-                                                disabled=has_drugs
-                                                on:click=on_remove
-                                            >
-                                                <IconTrash class="icon" />
-                                            </button>
-                                        </li>
+                                        <button
+                                            type="button"
+                                            role="tab"
+                                            aria-selected=move || is_selected.get().to_string()
+                                            class=move || if is_selected.get() {
+                                                "category-tab category-tab--active"
+                                            } else {
+                                                "category-tab"
+                                            }
+                                            on:click=on_select
+                                        >
+                                            <span class="category-tab__name">
+                                                {category.name}
+                                            </span>
+                                            <span class="category-tab__count">{count}</span>
+                                        </button>
                                     }
                                 })
                                 .collect_view()
                         }}
-                    </ul>
-                    <form class="catalog__add" on:submit=on_add_category>
-                        <input
-                            class="text-input"
-                            type="text"
-                            placeholder="เพิ่มหมวดใหม่"
-                            prop:value=move || new_category.get()
-                            on:input=move |ev| new_category.set(event_target_value(&ev))
-                        />
-                        <button class="button-icon-circular" aria-label="เพิ่มหมวด" type="submit">
-                            <IconPlus class="icon" />
-                        </button>
-                    </form>
-                </div>
+                    </div>
+                    {move || {
+                        let catalog = draft.get();
+                        let category_id = selected.get()?;
+                        let category = catalog
+                            .categories
+                            .iter()
+                            .find(|category| category.id == category_id)?;
+                        let category_name = category.name.clone();
+                        let has_drugs = catalog
+                            .drugs
+                            .iter()
+                            .any(|drug| drug.category_id == category_id);
+                        let remove_id = category_id.clone();
+                        let on_remove = move |_| on_remove_category(remove_id.clone());
+                        Some(view! {
+                            <div class="catalog__category-meta">
+                                <label class="field field--inline catalog__rename">
+                                    <span class="field__label">"ชื่อหมวด"</span>
+                                    <input
+                                        class="text-input text-input--compact"
+                                        type="text"
+                                        prop:value=category_name
+                                        on:change=on_rename_category
+                                    />
+                                </label>
+                                <button
+                                    class="button-ghost button-ghost--inline catalog__remove-category"
+                                    type="button"
+                                    disabled=has_drugs
+                                    title=if has_drugs {
+                                        "ลบหมวดได้เมื่อไม่มีรายการยา"
+                                    } else {
+                                        ""
+                                    }
+                                    on:click=on_remove
+                                >
+                                    <IconTrash class="icon" />
+                                    "ลบหมวด"
+                                </button>
+                            </div>
+                        })
+                    }}
+                </section>
 
-                <div class="catalog__main">
+                <section class="catalog__main">
                     {move || {
                         let Some(category_id) = selected.get() else {
                             return view! {
-                                <p class="rail__hint">"เพิ่มหมวดก่อน แล้วจึงเพิ่มรายการยา"</p>
+                                <div class="catalog__empty">
+                                    <p class="catalog__empty-title">"ยังไม่มีหมวดยา"</p>
+                                    <p class="catalog__empty-text">
+                                        "เพิ่มหมวดด้านบนก่อน แล้วจึงเพิ่มรายการยา"
+                                    </p>
+                                </div>
                             }
                                 .into_any();
                         };
                         let catalog = draft.get();
-                        let Some(category) = catalog
+                        if !catalog
                             .categories
                             .iter()
-                            .find(|category| category.id == category_id)
-                        else {
-                            return view! { <p class="rail__hint">"ไม่พบหมวด"</p> }.into_any();
-                        };
-                        let category_name = category.name.clone();
+                            .any(|category| category.id == category_id)
+                        {
+                            return view! {
+                                <div class="catalog__empty">
+                                    <p class="catalog__empty-title">"ไม่พบหมวด"</p>
+                                    <p class="catalog__empty-text">
+                                        "เลือกหมวดอื่นหรือเพิ่มหมวดใหม่"
+                                    </p>
+                                </div>
+                            }
+                                .into_any();
+                        }
                         let drugs = catalog.drugs_in_category(&category_id);
+                        let drug_count = drugs.len();
                         let drug_rows = drugs
                             .into_iter()
                             .cloned()
-                            .collect::<Vec<_>>()
-                            .into_iter()
-                            .map(|drug| {
+                            .enumerate()
+                            .map(|(index, drug)| {
+                                let icode = drug.icode.clone();
+                                let name = drug.name.clone();
+                                let strength_text = drug.strength_text.clone();
+                                let stock_text = drug.stock_text.clone();
+
                                 let on_name_change = {
-                                    let icode = drug.icode.clone();
-                                    let strength = drug.strength_text.clone();
-                                    let stock = drug.stock_text.clone();
+                                    let icode = icode.clone();
+                                    let strength = strength_text.clone();
+                                    let stock = stock_text.clone();
                                     move |ev| {
                                         on_update_drug(
                                             icode.clone(),
@@ -386,9 +443,9 @@ pub fn CatalogPanel(state: AppState) -> impl IntoView {
                                     }
                                 };
                                 let on_strength_change = {
-                                    let icode = drug.icode.clone();
-                                    let name = drug.name.clone();
-                                    let stock = drug.stock_text.clone();
+                                    let icode = icode.clone();
+                                    let name = name.clone();
+                                    let stock = stock_text.clone();
                                     move |ev| {
                                         on_update_drug(
                                             icode.clone(),
@@ -399,9 +456,9 @@ pub fn CatalogPanel(state: AppState) -> impl IntoView {
                                     }
                                 };
                                 let on_stock_change = {
-                                    let icode = drug.icode.clone();
-                                    let name = drug.name.clone();
-                                    let strength = drug.strength_text.clone();
+                                    let icode = icode.clone();
+                                    let name = name.clone();
+                                    let strength = strength_text.clone();
                                     move |ev| {
                                         on_update_drug(
                                             icode.clone(),
@@ -412,154 +469,191 @@ pub fn CatalogPanel(state: AppState) -> impl IntoView {
                                     }
                                 };
                                 let on_up = {
-                                    let icode = drug.icode.clone();
+                                    let icode = icode.clone();
                                     move |_| on_move_drug(icode.clone(), -1)
                                 };
                                 let on_down = {
-                                    let icode = drug.icode.clone();
+                                    let icode = icode.clone();
                                     move |_| on_move_drug(icode.clone(), 1)
                                 };
                                 let on_delete = {
-                                    let icode = drug.icode.clone();
+                                    let icode = icode.clone();
                                     move |_| on_remove_drug(icode.clone())
                                 };
+
                                 view! {
                                     <li class="drug-row">
-                                        <div class="drug-row__line">
+                                        <span class="drug-row__index">{index + 1}</span>
+                                        <div class="drug-row__identity">
                                             <input
-                                                class="text-input drug-row__name"
+                                                class="text-input text-input--compact drug-row__name"
                                                 type="text"
-                                                value=drug.name.clone()
+                                                value=name.clone()
                                                 aria-label="ชื่อยา"
                                                 on:change=on_name_change
                                             />
-                                            <span class="badge-icode">{drug.icode.clone()}</span>
-                                            <div class="drug-row__actions">
-                                                <button
-                                                    class="button-icon-circular button-icon-circular--small"
-                                                    aria-label="เลื่อนขึ้น"
-                                                    on:click=on_up
-                                                >
-                                                    <IconChevronUp class="icon" />
-                                                </button>
-                                                <button
-                                                    class="button-icon-circular button-icon-circular--small"
-                                                    aria-label="เลื่อนลง"
-                                                    on:click=on_down
-                                                >
-                                                    <IconChevronDown class="icon" />
-                                                </button>
-                                                <button
-                                                    class="button-icon-circular button-icon-circular--small"
-                                                    aria-label="ลบรายการยา"
-                                                    on:click=on_delete
-                                                >
-                                                    <IconTrash class="icon" />
-                                                </button>
-                                            </div>
+                                            <span class="badge-icode">{icode.clone()}</span>
                                         </div>
-                                        <div class="drug-row__line drug-row__line--fields">
-                                            <label class="drug-row__cell">
-                                                <span class="drug-row__cell-label">"ความแรง"</span>
-                                                <input
-                                                    class="text-input"
-                                                    type="text"
-                                                    placeholder="เช่น 500 mg"
-                                                    value=drug.strength_text.clone()
-                                                    on:change=on_strength_change
-                                                />
-                                            </label>
-                                            <label class="drug-row__cell">
-                                                <span class="drug-row__cell-label">"จำนวน/Stock (ต่อชุด/จำนวนชุด)"</span>
-                                                <input
-                                                    class="text-input"
-                                                    type="text"
-                                                    placeholder="เช่น 10/20"
-                                                    value=drug.stock_text.clone()
-                                                    on:change=on_stock_change
-                                                />
-                                            </label>
+                                        <input
+                                            class="text-input text-input--compact"
+                                            type="text"
+                                            placeholder="เช่น 500 mg"
+                                            value=strength_text.clone()
+                                            aria-label="ความแรง"
+                                            on:change=on_strength_change
+                                        />
+                                        <input
+                                            class="text-input text-input--compact"
+                                            type="text"
+                                            placeholder="เช่น 10/20"
+                                            value=stock_text.clone()
+                                            aria-label="จำนวน/Stock"
+                                            on:change=on_stock_change
+                                        />
+                                        <div class="drug-row__actions">
+                                            <button
+                                                class="button-icon-circular button-icon-circular--small"
+                                                type="button"
+                                                aria-label="เลื่อนขึ้น"
+                                                on:click=on_up
+                                            >
+                                                <IconChevronUp class="icon" />
+                                            </button>
+                                            <button
+                                                class="button-icon-circular button-icon-circular--small"
+                                                type="button"
+                                                aria-label="เลื่อนลง"
+                                                on:click=on_down
+                                            >
+                                                <IconChevronDown class="icon" />
+                                            </button>
+                                            <button
+                                                class="button-icon-circular button-icon-circular--small"
+                                                type="button"
+                                                aria-label="ลบรายการยา"
+                                                on:click=on_delete
+                                            >
+                                                <IconTrash class="icon" />
+                                            </button>
                                         </div>
                                     </li>
                                 }
                             })
                             .collect_view();
+
                         view! {
-                            <label class="field">
-                                <span class="field__label">"ชื่อหมวด"</span>
-                                <input
-                                    class="text-input"
-                                    type="text"
-                                    prop:value=category_name
-                                    on:change=on_rename_category
-                                />
-                            </label>
                             <form class="picker" on:submit=on_search>
                                 <div class="picker__search">
                                     <span class="picker__icon">
                                         <IconSearch class="icon" />
                                     </span>
                                     <input
-                                        class="text-input"
+                                        class="text-input picker__input"
                                         type="text"
                                         placeholder="ค้นหายาจากบัญชี HOSxP (อย่างน้อย 2 ตัวอักษร)"
                                         prop:value=move || search_term.get()
                                         on:input=move |ev| search_term.set(event_target_value(&ev))
                                     />
-                                    <button class="button-secondary" type="submit" disabled=move || {
-                                        searching.get()
-                                    }>
-                                        {move || if searching.get() { "กำลังค้นหา..." } else { "ค้นหา" }}
+                                    <button
+                                        class="button-secondary picker__submit"
+                                        type="submit"
+                                        disabled=move || searching.get()
+                                    >
+                                        {move || if searching.get() {
+                                            "กำลังค้นหา..."
+                                        } else {
+                                            "ค้นหา"
+                                        }}
                                     </button>
                                 </div>
-                                <ul class="picker__results">
-                                    {move || {
-                                        results
-                                            .get()
-                                            .into_iter()
-                                            .map(|item| {
-                                                let add_item = item.clone();
-                                                let strength_label = item.strength_label();
-                                                view! {
-                                                    <li class="picker__result">
-                                                        <div class="picker__result-info">
-                                                            <span class="picker__result-name">
-                                                                {item.name.clone()}
-                                                            </span>
-                                                            <span class="picker__result-meta">
-                                                                <span class="badge-icode">
-                                                                    {item.icode.clone()}
-                                                                </span>
-                                                                {(!strength_label.is_empty())
-                                                                    .then(move || {
-                                                                        view! {
-                                                                            <span class="picker__result-strength">
-                                                                                {strength_label}
-                                                                            </span>
-                                                                        }
-                                                                    })}
-                                                            </span>
-                                                        </div>
-                                                        <button
-                                                            class="button-ghost button-ghost--inline"
-                                                            type="button"
-                                                            on:click=move |_| on_add_drug(add_item.clone())
-                                                        >
-                                                            <IconPlus class="icon" />
-                                                            "เพิ่ม"
-                                                        </button>
-                                                    </li>
-                                                }
-                                            })
-                                            .collect_view()
-                                    }}
-                                </ul>
+                                {move || {
+                                    let hits = results.get();
+                                    if hits.is_empty() {
+                                        return None;
+                                    }
+                                    let total = hits.len();
+                                    Some(view! {
+                                        <div class="picker__results-wrap">
+                                            <div class="picker__results-head">
+                                                <span class="picker__results-title">
+                                                    "ผลการค้นหาจาก HOSxP"
+                                                </span>
+                                                <span class="picker__results-count">{total}</span>
+                                            </div>
+                                            <ul class="picker__results">
+                                                {hits
+                                                    .into_iter()
+                                                    .map(|item| {
+                                                        let add_item = item.clone();
+                                                        let strength_label = item.strength_label();
+                                                        view! {
+                                                            <li class="picker__result">
+                                                                <div class="picker__result-info">
+                                                                    <span class="picker__result-name">
+                                                                        {item.name.clone()}
+                                                                    </span>
+                                                                    <span class="picker__result-meta">
+                                                                        <span class="badge-icode">
+                                                                            {item.icode.clone()}
+                                                                        </span>
+                                                                        {(!strength_label.is_empty())
+                                                                            .then(move || {
+                                                                                view! {
+                                                                                    <span class="picker__result-strength">
+                                                                                        {strength_label}
+                                                                                    </span>
+                                                                                }
+                                                                            })}
+                                                                    </span>
+                                                                </div>
+                                                                <button
+                                                                    class="button-secondary picker__add"
+                                                                    type="button"
+                                                                    on:click=move |_| {
+                                                                        on_add_drug(add_item.clone())
+                                                                    }
+                                                                >
+                                                                    <IconPlus class="icon" />
+                                                                    "เพิ่ม"
+                                                                </button>
+                                                            </li>
+                                                        }
+                                                    })
+                                                    .collect_view()}
+                                            </ul>
+                                        </div>
+                                    })
+                                }}
                             </form>
-                            <ul class="drug-list">{drug_rows}</ul>
+                            <div class="catalog__list-head">
+                                <span class="catalog__list-title">"รายการยา"</span>
+                                <span class="catalog__list-count">
+                                    {format!("{} รายการ", drug_count)}
+                                </span>
+                            </div>
+                            <div class="drug-table">
+                                <div class="drug-table__head">
+                                    <span class="drug-table__no">"#"</span>
+                                    <span>"ชื่อยา"</span>
+                                    <span>"ความแรง"</span>
+                                    <span>"จำนวน/Stock"</span>
+                                    <span class="drug-table__actions">"จัดการ"</span>
+                                </div>
+                                {(drug_count == 0)
+                                    .then(|| {
+                                        view! {
+                                            <p class="drug-table__empty">
+                                                "ยังไม่มีรายการยาในหมวดนี้ — ค้นหาด้านบนเพื่อเพิ่ม"
+                                            </p>
+                                        }
+                                    })}
+                                {(drug_count > 0)
+                                    .then(|| view! { <ul class="drug-list">{drug_rows}</ul> })}
+                            </div>
                         }
                             .into_any()
                     }}
-                </div>
+                </section>
             </div>
             <StatusLine message=status />
             <div class="panel__actions">
