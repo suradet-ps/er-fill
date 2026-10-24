@@ -5,6 +5,7 @@
 //! errors become Thai ([`crate::error::CommandError`]).
 
 use std::path::Path;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{Duration, Instant};
 
 use er_refill_core::{HosxRepository, RepositoryError, verify_password};
@@ -34,6 +35,9 @@ const SEARCH_TERM_MAX_CHARS: usize = 100;
 
 /// Defensive cap on the exported settings payload (5 MiB).
 const EXPORT_MAX_BYTES: usize = 5 * 1024 * 1024;
+
+/// Makes temporary export file names unique within this process.
+static EXPORT_TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
 /// Settings export payload produced by the frontend.
 #[derive(Debug, Deserialize)]
@@ -397,13 +401,39 @@ pub async fn export_settings_file(
     let path = picked
         .into_path()
         .map_err(|_| CommandError::storage("invalid export path"))?;
-    tokio::fs::write(&path, input.json.as_bytes())
+    write_export_file(&path, input.json.as_bytes())
         .await
         .map_err(|err| CommandError::storage(err.to_string()))?;
     Ok(ExportSettingsResult {
         saved: true,
         path: Some(path.display().to_string()),
     })
+}
+
+/// Writes `bytes` to a sibling temp file, then renames it over `path`, so a
+/// failed write can never truncate an existing export.
+async fn write_export_file(path: &Path, bytes: &[u8]) -> std::io::Result<()> {
+    let mut temp_name = std::ffi::OsString::from(".");
+    temp_name.push(
+        path.file_name()
+            .unwrap_or_else(|| std::ffi::OsStr::new("er-refill-settings.json")),
+    );
+    temp_name.push(format!(
+        ".tmp-{}-{}",
+        std::process::id(),
+        EXPORT_TEMP_COUNTER.fetch_add(1, Ordering::Relaxed)
+    ));
+    let temp_path = path.with_file_name(temp_name);
+
+    if let Err(err) = tokio::fs::write(&temp_path, bytes).await {
+        let _ = tokio::fs::remove_file(&temp_path).await;
+        return Err(err);
+    }
+    if let Err(err) = tokio::fs::rename(&temp_path, path).await {
+        let _ = tokio::fs::remove_file(&temp_path).await;
+        return Err(err);
+    }
+    Ok(())
 }
 
 /// Drug autocomplete from HOSxP `drugitems`.
@@ -558,15 +588,59 @@ async fn note_query_outcome(state: &AppState, err: &RepositoryError) {
     }
 }
 
-/// Accepts only a bounded JSON envelope produced by the settings exporter.
+/// Accepts only a bounded, complete export envelope that the importer accepts.
 fn validate_export_payload(json: &str) -> Result<(), CommandError> {
     if json.len() > EXPORT_MAX_BYTES {
         return Err(CommandError::validation("ไฟล์ส่งออกใหญ่เกินไป"));
     }
     let value: serde_json::Value =
         serde_json::from_str(json).map_err(|_| CommandError::validation("ข้อมูลส่งออกไม่ถูกต้อง"))?;
+    let invalid = || CommandError::validation("ข้อมูลส่งออกไม่ถูกต้อง");
+
     if value.get("format").and_then(serde_json::Value::as_str) != Some("er-refill-settings") {
-        return Err(CommandError::validation("ข้อมูลส่งออกไม่ถูกต้อง"));
+        return Err(invalid());
+    }
+    if value
+        .get("version")
+        .and_then(serde_json::Value::as_u64)
+        .is_none()
+    {
+        return Err(invalid());
+    }
+    if value
+        .get("exportedAt")
+        .and_then(serde_json::Value::as_str)
+        .is_none_or(str::is_empty)
+    {
+        return Err(invalid());
+    }
+    let Some(settings) = value.get("settings").and_then(serde_json::Value::as_object) else {
+        return Err(invalid());
+    };
+    let Some(catalog) = settings
+        .get("catalog")
+        .and_then(serde_json::Value::as_object)
+    else {
+        return Err(invalid());
+    };
+    if !catalog
+        .get("categories")
+        .and_then(serde_json::Value::as_array)
+        .is_some_and(|categories| !categories.is_empty())
+    {
+        return Err(invalid());
+    }
+    if !catalog
+        .get("drugs")
+        .is_some_and(serde_json::Value::is_array)
+    {
+        return Err(invalid());
+    }
+    if !settings
+        .get("report")
+        .is_some_and(serde_json::Value::is_object)
+    {
+        return Err(invalid());
     }
     Ok(())
 }
@@ -666,10 +740,45 @@ mod tests {
     }
 
     #[test]
-    fn validate_export_payload_accepts_only_the_export_envelope() {
-        assert!(validate_export_payload(r#"{"format":"er-refill-settings"}"#).is_ok());
-        assert!(validate_export_payload(r#"{"format":"other"}"#).is_err());
+    fn validate_export_payload_accepts_only_a_complete_export_envelope() {
+        let valid = r#"{
+            "format": "er-refill-settings",
+            "version": 3,
+            "exportedAt": "2026-10-24 06:00",
+            "settings": {
+                "catalog": {
+                    "categories": [
+                        { "id": "cat-1", "name": "ยาเม็ด", "sortOrder": 0 }
+                    ],
+                    "drugs": []
+                },
+                "report": {}
+            }
+        }"#;
+        assert!(validate_export_payload(valid).is_ok());
+        for incomplete in [
+            r#"{"format":"er-refill-settings"}"#,
+            r#"{"format":"other","version":3,"exportedAt":"x","settings":{}}"#,
+            r#"{"format":"er-refill-settings","version":3,"exportedAt":"x","settings":{"catalog":{"categories":[],"drugs":[]},"report":{}}}"#,
+            r#"{"format":"er-refill-settings","version":3,"exportedAt":"x","settings":{"catalog":{"categories":[{}]},"report":{}}}"#,
+        ] {
+            assert!(validate_export_payload(incomplete).is_err());
+        }
         assert!(validate_export_payload("not json").is_err());
+    }
+
+    #[tokio::test]
+    async fn write_export_file_replaces_the_target_and_cleans_up_temp_files()
+    -> Result<(), Box<dyn std::error::Error>> {
+        let dir = tempfile::tempdir()?;
+        let path = dir.path().join("er-refill-settings.json");
+        tokio::fs::write(&path, b"old").await?;
+
+        write_export_file(&path, b"new").await?;
+
+        assert_eq!(tokio::fs::read(&path).await?, b"new");
+        assert_eq!(std::fs::read_dir(dir.path())?.count(), 1);
+        Ok(())
     }
 
     #[test]

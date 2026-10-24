@@ -42,8 +42,9 @@ All notable changes to ER-Refill are documented here. The format follows
   pharmacy footer line was removed from the login panel.
 - Settings export now opens the native Save As dialog so the operator chooses
   the destination folder and file name; the footer reports the saved path.
-  The backend validates the export envelope and writes the chosen file
-  without granting frontend filesystem scopes.
+  The backend validates the complete export envelope and writes through a
+  sibling temp file before replacing the target, so a failed write never
+  truncates an existing export. No frontend filesystem scope is granted.
 - ER usage is now scoped to `dep_code = '009'` drug orders (`sub_type = '1'`,
   excluding `item_type = 'A'` automatic charges) and the out-of-hours window
   is computed from `rxdate`/`rxtime` (ER order time) instead of
