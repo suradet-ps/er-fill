@@ -14,6 +14,10 @@ All notable changes to ER-Refill are documented here. The format follows
   input, manual window editor, and summary stat cards were removed.
 - Settings now hold only the catalog and report header (settings file and
   export version 3); legacy files with a `schedule` block still load.
+- Polished the command bar: the locked-date caption is gone, the four ranges
+  are a compact segmented control, action buttons have stable widths, the
+  stage reserves its scrollbar gutter, and messages now appear as a floating
+  toast so the sheet never jumps when a banner appears or dismisses.
 - ER usage is now scoped to `dep_code = '009'` drug orders (`sub_type = '1'`,
   excluding `item_type = 'A'` automatic charges) and the out-of-hours window
   is computed from `rxdate`/`rxtime` (ER order time) instead of

@@ -71,7 +71,6 @@ pub fn CommandBar(state: AppState) -> impl IntoView {
                         <span class="run-date__value">
                             {move || format_thai_date(state.run_date.get())}
                         </span>
-                        <span class="run-date__badge">"วันนี้ · แก้ไขไม่ได้"</span>
                     </div>
 
                     <div class="range-picker">
@@ -88,7 +87,7 @@ pub fn CommandBar(state: AppState) -> impl IntoView {
                                     if state.window_preset.get().is_some() {
                                         "เลือกแล้ว"
                                     } else {
-                                        "เลือก 1 ช่วงก่อนดึงข้อมูล"
+                                        "เลือก 1 ช่วง · เมื่อวาน → วันนี้"
                                     }
                                 }}
                             </span>
@@ -110,6 +109,11 @@ pub fn CommandBar(state: AppState) -> impl IntoView {
                                             type="button"
                                             role="radio"
                                             aria-checked=move || selected.get().to_string()
+                                            aria-label=format!(
+                                                "ช่วงเวลา {} ถึง {}",
+                                                format_time_hm(preset.start()),
+                                                format_time_hm(preset.end()),
+                                            )
                                             class=move || {
                                                 if selected.get() {
                                                     "range-option range-option--selected"
@@ -124,21 +128,21 @@ pub fn CommandBar(state: AppState) -> impl IntoView {
                                                 <span class="range-option__arrow">"→"</span>
                                                 <span>{format_time_hm(preset.end())}</span>
                                             </span>
-                                            <span class="range-option__caption">
-                                                "เมื่อวาน → วันนี้"
-                                            </span>
                                         </button>
                                     }
                                 })
                                 .collect_view()}
                         </div>
-                        <p class=move || {
-                            if state.window.get().is_some() {
-                                "range-picker__preview range-picker__preview--ready"
-                            } else {
-                                "range-picker__preview"
+                        <p
+                            class=move || {
+                                if state.window.get().is_some() {
+                                    "range-picker__preview range-picker__preview--ready"
+                                } else {
+                                    "range-picker__preview"
+                                }
                             }
-                        }>
+                            aria-live="polite"
+                        >
                             {move || {
                                 state
                                     .window
@@ -151,8 +155,7 @@ pub fn CommandBar(state: AppState) -> impl IntoView {
                                         )
                                     })
                                     .unwrap_or_else(|| {
-                                        "ยังไม่ได้เลือกช่วงเวลา — เลือกช่วงด้านบนเพื่อเปิดการดึงข้อมูล"
-                                            .to_string()
+                                        "เลือกช่วงเวลาเพื่อดึงข้อมูลของเมื่อวานถึงวันนี้".to_string()
                                     })
                             }}
                         </p>
@@ -172,9 +175,9 @@ pub fn CommandBar(state: AppState) -> impl IntoView {
                         <button
                             class=move || {
                                 if state.sections.get().is_none() {
-                                    "button-primary"
+                                    "button-primary command-bar__fetch"
                                 } else {
-                                    "button-secondary"
+                                    "button-secondary command-bar__fetch"
                                 }
                             }
                             disabled=move || state.window.get().is_none() || state.loading.get()
@@ -222,7 +225,7 @@ pub fn CommandBar(state: AppState) -> impl IntoView {
                                 Some(
                                     view! {
                                         <button
-                                            class="button-accent"
+                                            class="button-accent command-bar__confirm"
                                             disabled=!has_rows || busy
                                             on:click=on_open_confirm
                                         >
@@ -235,7 +238,7 @@ pub fn CommandBar(state: AppState) -> impl IntoView {
                             }
                         }}
                         <button
-                            class="button-primary"
+                            class="button-primary command-bar__print"
                             disabled=move || {
                                 state.sections.get().is_none()
                                     || state.confirmed.get().is_none()

@@ -208,7 +208,7 @@ the logout action beside the connection status.
 ┌──────────────────────────────────────────────────────────────────────┐
 │ Top bar (48px: mark · ER-Refill · ระบบใบเบิกยาห้องฉุกเฉิน · status · ตั้งค่า) │
 ├──────────────────────────────────────────────────────────────────────┤
-│ COMMAND BAR (the only control surface; stacks under 1280px)          │
+│ COMMAND BAR (the only control surface; stacks under 1440px)          │
 │  วันที่เบิก 24 ตุลาคม 2569 [วันนี้ · แก้ไขไม่ได้]                     │
 │  ช่วงเวลาเบิก  [20:30→08:00] [20:30→08:30] [16:00→08:00] [16:00→08:30]│
 │  ดึงข้อมูล 23 ต.ค. 2569 20:30 → 24 ต.ค. 2569 08:00                    │
@@ -376,18 +376,19 @@ rounded `{rounded.sm}`, `2px 6px`.
 `{colors.warn-text}` degraded, `{colors.error}` disconnected, `{colors.stone}`
 unconfigured. Applied with a soft halo (`box-shadow: 0 0 0 3px soft`).
 
-**`run-date` card** - The fixed run date: an uppercase "วันที่เบิก" label,
-"24 ตุลาคม 2569" in ink, and a quiet "วันนี้ · แก้ไขไม่ได้" caption. It is a
-display card, never an input - the date can not drift from the morning run.
+**`run-date` card** - The fixed run date: an uppercase "วันที่เบิก" label and
+"24 ตุลาคม 2569" in ink, top-aligned with the range heading so both labels
+sit on one optical line. It is a display card, never an input - the date can
+not drift from the morning run, and it carries no redundant "locked" caption.
 
-**`range-picker` / `range-option`** - The four fixed overnight ranges as
-radio-style chips (20:30-08:00, 20:30-08:30, 16:00-08:00, 16:00-08:30).
-Each option stacks a mono time pair over a "เมื่อวาน → วันนี้" caption; the
-selected option takes the rose border and soft-rose fill. A heading status
-switches from "เลือก 1 ช่วงก่อนดึงข้อมูล" (steel) to "เลือกแล้ว" (green), and
-the preview line spells out the actual window in Thai/BE, e.g. "ดึงข้อมูล
-ศ. 23 ต.ค. 2569 20:30 → ส. 24 ต.ค. 2569 08:00". The fetch action stays
-disabled until one chip is selected.
+**`range-picker` / `range-option`** - The four fixed overnight ranges as a
+segmented radio group (20:30-08:00, 20:30-08:30, 16:00-08:00, 16:00-08:30)
+inside a soft-surface track. Each segment shows only the mono time pair; the
+selected segment takes the rose border and soft-rose fill. The heading status
+explains the mapping once ("เลือก 1 ช่วง · เมื่อวาน → วันนี้", steel) and
+switches to "เลือกแล้ว" (green) after a choice. The preview line spells out the
+actual window in Thai/BE, e.g. "ดึงข้อมูล ศ. 23 ต.ค. 2569 20:30 → ส. 24 ต.ค.
+2569 08:00". The fetch action stays disabled until one segment is selected.
 
 ### Signature Components
 
@@ -413,15 +414,18 @@ mirrors the same bear in the top bar and splash at 28px, and at 15mm in the
 top-left corner of every printed sheet page. Print drops the SVG emboss
 filter so the 15mm mark stays crisp vector art at the printer's resolution.
 
-**`command-bar`** - The only control surface; it stacks below 1280px:
+**`command-bar`** - The only control surface; it stacks below 1440px:
 - Left: the read-only `run-date` card beside the `range-picker` (heading +
-  four `range-option` chips + the actual-window preview).
+  four `range-option` segments + the actual-window preview).
 - Right: the document actions - **เพิ่มรายการยา** (secondary, opens the
   configured-catalog picker) · **ดึงข้อมูลการใช้ยา** (primary when the sheet is
   empty, secondary "ดึงใหม่" after; disabled until a range is selected) ·
   **ยืนยันข้อมูลเบิก** (rose accent; replaced by a success `confirm-chip` with
   the confirmation time) · **พิมพ์ใบเบิก** (black pill, disabled until the sheet
   is confirmed; any edit disables it again).
+- Action widths are fixed (fetch 196px, confirm/chip 176px, print 148px), so
+  state changes like "ดึงข้อมูลการใช้ยา" → "กำลังดึงข้อมูล..." → "ดึงใหม่" never
+  nudge the neighbouring buttons.
 - There is no date input, no manual window editor, and no summary stat strip:
   the run context is the fixed date plus the chosen range, nothing else.
 - Background `{colors.canvas}`, bottom hairline - chrome, not content.
@@ -512,10 +516,12 @@ The modal footer is a `{colors.surface-soft}` strip with
 the exported JSON carries the catalog and report header, never connection
 credentials.
 
-**`banner`** - Degraded-connection / save-failure strip at the top of the
-stage: amber pair (`{colors.warn-bg}`/`{colors.warn-text}`) with a dismiss
-ghost button. Error banners use the red pair. Success/info strips auto-dismiss
-after 5 seconds; warning/error strips stay until dismissed.
+**`banner`** - Floating toast at the bottom-right of the stage (fixed, so it
+never pushes the sheet or causes a layout jump): amber pair
+(`{colors.warn-bg}`/`{colors.warn-text}`) with a dismiss ghost button and
+`{elevation.2}`. Error banners use the red pair. It fades in 160ms
+(`prefers-reduced-motion` disables the animation). Success/info toasts
+auto-dismiss after 5 seconds; warning/error toasts stay until dismissed.
 
 **`category-list` / `drug-picker`** - Catalog manager: left mini-list of
 categories (`{typography.body-sm-medium}`), right list of drugs with
@@ -582,8 +588,8 @@ A fixed-purpose desktop window (Tauri), 1120×800 default, min 900×620:
 | Window width | Behavior |
 |---|---|
 | < 960px | The sheet goes full-width with reduced padding; the settings nav rail turns horizontal and the catalog collapses to one column. |
-| < 1280px | Command bar stacks into two intentional rows (fixed date + range picker, then actions); the action buttons wrap rather than overflow. |
-| ≥ 1280px | Full command bar; the sheet stays at `min(210mm, 100%)` and is centered on the desk with breathing room. |
+| < 1440px | Command bar stacks into two intentional rows (fixed date + range picker, then actions); the action buttons wrap rather than overflow. |
+| ≥ 1440px | Full command bar; the sheet stays at `min(210mm, 100%)` and is centered on the desk with breathing room. |
 
 Touch targets: buttons 40px effective height, icon-circular 32px desktop.
 This is a mouse-class desktop app; there is no mobile layout.
