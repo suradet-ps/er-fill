@@ -122,6 +122,16 @@ pub fn format_thai_date_abbr(date: NaiveDate) -> String {
     )
 }
 
+/// "18 / 10 / 2569" - the numeric Buddhist-era date used on signature lines.
+pub fn format_thai_date_slash(date: NaiveDate) -> String {
+    format!(
+        "{:02} / {:02} / {}",
+        date.day(),
+        date.month(),
+        be_year(date.year())
+    )
+}
+
 /// "16:00" - 24-hour clock, zero-padded (callers append " น." if idiomatic).
 pub fn format_time_hm(time: NaiveTime) -> String {
     format!("{:02}:{:02}", time.hour(), time.minute())
@@ -200,6 +210,14 @@ mod tests {
     fn format_thai_date_abbr_is_compact() {
         let d = date(2026, 10, 18).expect("valid date");
         assert_eq!(format_thai_date_abbr(d), "อา. 18 ต.ค. 2569");
+    }
+
+    #[test]
+    fn format_thai_date_slash_is_numeric_buddhist_era() {
+        let d = date(2026, 1, 5).expect("valid date");
+        assert_eq!(format_thai_date_slash(d), "05 / 01 / 2569");
+        let d = date(2026, 10, 18).expect("valid date");
+        assert_eq!(format_thai_date_slash(d), "18 / 10 / 2569");
     }
 
     #[test]

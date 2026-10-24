@@ -11,7 +11,9 @@
 use std::time::Duration;
 
 use er_refill_core::{ROWS_PER_PAGE, SheetPage, paginate_sections};
-use er_refill_models::{ReportSection, format_qty, format_thai_datetime_full, format_time_hm};
+use er_refill_models::{
+    ReportSection, format_qty, format_thai_date_slash, format_thai_datetime_full, format_time_hm,
+};
 use leptos::prelude::*;
 
 use crate::components::icons::IconX;
@@ -85,6 +87,16 @@ fn SheetPageView(
     let page_label = format!("หน้า {} / {}", page.number, page.count);
     let sections = page.sections;
     let has_sections = !sections.is_empty();
+    let signature_date = Memo::new({
+        let state = state.clone();
+        move |_| {
+            state
+                .window
+                .get()
+                .map(|window| format_thai_date_slash(window.end.date()))
+                .unwrap_or_else(|| "......... / ......... / .........".to_string())
+        }
+    });
 
     view! {
         <article class="sheet">
@@ -291,14 +303,14 @@ fn SheetPageView(
                                         }}
                                         " )"
                                     </p>
-                                    <p>"วันที่ ......... / ......... / ........."</p>
+                                    <p>"วันที่ " {move || signature_date.get()}</p>
                                 </div>
                             </div>
                             <div class="sheet__signature">
                                 <div class="sheet__signature-inner">
                                     <p>"ลงชื่อ .................................................. ผู้จ่าย"</p>
                                     <p>"( .................................................. )"</p>
-                                    <p>"วันที่ ......... / ......... / ........."</p>
+                                    <p>"วันที่ " {move || signature_date.get()}</p>
                                 </div>
                             </div>
                         </div>
