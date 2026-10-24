@@ -27,6 +27,9 @@ All notable changes to ER-Refill are documented here. The format follows
 - The fixed run date now rolls over at midnight even when no range is
   selected. Clearing the requisition also invalidates any in-flight fetch, so
   switching A -> B -> A can not restore the old sheet from the first fetch.
+- The printed sheet header now sits left-aligned beside the bear mark, with a
+  large bordered box on the right showing the selected time range
+  (e.g. 20:30–08:30).
 - ER usage is now scoped to `dep_code = '009'` drug orders (`sub_type = '1'`,
   excluding `item_type = 'A'` automatic charges) and the out-of-hours window
   is computed from `rxdate`/`rxtime` (ER order time) instead of

@@ -1039,20 +1039,29 @@ button:disabled {
 }
 
 .sheet__header {
-    position: relative;
-    min-height: 16mm;
+    display: flex;
+    align-items: stretch;
+    justify-content: space-between;
+    gap: 4mm;
+    min-height: 17mm;
     margin-bottom: 6px;
-    text-align: center;
+    text-align: left;
+}
+
+.sheet__identity {
+    display: flex;
+    align-items: center;
+    flex: 1 1 auto;
+    gap: 4mm;
+    min-width: 0;
 }
 
 .sheet__heading {
-    padding: 0 18mm;
+    min-width: 0;
 }
 
 .sheet__logo {
-    position: absolute;
-    top: 0;
-    left: 0;
+    flex: 0 0 15mm;
     width: 15mm;
     height: 15mm;
     -webkit-print-color-adjust: exact;
@@ -1081,6 +1090,37 @@ button:disabled {
     font-size: 10.5px;
     color: var(--slate);
     margin-top: 2px;
+}
+
+.sheet__window-box {
+    display: flex;
+    flex: 0 0 58mm;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 2mm 3mm;
+    border: 1.5px solid var(--ink);
+    text-align: center;
+}
+
+.sheet__window-label {
+    font-size: 9.5px;
+    font-weight: 600;
+    line-height: 1.4;
+    letter-spacing: 0.4px;
+    color: var(--slate);
+}
+
+.sheet__window-range {
+    font-family: var(--font-mono);
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: 0.2px;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+    white-space: nowrap;
 }
 
 .sheet__window {
@@ -1995,6 +2035,10 @@ button:disabled {
     .sheet + .sheet {
         margin-top: 0;
         break-before: page;
+    }
+
+    .sheet__window-box {
+        border-color: #000000;
     }
 
     .sheet__table th,
