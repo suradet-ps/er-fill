@@ -8,7 +8,7 @@ use std::time::Duration;
 use er_refill_models::{WindowPreset, format_thai_date, format_thai_datetime_abbr, format_time_hm};
 use leptos::prelude::*;
 
-use crate::components::icons::{IconCheck, IconPlus, IconPrinter, IconRefresh};
+use crate::components::icons::{IconCalendar, IconCheck, IconPlus, IconPrinter, IconRefresh};
 use crate::state::{AppState, Banner};
 
 /// Buffer before `window.print()` so the sheet reflects the latest state
@@ -67,7 +67,10 @@ pub fn CommandBar(state: AppState) -> impl IntoView {
             <div class="command-bar__main">
                 <div class="command-bar__run">
                     <div class="run-date">
-                        <span class="run-date__label">"วันที่เบิก"</span>
+                        <span class="run-date__label">
+                            <IconCalendar class="icon run-date__icon" />
+                            "วันที่เบิก"
+                        </span>
                         <span class="run-date__value">
                             {move || format_thai_date(state.run_date.get())}
                         </span>

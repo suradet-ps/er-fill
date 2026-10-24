@@ -208,8 +208,8 @@ the logout action beside the connection status.
 ┌──────────────────────────────────────────────────────────────────────┐
 │ Top bar (48px: mark · ER-Refill · ระบบใบเบิกยาห้องฉุกเฉิน · status · ตั้งค่า) │
 ├──────────────────────────────────────────────────────────────────────┤
-│ COMMAND BAR (the only control surface; stacks under 1440px)          │
-│  วันที่เบิก 24 ตุลาคม 2569 [วันนี้ · แก้ไขไม่ได้]                     │
+│ COMMAND BAR (the only control surface; stacks under 1500px)          │
+│  วันที่เบิก 24 ตุลาคม 2569                                            │
 │  ช่วงเวลาเบิก  [20:30→08:00] [20:30→08:30] [16:00→08:00] [16:00→08:30]│
 │  ดึงข้อมูล 23 ต.ค. 2569 20:30 → 24 ต.ค. 2569 08:00                    │
 │  [เพิ่มรายการยา] [ดึงข้อมูลการใช้ยา] [ยืนยันข้อมูลเบิก] [พิมพ์ใบเบิก]   │
@@ -376,10 +376,12 @@ rounded `{rounded.sm}`, `2px 6px`.
 `{colors.warn-text}` degraded, `{colors.error}` disconnected, `{colors.stone}`
 unconfigured. Applied with a soft halo (`box-shadow: 0 0 0 3px soft`).
 
-**`run-date` card** - The fixed run date: an uppercase "วันที่เบิก" label and
-"24 ตุลาคม 2569" in ink, top-aligned with the range heading so both labels
-sit on one optical line. It is a display card, never an input - the date can
-not drift from the morning run, and it carries no redundant "locked" caption.
+**`run-date` card** - The fixed run date: a roomy 210px-minimum card with an
+uppercase "วันที่เบิก" label beside a 14px rose calendar icon, and
+"24 ตุลาคม 2569" at 18px/600 in ink. It stretches to the range picker's full
+height and centers its two lines, giving the run date equal visual weight to
+the range choice. It is a display card, never an input - the date can not
+drift from the morning run, and it carries no redundant "locked" caption.
 
 **`range-picker` / `range-option`** - The four fixed overnight ranges as a
 segmented radio group (20:30-08:00, 20:30-08:30, 16:00-08:00, 16:00-08:30)
@@ -414,7 +416,7 @@ mirrors the same bear in the top bar and splash at 28px, and at 15mm in the
 top-left corner of every printed sheet page. Print drops the SVG emboss
 filter so the 15mm mark stays crisp vector art at the printer's resolution.
 
-**`command-bar`** - The only control surface; it stacks below 1440px:
+**`command-bar`** - The only control surface; it stacks below 1500px:
 - Left: the read-only `run-date` card beside the `range-picker` (heading +
   four `range-option` segments + the actual-window preview).
 - Right: the document actions - **เพิ่มรายการยา** (secondary, opens the
@@ -588,8 +590,8 @@ A fixed-purpose desktop window (Tauri), 1120×800 default, min 900×620:
 | Window width | Behavior |
 |---|---|
 | < 960px | The sheet goes full-width with reduced padding; the settings nav rail turns horizontal and the catalog collapses to one column. |
-| < 1440px | Command bar stacks into two intentional rows (fixed date + range picker, then actions); the action buttons wrap rather than overflow. |
-| ≥ 1440px | Full command bar; the sheet stays at `min(210mm, 100%)` and is centered on the desk with breathing room. |
+| < 1500px | Command bar stacks into two intentional rows (fixed date + range picker, then actions); the action buttons wrap rather than overflow. |
+| ≥ 1500px | Full command bar; the sheet stays at `min(210mm, 100%)` and is centered on the desk with breathing room. |
 
 Touch targets: buttons 40px effective height, icon-circular 32px desktop.
 This is a mouse-class desktop app; there is no mobile layout.
