@@ -525,7 +525,7 @@ button {
     position: relative;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: flex-start;
     padding: 52px var(--sp-xxl);
     background:
         radial-gradient(circle at 92% 10%, var(--brand-glow), transparent 32%),
@@ -576,6 +576,7 @@ button {
     position: relative;
     z-index: 1;
     display: flex;
+    flex: 1;
     flex-direction: column;
     align-items: center;
     justify-content: center;
@@ -602,13 +603,6 @@ button {
     display: block;
     width: 100%;
     height: auto;
-}
-
-.login__brand-foot {
-    position: relative;
-    z-index: 1;
-    font-size: 11px;
-    color: var(--steel);
 }
 
 .login__main {
