@@ -1,10 +1,11 @@
-//! Top bar: brand mark, titles, connection status dot, settings action
+//! Top bar: settings hidden behind the brand mark, the signed-in officer,
+//! and a compact connection indicator beside the subtitle
 //! (DESIGN.md "Components / top-bar").
 
 use leptos::prelude::*;
 
 use crate::api;
-use crate::components::icons::{IconLogOut, IconSettings};
+use crate::components::icons::IconLogOut;
 use crate::state::AppState;
 
 /// The 44px header across the top of the window.
@@ -29,20 +30,35 @@ pub fn TopBar(state: AppState) -> impl IntoView {
     view! {
         <header class="top-bar">
             <div class="top-bar__left">
-                <BrandMark />
+                <button
+                    class="brand-button"
+                    title="ตั้งค่า"
+                    aria-label="เปิดการตั้งค่า"
+                    aria-haspopup="dialog"
+                    on:click=open_settings
+                >
+                    <BrandMark />
+                </button>
                 <div class="top-bar__titles">
                     <span class="top-bar__title">"ER-Refill"</span>
                     <span class="top-bar__subtitle">"ระบบใบเบิกยาห้องฉุกเฉิน"</span>
+                    <span
+                        class=move || {
+                            format!(
+                                "status-dot status-dot--compact status-dot--{}",
+                                health.get().dot_class(),
+                            )
+                        }
+                        role="status"
+                        tabindex="0"
+                        aria-label=move || health.get().label_th()
+                        data-tooltip=move || health.get().label_th()
+                    >
+                        <span class="status-dot__dot" aria-hidden="true"></span>
+                    </span>
                 </div>
             </div>
             <div class="top-bar__right">
-                <span
-                    class=move || format!("status-dot status-dot--{}", health.get().dot_class())
-                    role="status"
-                >
-                    <span class="status-dot__dot" aria-hidden="true"></span>
-                    <span class="status-dot__label">{move || health.get().label_th()}</span>
-                </span>
                 {move || {
                     state
                         .session
@@ -59,21 +75,18 @@ pub fn TopBar(state: AppState) -> impl IntoView {
                             view! {
                                 <span class="user-chip" title=title>
                                     <span class="user-chip__avatar">{initial}</span>
-                                    <span class="user-chip__text">
-                                        <span class="user-chip__name">{user.display_name}</span>
-                                        <span class="user-chip__role">"เจ้าหน้าที่"</span>
-                                    </span>
+                                    <span class="user-chip__name">{user.display_name}</span>
                                 </span>
                             }
                         })
                 }}
-                <button class="button-ghost" title="ออกจากระบบ" on:click=logout>
+                <button
+                    class="button-secondary top-bar__logout"
+                    title="ออกจากระบบ"
+                    on:click=logout
+                >
                     <IconLogOut class="icon" />
                     "ออกจากระบบ"
-                </button>
-                <button class="button-ghost" title="ตั้งค่า" on:click=open_settings>
-                    <IconSettings class="icon" />
-                    "ตั้งค่า"
                 </button>
             </div>
         </header>

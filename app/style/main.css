@@ -146,9 +146,12 @@ button {
 /* ── Top bar ───────────────────────────────────────────────────────── */
 
 .top-bar {
+    position: relative;
+    z-index: 20;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: var(--sp-md);
     height: var(--topbar-height);
     padding: 0 var(--sp-md);
     background: var(--canvas);
@@ -160,29 +163,59 @@ button {
     display: flex;
     align-items: center;
     gap: var(--sp-sm);
+    min-width: 0;
 }
 
 .top-bar__titles {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     gap: var(--sp-xs);
+    min-width: 0;
 }
 
 .top-bar__title {
     font-size: 16px;
     font-weight: 700;
     letter-spacing: -0.2px;
+    white-space: nowrap;
 }
 
 .top-bar__subtitle {
+    overflow: hidden;
     font-size: 13px;
     color: var(--steel);
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .top-bar__right {
     display: flex;
     align-items: center;
-    gap: var(--sp-md);
+    gap: var(--sp-sm);
+    flex-shrink: 0;
+}
+
+.brand-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: -4px;
+    padding: 4px;
+    border: none;
+    border-radius: var(--rounded-sm);
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+}
+
+.brand-button:hover,
+.brand-button:active {
+    background: var(--surface);
+}
+
+.brand-button:focus-visible {
+    outline: 2px solid var(--brand-pink);
+    outline-offset: 2px;
 }
 
 .brand-mark {
@@ -226,6 +259,47 @@ button {
 
 .status-dot--idle .status-dot__dot {
     background: var(--stone);
+}
+
+.status-dot--compact {
+    position: relative;
+    margin: -4px;
+    padding: 4px;
+    border-radius: var(--rounded-full);
+    cursor: help;
+}
+
+.status-dot--compact::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    z-index: 40;
+    padding: 6px 9px;
+    border: 1px solid var(--hairline);
+    border-radius: var(--rounded-sm);
+    background: var(--canvas);
+    box-shadow: var(--elev-2);
+    color: var(--ink);
+    font-size: 11.5px;
+    font-weight: 500;
+    line-height: 1.4;
+    white-space: nowrap;
+    opacity: 0;
+    transform: translateY(-2px);
+    transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
+    pointer-events: none;
+}
+
+.status-dot--compact:hover::after,
+.status-dot--compact:focus-visible::after {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.status-dot--compact:focus-visible {
+    outline: 2px solid var(--brand-pink);
+    outline-offset: 2px;
 }
 
 /* ── Command bar ───────────────────────────────────────────────────── */
@@ -681,7 +755,7 @@ button {
     align-items: center;
     gap: 8px;
     min-width: 0;
-    padding: 5px 12px 5px 4px;
+    padding: 4px 14px 4px 4px;
     border: 1px solid var(--hairline);
     border-radius: var(--rounded-full);
     background: var(--surface);
@@ -691,6 +765,7 @@ button {
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
     width: 26px;
     height: 26px;
     border-radius: 50%;
@@ -700,26 +775,23 @@ button {
     font-weight: 700;
 }
 
-.user-chip__text {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-    line-height: 1.45;
-}
-
 .user-chip__name {
     max-width: 220px;
     overflow: hidden;
     text-overflow: ellipsis;
-    font-size: 11.5px;
+    font-size: 12.5px;
     font-weight: 600;
+    line-height: 1.4;
     color: var(--ink);
     white-space: nowrap;
 }
 
-.user-chip__role {
-    font-size: 9.5px;
-    color: var(--steel);
+.top-bar__logout {
+    height: 34px;
+    padding: 0 16px;
+    border-color: var(--stone);
+    font-size: 13px;
+    font-weight: 600;
 }
 
 @media (max-width: 1000px) {
@@ -735,8 +807,7 @@ button {
         padding: 56px 24px 24px;
     }
 
-    .top-bar__subtitle,
-    .user-chip__role {
+    .top-bar__subtitle {
         display: none;
     }
 }

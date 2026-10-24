@@ -201,12 +201,13 @@ four clearly labelled overnight ranges before fetching.
 Before the document exists, the full-height `login-gate` replaces the shell
 until an `officer` signs in. Connection setup is not part of this surface:
 the settings dialog opens from the gate and owns the HOSxP credentials. After
-sign-in the shell below is revealed; the top bar adds the signed-in user and
-the logout action beside the connection status.
+sign-in the shell below is revealed; the top bar shows the signed-in user
+and a prominent logout pill on the right, with the connection dot tucked
+beside the subtitle and the settings action hidden behind the brand mark.
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
-│ Top bar (48px: mark · ER-Refill · ระบบใบเบิกยาห้องฉุกเฉิน · status · ตั้งค่า) │
+│ Top bar (48px: [mark=ตั้งค่า] ER-Refill · subtitle · ● │ user · ออกจากระบบ) │
 ├──────────────────────────────────────────────────────────────────────┤
 │ COMMAND BAR (the only control surface; stacks under 1500px)          │
 │  วันที่เบิก 24 ตุลาคม 2569                                            │
@@ -309,10 +310,11 @@ empty-state or catalog CTA.
 
 **`button-secondary`** - Outlined pill: transparent background, text
 `{colors.ink}`, border `1px solid {colors.hairline}`, padding `10px 20px`.
+The top-bar logout uses a stronger `{colors.stone}` border and 600 weight so
+it reads as the one clear exit action.
 
-**`button-ghost`** - Quiet rectangular action (top-bar "ออกจากระบบ" /
-"ตั้งค่า"): transparent, text `{colors.ink}`, padding `8px 12px`,
-rounded `{rounded.md}`.
+**`button-ghost`** - Quiet rectangular action (settings close): transparent,
+text `{colors.ink}`, padding `8px 12px`, rounded `{rounded.md}`.
 
 **`button-icon-circular`** - 32×32px circular utility (close, ↑/↓ in the
 catalog list): background `{colors.canvas}`, border
@@ -374,8 +376,12 @@ catalog panel needs the modal's full width for its three-field drug rows.
 rounded `{rounded.sm}`, `2px 6px`.
 
 **`status-dot`** - 8px dot + text: `{colors.success}` connected,
-`{colors.warn-text}` degraded, `{colors.error}` disconnected, `{colors.stone}`
-unconfigured. Applied with a soft halo (`box-shadow: 0 0 0 3px soft`).
+`{colors.error}` disconnected, `{colors.stone}` unconfigured. Applied with a
+soft halo (`box-shadow: 0 0 0 3px soft`). The top bar uses the compact variant
+(`status-dot--compact`): the dot alone, immediately after the subtitle, with
+no visible label. Hovering or focusing it shows a small bordered tooltip with
+the full Thai status ("เชื่อมต่อ HOSxP แล้ว" / "การเชื่อมต่อขัดข้อง" /
+"ยังไม่ตั้งค่าการเชื่อมต่อ"); the same text is the `aria-label`.
 
 **`run-date` card** - The fixed run date: a roomy 210px-minimum card with an
 uppercase "วันที่เบิก" label beside a 14px rose calendar icon, and
@@ -416,6 +422,17 @@ muzzle, hugging paws, and a white medical heart with a rose cross.
 mirrors the same bear in the top bar and splash at 28px, and at 15mm in the
 top-left corner of every printed sheet page. Print drops the SVG emboss
 filter so the 15mm mark stays crisp vector art at the printer's resolution.
+
+**`top-bar`** - The 48px chrome above the command bar:
+- Left: the `BrandMark` doubles as the quiet settings trigger (native
+  "ตั้งค่า" tooltip, hover surface, keyboard focus ring, `aria-haspopup`);
+  the "ER-Refill" title and "ระบบใบเบิกยาห้องฉุกเฉิน" subtitle follow, with
+  the compact connection dot at the end of that line.
+- Right: exactly the signed-in user pill (avatar initial + display name) and
+  a prominent outlined "ออกจากระบบ" pill. There is no visible settings button
+  on the right.
+- Below 1000px the subtitle hides; the compact status dot stays next to the
+  title.
 
 **`command-bar`** - The only control surface; it stacks below 1500px:
 - Left: the read-only `run-date` card beside the `range-picker` (heading +

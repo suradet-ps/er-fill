@@ -30,6 +30,10 @@ All notable changes to ER-Refill are documented here. The format follows
 - The printed sheet header now sits left-aligned beside the bear mark, with a
   large bordered box on the right showing the selected time range
   (e.g. 20:30–08:30).
+- Simplified the top bar: settings now opens by clicking the bear mark, the
+  connection state is a compact green/red dot with a readable tooltip beside
+  the subtitle, and the right side shows only the signed-in name and a
+  prominent logout pill.
 - ER usage is now scoped to `dep_code = '009'` drug orders (`sub_type = '1'`,
   excluding `item_type = 'A'` automatic charges) and the out-of-hours window
   is computed from `rxdate`/`rxtime` (ER order time) instead of
