@@ -1803,6 +1803,7 @@ button:disabled {
     line-height: 1.5;
     padding: var(--sp-xs) var(--sp-md);
     border-radius: var(--rounded-md);
+    overflow-wrap: anywhere;
 }
 
 .status-line--ok {

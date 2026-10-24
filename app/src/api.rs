@@ -267,6 +267,42 @@ pub async fn load_settings() -> Result<AppSettings, ApiError> {
     call_empty("load_settings").await
 }
 
+/// Settings export payload sent to the native Save As flow.
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ExportSettingsInput {
+    /// The serialized export envelope.
+    pub json: String,
+    /// Suggested file name for the Save As dialog.
+    pub file_name: String,
+}
+
+/// Outcome of the native Save As flow.
+#[derive(Debug, Clone, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ExportSettingsResult {
+    /// False when the operator cancelled the dialog.
+    pub saved: bool,
+    /// Full path written when `saved` is true.
+    pub path: Option<String>,
+}
+
+/// Opens the OS Save As dialog and writes the settings export to the chosen path.
+pub async fn export_settings_file(
+    json: &str,
+    file_name: &str,
+) -> Result<ExportSettingsResult, ApiError> {
+    call_struct_arg(
+        "export_settings_file",
+        "input",
+        &ExportSettingsInput {
+            json: json.to_string(),
+            file_name: file_name.to_string(),
+        },
+    )
+    .await
+}
+
 /// Persists the ER drug catalog.
 pub async fn save_catalog(catalog: &Catalog) -> Result<(), ApiError> {
     call_struct_arg("save_catalog", "catalog", catalog).await

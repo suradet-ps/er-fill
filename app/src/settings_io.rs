@@ -70,48 +70,13 @@ pub fn parse_import(raw: &str) -> Result<AppSettings, String> {
     Ok(file.settings)
 }
 
-/// File name offered by the browser download: `er-refill-settings-YYYYMMDD.json`.
+/// Suggested file name for the native Save As dialog:
+/// `er-refill-settings-YYYYMMDD.json`.
 pub fn export_file_name() -> String {
     format!(
         "er-refill-settings-{}.json",
         chrono::Local::now().format("%Y%m%d")
     )
-}
-
-/// Downloads `json` as a file (blob + object URL, no filesystem scopes,
-/// AGENTS.md section 15). Errors are Thai, for the status line.
-///
-/// # Errors
-///
-/// Returns a Thai message when the browser denies any DOM step.
-pub fn download_json(json: &str, file_name: &str) -> Result<(), String> {
-    use wasm_bindgen::JsCast;
-
-    let window = web_sys::window().ok_or_else(|| "ไม่พบหน้าต่างโปรแกรม".to_string())?;
-    let document = window
-        .document()
-        .ok_or_else(|| "ไม่พบเอกสารของโปรแกรม".to_string())?;
-
-    let parts = js_sys::Array::new();
-    parts.push(&wasm_bindgen::JsValue::from_str(json));
-    let blob = web_sys::Blob::new_with_str_sequence(&parts)
-        .map_err(|_| "สร้างไฟล์สำหรับดาวน์โหลดไม่สำเร็จ".to_string())?;
-    let url = web_sys::Url::create_object_url_with_blob(&blob)
-        .map_err(|_| "สร้างไฟล์สำหรับดาวน์โหลดไม่สำเร็จ".to_string())?;
-
-    let anchor = document
-        .create_element("a")
-        .map_err(|_| "สร้างไฟล์สำหรับดาวน์โหลดไม่สำเร็จ".to_string())?
-        .unchecked_into::<web_sys::HtmlAnchorElement>();
-    anchor.set_href(&url);
-    anchor.set_download(file_name);
-    if let Some(body) = document.body() {
-        let _ = body.append_child(&anchor);
-        anchor.click();
-        let _ = body.remove_child(&anchor);
-    }
-    let _ = web_sys::Url::revoke_object_url(&url);
-    Ok(())
 }
 
 #[cfg(test)]

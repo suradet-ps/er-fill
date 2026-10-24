@@ -4,6 +4,7 @@
 //! through `er-refill-hosxp-connector`, and this file is the boundary where
 //! errors become Thai ([`crate::error::CommandError`]).
 
+use std::path::Path;
 use std::time::{Duration, Instant};
 
 use er_refill_core::{HosxRepository, RepositoryError, verify_password};
@@ -14,7 +15,8 @@ use er_refill_models::{
 };
 use secrecy::{ExposeSecret, SecretBox, SecretString};
 use serde::{Deserialize, Serialize};
-use tauri::State;
+use tauri::{AppHandle, State, WebviewWindow};
+use tauri_plugin_dialog::DialogExt;
 
 use crate::error::CommandError;
 use crate::settings::{self, AppSettings};
@@ -29,6 +31,29 @@ const SEARCH_TERM_MIN_CHARS: usize = 2;
 /// Upper bound on the operator's search term (defensive; the term is bound,
 /// never interpolated).
 const SEARCH_TERM_MAX_CHARS: usize = 100;
+
+/// Defensive cap on the exported settings payload (5 MiB).
+const EXPORT_MAX_BYTES: usize = 5 * 1024 * 1024;
+
+/// Settings export payload produced by the frontend.
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ExportSettingsInput {
+    /// The serialized export envelope.
+    pub json: String,
+    /// Suggested file name for the native Save As dialog.
+    pub file_name: String,
+}
+
+/// Outcome of the native Save As flow.
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ExportSettingsResult {
+    /// False when the operator cancelled the dialog.
+    pub saved: bool,
+    /// Full path written when `saved` is true.
+    pub path: Option<String>,
+}
 
 /// Plaintext connection settings typed by the operator in the settings
 /// dialog. The plaintext lives in the webview's JS heap while the operator
@@ -339,6 +364,48 @@ pub async fn save_report(
     update_settings(&state, |settings| settings.report = report).await
 }
 
+/// Writes the settings export to a path chosen in the native Save As dialog.
+///
+/// The webview supplies the already-serialized export; the backend validates
+/// its envelope and size before opening the dialog, then writes the exact
+/// bytes to the chosen path. Frontend filesystem scopes stay closed.
+#[tauri::command]
+pub async fn export_settings_file(
+    input: ExportSettingsInput,
+    app: AppHandle,
+    window: WebviewWindow,
+    state: State<'_, AppState>,
+) -> Result<ExportSettingsResult, CommandError> {
+    require_session(&state).await?;
+    validate_export_payload(&input.json)?;
+
+    let Some(picked) = app
+        .dialog()
+        .file()
+        .set_title("ส่งออกการตั้งค่า")
+        .set_file_name(sanitize_export_file_name(&input.file_name))
+        .add_filter("ER-Refill settings", &["json"])
+        .set_parent(&window)
+        .blocking_save_file()
+    else {
+        return Ok(ExportSettingsResult {
+            saved: false,
+            path: None,
+        });
+    };
+
+    let path = picked
+        .into_path()
+        .map_err(|_| CommandError::storage("invalid export path"))?;
+    tokio::fs::write(&path, input.json.as_bytes())
+        .await
+        .map_err(|err| CommandError::storage(err.to_string()))?;
+    Ok(ExportSettingsResult {
+        saved: true,
+        path: Some(path.display().to_string()),
+    })
+}
+
 /// Drug autocomplete from HOSxP `drugitems`.
 #[tauri::command]
 pub async fn search_drugs(
@@ -491,6 +558,34 @@ async fn note_query_outcome(state: &AppState, err: &RepositoryError) {
     }
 }
 
+/// Accepts only a bounded JSON envelope produced by the settings exporter.
+fn validate_export_payload(json: &str) -> Result<(), CommandError> {
+    if json.len() > EXPORT_MAX_BYTES {
+        return Err(CommandError::validation("ไฟล์ส่งออกใหญ่เกินไป"));
+    }
+    let value: serde_json::Value =
+        serde_json::from_str(json).map_err(|_| CommandError::validation("ข้อมูลส่งออกไม่ถูกต้อง"))?;
+    if value.get("format").and_then(serde_json::Value::as_str) != Some("er-refill-settings") {
+        return Err(CommandError::validation("ข้อมูลส่งออกไม่ถูกต้อง"));
+    }
+    Ok(())
+}
+
+/// Keeps only the file name and guarantees a `.json` extension.
+fn sanitize_export_file_name(raw: &str) -> String {
+    let name = Path::new(raw)
+        .file_name()
+        .and_then(|name| name.to_str())
+        .map(str::trim)
+        .filter(|name| !name.is_empty())
+        .unwrap_or("er-refill-settings.json");
+    if name.to_ascii_lowercase().ends_with(".json") {
+        name.to_string()
+    } else {
+        format!("{name}.json")
+    }
+}
+
 /// Rejects a reversed requisition window before touching the database.
 fn validate_window(window: &RequisitionWindow) -> Result<(), CommandError> {
     RequisitionWindow::new(window.start, window.end)
@@ -558,6 +653,23 @@ mod tests {
         };
         *state.session.lock().await = Some(user.clone());
         assert_eq!(require_session(&state).await.expect("session"), user);
+    }
+
+    #[test]
+    fn sanitize_export_file_name_strips_paths_and_appends_json() {
+        assert_eq!(sanitize_export_file_name("../../evil.txt"), "evil.txt.json");
+        assert_eq!(
+            sanitize_export_file_name("er-refill-settings-20261024.json"),
+            "er-refill-settings-20261024.json"
+        );
+        assert_eq!(sanitize_export_file_name("   "), "er-refill-settings.json");
+    }
+
+    #[test]
+    fn validate_export_payload_accepts_only_the_export_envelope() {
+        assert!(validate_export_payload(r#"{"format":"er-refill-settings"}"#).is_ok());
+        assert!(validate_export_payload(r#"{"format":"other"}"#).is_err());
+        assert!(validate_export_payload("not json").is_err());
     }
 
     #[test]

@@ -538,7 +538,9 @@ top-to-bottom instead of competing with a sidebar. The modal footer is a
 `{colors.surface-soft}` strip with
 `ส่งออกการตั้งค่า` / `นำเข้าการตั้งค่า` secondary pills + a status line -
 the exported JSON carries the catalog and report header, never connection
-credentials.
+credentials. "ส่งออกการตั้งค่า" opens the native OS Save As dialog
+(`tauri-plugin-dialog`) so the operator chooses the folder and file name; the
+status line then reports the full saved path (wrapped in the footer).
 
 **`banner`** - Floating toast at the bottom-right of the stage (fixed, so it
 never pushes the sheet or causes a layout jump): amber pair

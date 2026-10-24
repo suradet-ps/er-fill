@@ -184,6 +184,9 @@ by screen and print.
   for the MD5 check, and dropped; they are never stored or logged. The
   backend session is memory-only and cleared on logout, restart, or a
   connection change.
+- Settings export opens the OS Save As dialog through `tauri-plugin-dialog`;
+  the Rust command validates the bounded JSON envelope and writes the chosen
+  path itself. No frontend filesystem/shell scope is granted for this.
 - The frontend never touches the database; it only calls Tauri commands.
   `fetch_usage`, `search_drugs`, and settings writes require a backend
   session; login/connection commands do not.
