@@ -1824,69 +1824,136 @@ button:disabled {
 /* ── Catalog manager ───────────────────────────────────────────────── */
 
 .catalog {
-    display: grid;
-    grid-template-columns: 220px 1fr;
-    gap: var(--sp-lg);
-    align-items: start;
-}
-
-.catalog__sidebar {
     display: flex;
     flex-direction: column;
-    gap: var(--sp-xs);
+    gap: var(--sp-md);
+}
+
+.catalog__categories {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-sm);
+    padding: var(--sp-sm) var(--sp-md);
+    border: 1px solid var(--hairline);
+    border-radius: var(--rounded-md);
+    background: var(--surface-soft);
+}
+
+.catalog__section-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--sp-md);
+    flex-wrap: wrap;
 }
 
 .catalog__subtitle {
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 600;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    color: var(--steel);
-}
-
-.category-list {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-.category-list__item {
-    display: flex;
-    align-items: center;
-    gap: var(--sp-xxs);
-}
-
-.category-list__button {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--sp-xs);
-    padding: var(--sp-xs) var(--sp-sm);
-    background: transparent;
-    border: none;
-    border-radius: var(--rounded-sm);
-    font-size: 14px;
-    color: var(--steel);
-    text-align: left;
-}
-
-.category-list__button--active {
-    background: var(--surface);
+    line-height: 1.4;
     color: var(--ink);
-    font-weight: 500;
 }
 
-.category-list__count {
-    font-family: var(--font-mono);
-    font-size: 12px;
-    color: var(--stone);
+.catalog__hint {
+    margin: 1px 0 0;
+    font-size: 11.5px;
+    line-height: 1.4;
+    color: var(--steel);
 }
 
 .catalog__add {
     display: flex;
-    gap: var(--sp-xxs);
     align-items: center;
+    gap: var(--sp-xs);
+}
+
+.catalog__add .text-input {
+    width: 190px;
+    height: 34px;
+}
+
+.catalog__add-button {
+    height: 34px;
+    padding: 0 14px;
+    font-size: 13px;
+}
+
+.category-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-xs);
+}
+
+.category-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border: 1px solid var(--hairline);
+    border-radius: var(--rounded-full);
+    background: var(--canvas);
+    color: var(--slate);
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.4;
+    transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease),
+        color var(--dur) var(--ease);
+}
+
+.category-tab:hover {
+    background: var(--surface);
+}
+
+.category-tab--active {
+    border-color: var(--brand-pink);
+    background: var(--brand-pink-soft);
+    color: var(--brand-pink-deep);
+    font-weight: 600;
+}
+
+.category-tab__count {
+    min-width: 18px;
+    padding: 0 5px;
+    border-radius: var(--rounded-full);
+    background: var(--surface);
+    color: var(--steel);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    line-height: 16px;
+    text-align: center;
+}
+
+.category-tab--active .category-tab__count {
+    background: var(--canvas);
+    color: var(--brand-pink-deep);
+}
+
+.catalog__category-meta {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--sp-md);
+    padding-top: var(--sp-xs);
+    border-top: 1px solid var(--hairline);
+}
+
+.catalog__rename {
+    flex: 1;
+    max-width: 320px;
+}
+
+.catalog__rename .text-input {
+    width: 220px;
+    height: 34px;
+}
+
+.catalog__remove-category {
+    flex-shrink: 0;
+    color: var(--error);
+}
+
+.catalog__remove-category:disabled {
+    color: var(--muted);
 }
 
 .catalog__main {
@@ -1896,85 +1963,89 @@ button:disabled {
     min-width: 0;
 }
 
-.drug-list {
+.catalog__empty {
     display: flex;
     flex-direction: column;
-    gap: var(--sp-xs);
-}
-
-/* Two-line drug rows: identity line (name, icode, actions) + field line
-   (strength, stock) so nothing overlaps at modal widths. */
-
-.drug-row {
-    display: flex;
-    flex-direction: column;
-    gap: var(--sp-xxs);
-    padding: var(--sp-xs) var(--sp-sm);
-    background: var(--canvas);
-    border: 1px solid var(--hairline-soft);
+    gap: 2px;
+    padding: var(--sp-xl) var(--sp-md);
+    border: 1px dashed var(--hairline);
     border-radius: var(--rounded-md);
+    background: var(--surface-soft);
+    text-align: center;
 }
 
-.drug-row__line {
-    display: flex;
-    align-items: center;
-    gap: var(--sp-xs);
+.catalog__empty-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
 }
 
-.drug-row__line--fields {
-    gap: var(--sp-md);
-}
-
-.drug-row__name {
-    flex: 1;
-    min-width: 0;
-}
-
-.drug-row__cell {
-    display: flex;
-    align-items: center;
-    gap: var(--sp-xs);
-    flex: 1;
-    min-width: 0;
-}
-
-.drug-row__cell-label {
-    flex-shrink: 0;
+.catalog__empty-text {
     font-size: 12px;
     color: var(--steel);
-    white-space: nowrap;
-}
-
-.drug-row__cell .text-input {
-    flex: 1;
-    min-width: 0;
-}
-
-.drug-row__actions {
-    display: flex;
-    gap: 2px;
-    flex-shrink: 0;
 }
 
 .picker {
     display: flex;
     flex-direction: column;
-    gap: var(--sp-xs);
+    gap: var(--sp-sm);
     padding: var(--sp-sm) var(--sp-md);
-    background: var(--surface-soft);
-    border: 1px dashed var(--hairline);
+    border: 1px solid var(--hairline);
     border-radius: var(--rounded-md);
+    background: var(--canvas);
 }
 
 .picker__search {
     display: flex;
-    gap: var(--sp-xs);
     align-items: center;
+    gap: var(--sp-xs);
 }
 
 .picker__icon {
-    color: var(--stone);
     display: inline-flex;
+    flex-shrink: 0;
+    color: var(--stone);
+}
+
+.picker__input {
+    flex: 1;
+    min-width: 0;
+    height: 36px;
+}
+
+.picker__submit {
+    height: 36px;
+    padding: 0 16px;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.picker__results-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-top: var(--sp-xs);
+    border-top: 1px solid var(--hairline-soft);
+}
+
+.picker__results-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-xs);
+    color: var(--steel);
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.picker__results-title {
+    font-weight: 600;
+    letter-spacing: 0.2px;
+}
+
+.picker__results-count {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
 }
 
 .picker__results {
@@ -1991,9 +2062,9 @@ button:disabled {
     justify-content: space-between;
     gap: var(--sp-sm);
     padding: var(--sp-xs) var(--sp-sm);
-    background: var(--canvas);
+    border: 1px solid var(--hairline-soft);
     border-radius: var(--rounded-sm);
-    box-shadow: var(--elev-1);
+    background: var(--surface-soft);
 }
 
 .picker__result-info {
@@ -2004,10 +2075,10 @@ button:disabled {
 }
 
 .picker__result-name {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--ink);
     overflow: hidden;
+    color: var(--ink);
+    font-size: 13.5px;
+    font-weight: 600;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
@@ -2020,11 +2091,127 @@ button:disabled {
 
 .picker__result-strength {
     font-family: var(--font-mono);
-    font-size: 12px;
+    font-size: 11.5px;
     color: var(--slate);
     font-variant-numeric: tabular-nums;
 }
 
+.picker__add {
+    flex-shrink: 0;
+    height: 30px;
+    padding: 0 12px;
+    border-color: var(--brand-pink-soft);
+    color: var(--brand-pink-deep);
+    font-size: 12.5px;
+}
+
+.catalog__list-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--sp-sm);
+}
+
+.catalog__list-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.catalog__list-count {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--steel);
+}
+
+.drug-table {
+    overflow: hidden;
+    border: 1px solid var(--hairline);
+    border-radius: var(--rounded-md);
+    background: var(--canvas);
+}
+
+.drug-table__head,
+.drug-row {
+    display: grid;
+    grid-template-columns: 26px minmax(0, 1fr) 120px 112px 96px;
+    align-items: center;
+    gap: var(--sp-xs);
+}
+
+.drug-table__head {
+    padding: 6px var(--sp-sm);
+    border-bottom: 1px solid var(--hairline);
+    background: var(--surface);
+    color: var(--steel);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+.drug-table__no {
+    font-family: var(--font-mono);
+    text-align: center;
+}
+
+.drug-table__actions {
+    text-align: right;
+}
+
+.drug-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.drug-row {
+    padding: 7px var(--sp-sm);
+    border-bottom: 1px solid var(--hairline-soft);
+}
+
+.drug-row:last-child {
+    border-bottom: none;
+}
+
+.drug-row:hover {
+    background: var(--surface-soft);
+}
+
+.drug-row__index {
+    color: var(--stone);
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    text-align: center;
+}
+
+.drug-row__identity {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+
+.drug-row__name {
+    flex: 1;
+    min-width: 0;
+    font-weight: 600;
+}
+
+.drug-row .text-input {
+    width: 100%;
+}
+
+.drug-row__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 2px;
+}
+
+.drug-table__empty {
+    padding: var(--sp-lg) var(--sp-md);
+    color: var(--steel);
+    font-size: 12.5px;
+    text-align: center;
+}
 .badge-icode {
     display: inline-block;
     font-family: var(--font-mono);
@@ -2190,10 +2377,6 @@ button:disabled {
     .settings-nav__item--active {
         border-left-color: transparent;
         border-bottom-color: var(--brand-pink);
-    }
-
-    .catalog {
-        grid-template-columns: 1fr;
     }
 }
 

@@ -363,7 +363,8 @@ modal's vertical navigation rail (icon + label per panel, on a
 icon; active: `{colors.canvas}` background, ink text, and a 3px rose left
 border. Below 960px the rail turns into a horizontal scrolling strip
 (rose bottom border on the active item). The rail exists because the
-catalog panel needs the modal's full width for its three-field drug rows.
+catalog panel needs the modal's full width for its category, search, and
+drug-table layout.
 
 ### Badges & Status
 
@@ -531,10 +532,10 @@ the operator confirms again.
 backdrop, `{rounded.lg}`, max-width 960px. A 200px vertical `settings-nav`
 rail (icons + การเชื่อมต่อ · รายการยา · หัวใบเบิก) beside a
 scrolling `settings-content` area. Each panel keeps its own action row
-(rose accent or black pill for save). The catalog panel uses two-line drug
-rows - identity line (name, icode chip, ↑/↓/remove) over a labeled field
-line (ความแรง, จำนวน/Stock) - so the three inputs never fight for width.
-The modal footer is a `{colors.surface-soft}` strip with
+(rose accent or black pill for save). The catalog panel stacks the category
+tabs, the HOSxP search, and a compact editable drug table so the rows read
+top-to-bottom instead of competing with a sidebar. The modal footer is a
+`{colors.surface-soft}` strip with
 `ส่งออกการตั้งค่า` / `นำเข้าการตั้งค่า` secondary pills + a status line -
 the exported JSON carries the catalog and report header, never connection
 credentials.
@@ -546,14 +547,23 @@ never pushes the sheet or causes a layout jump): amber pair
 (`prefers-reduced-motion` disables the animation). Success/info toasts
 auto-dismiss after 5 seconds; warning/error toasts stay until dismissed.
 
-**`category-list` / `drug-picker`** - Catalog manager: left mini-list of
-categories (`{typography.body-sm-medium}`), right list of drugs with
-`button-icon-circular` ↑/↓/remove per row and three inline editors (name ·
-ความแรง · จำนวน/Stock); `search-pill` above, results as `{elevation.2}`
-picker rows with `+ เพิ่ม` ghost action. Each result keeps the icode chip plus
-the full strength label from `drugitems` (`{typography.code-sm}`, e.g.
-"500 mg"), so operators can identify the item; the label is saved into the
-drug's `strengthText`, and the printed sheet trims the Thai unit suffix.
+**`catalog-manager`** - Settings panel in three stacked bands:
+- **Categories on top:** a wrapped row of pill tabs, each with the category
+  name and a mono count. The active tab takes the rose border and soft-rose
+  fill. The "เพิ่มหมวด" input/button sits at the right of the section heading;
+  a slim row below the tabs edits the selected category name and offers
+  "ลบหมวด" (disabled while the category still has drugs).
+- **Search next:** a full-width search card with the magnifier, a
+  "ค้นหายาจากบัญชี HOSxP" field, and a compact search button. Results appear in
+  a bordered card with a count, a max-height scroll area, the icode chip and
+  full strength label from `drugitems`, and a `+ เพิ่ม` secondary action. An
+  added result leaves the list immediately.
+- **Rows last:** a compact drug table with fixed column headers (# · ชื่อยา ·
+  ความแรง · จำนวน/Stock · จัดการ). Rows are single-line grid rows: name (600)
+  with icode chip, strength and stock inputs, then ↑/↓/remove icon buttons.
+  This replaces the old two-line form cards so a category's items can be
+  scanned quickly. The label is saved into the drug's `strengthText`, and the
+  printed sheet trims the Thai unit suffix.
 
 ## Do's and Don'ts
 
@@ -610,7 +620,7 @@ A fixed-purpose desktop window (Tauri), 1120×800 default, min 900×620:
 
 | Window width | Behavior |
 |---|---|
-| < 960px | The sheet goes full-width with reduced padding; the settings nav rail turns horizontal and the catalog collapses to one column. |
+| < 960px | The sheet goes full-width with reduced padding; the settings nav rail turns horizontal, giving the catalog panel more width. |
 | < 1500px | Command bar stacks into two intentional rows (fixed date + range picker, then actions); the action buttons wrap rather than overflow. |
 | ≥ 1500px | Full command bar; the sheet stays at `min(210mm, 100%)` and is centered on the desk with breathing room. |
 
