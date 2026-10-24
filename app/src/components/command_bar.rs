@@ -95,46 +95,75 @@ pub fn CommandBar(state: AppState) -> impl IntoView {
                                 }}
                             </span>
                         </div>
-                        <div class="range-picker__options" role="radiogroup" aria-label="ช่วงเวลาเบิก">
-                            {WindowPreset::ALL
-                                .into_iter()
-                                .map(|preset| {
-                                    let selected = Memo::new({
-                                        let state = state.clone();
-                                        move |_| state.window_preset.get() == Some(preset)
-                                    });
-                                    let on_pick = {
-                                        let state = state.clone();
-                                        move |_| state.select_window_preset(preset)
-                                    };
-                                    view! {
-                                        <button
-                                            type="button"
-                                            role="radio"
-                                            aria-checked=move || selected.get().to_string()
-                                            aria-label=format!(
-                                                "ช่วงเวลา {} ถึง {}",
-                                                format_time_hm(preset.start()),
-                                                format_time_hm(preset.end()),
-                                            )
-                                            class=move || {
-                                                if selected.get() {
-                                                    "range-option range-option--selected"
-                                                } else {
-                                                    "range-option"
+                        <div class="range-picker__controls">
+                            <div
+                                class="range-picker__options"
+                                role="radiogroup"
+                                aria-label="ช่วงเวลาเบิก"
+                            >
+                                {WindowPreset::ALL
+                                    .into_iter()
+                                    .map(|preset| {
+                                        let selected = Memo::new({
+                                            let state = state.clone();
+                                            move |_| state.window_preset.get() == Some(preset)
+                                        });
+                                        let on_pick = {
+                                            let state = state.clone();
+                                            move |_| state.select_window_preset(preset)
+                                        };
+                                        view! {
+                                            <button
+                                                type="button"
+                                                role="radio"
+                                                aria-checked=move || selected.get().to_string()
+                                                aria-label=format!(
+                                                    "ช่วงเวลา {} ถึง {}",
+                                                    format_time_hm(preset.start()),
+                                                    format_time_hm(preset.end()),
+                                                )
+                                                class=move || {
+                                                    if selected.get() {
+                                                        "range-option range-option--selected"
+                                                    } else {
+                                                        "range-option"
+                                                    }
                                                 }
-                                            }
-                                            on:click=on_pick
-                                        >
-                                            <span class="range-option__times">
-                                                <span>{format_time_hm(preset.start())}</span>
-                                                <span class="range-option__arrow">"→"</span>
-                                                <span>{format_time_hm(preset.end())}</span>
-                                            </span>
-                                        </button>
+                                                on:click=on_pick
+                                            >
+                                                <span class="range-option__times">
+                                                    <span>{format_time_hm(preset.start())}</span>
+                                                    <span class="range-option__arrow">"→"</span>
+                                                    <span>{format_time_hm(preset.end())}</span>
+                                                </span>
+                                            </button>
+                                        }
+                                    })
+                                    .collect_view()}
+                            </div>
+                            <button
+                                class="button-primary range-picker__fetch"
+                                disabled=move || {
+                                    state.window.get().is_none() || state.loading.get()
+                                }
+                                title=move || {
+                                    if state.window.get().is_none() {
+                                        "ต้องเลือกช่วงเวลาเบิกก่อน"
+                                    } else {
+                                        ""
                                     }
-                                })
-                                .collect_view()}
+                                }
+                                on:click=on_fetch
+                            >
+                                <IconRefresh class="icon" />
+                                {move || {
+                                    if state.loading.get() {
+                                        "กำลังดึงข้อมูล..."
+                                    } else {
+                                        "ดึงข้อมูล"
+                                    }
+                                }}
+                            </button>
                         </div>
                         <p
                             class=move || {
@@ -152,7 +181,7 @@ pub fn CommandBar(state: AppState) -> impl IntoView {
                                     .get()
                                     .map(|window| {
                                         format!(
-                                            "ดึงข้อมูล {} → {}",
+                                            "ช่วงข้อมูล: {} → {}",
                                             format_thai_datetime_abbr(window.start),
                                             format_thai_datetime_abbr(window.end),
                                         )
@@ -174,35 +203,6 @@ pub fn CommandBar(state: AppState) -> impl IntoView {
                         >
                             <IconPlus class="icon" />
                             "เพิ่มรายการยา"
-                        </button>
-                        <button
-                            class=move || {
-                                if state.sections.get().is_none() {
-                                    "button-primary command-bar__fetch"
-                                } else {
-                                    "button-secondary command-bar__fetch"
-                                }
-                            }
-                            disabled=move || state.window.get().is_none() || state.loading.get()
-                            title=move || {
-                                if state.window.get().is_none() {
-                                    "ต้องเลือกช่วงเวลาเบิกก่อน"
-                                } else {
-                                    ""
-                                }
-                            }
-                            on:click=on_fetch
-                        >
-                            <IconRefresh class="icon" />
-                            {move || {
-                                if state.loading.get() {
-                                    "กำลังดึงข้อมูล..."
-                                } else if state.sections.get().is_some() {
-                                    "ดึงใหม่"
-                                } else {
-                                    "ดึงข้อมูลการใช้ยา"
-                                }
-                            }}
                         </button>
                         {move || {
                             state.sections.get()?;

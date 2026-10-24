@@ -131,8 +131,9 @@ Four crates, one hard law: HOSxP is read-only, without exceptions.
    with the `officer` account, then pick one of the four overnight ranges -
    20:30-08:00, 20:30-08:30, 16:00-08:00, or 16:00-08:30. The date is
    always today and never editable.
-2. Press "ดึงข้อมูลการใช้ยา": one grouped read returns every configured
-   drug's usage in the chosen window - only the drugs actually used appear,
+2. Press "ดึงข้อมูล" beside the range: one grouped read returns every
+   configured drug's usage in the chosen window - only the drugs actually
+   used appear,
    with strength beside each name and จำนวนเบิก derived as whole packs from
    the จำนวน/Stock setting.
 3. Review the paper grouped by หมวด; where reality differs from the record,

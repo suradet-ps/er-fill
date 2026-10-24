@@ -211,9 +211,9 @@ beside the subtitle and the settings action hidden behind the brand mark.
 ├──────────────────────────────────────────────────────────────────────┤
 │ COMMAND BAR (the only control surface; stacks under 1500px)          │
 │  วันที่เบิก 24 ตุลาคม 2569                                            │
-│  ช่วงเวลาเบิก  [20:30→08:00] [20:30→08:30] [16:00→08:00] [16:00→08:30]│
-│  ดึงข้อมูล 23 ต.ค. 2569 20:30 → 24 ต.ค. 2569 08:00                    │
-│  [เพิ่มรายการยา] [ดึงข้อมูลการใช้ยา] [ยืนยันข้อมูลเบิก] [พิมพ์ใบเบิก]   │
+│  ช่วงเวลาเบิก  [20:30→08:00] [20:30→08:30] [16:00→08:00] [16:00→08:30] [ดึงข้อมูล] │
+│  ช่วงข้อมูล: 23 ต.ค. 2569 20:30 → 24 ต.ค. 2569 08:00                  │
+│  [เพิ่มรายการยา] [ยืนยันข้อมูลเบิก] [พิมพ์ใบเบิก]                       │
 ├──────────────────────────────────────────────────────────────────────┤
 │ STAGE (desk surface, scrollable)                                     │
 │                                                                      │
@@ -396,9 +396,12 @@ segmented radio group (20:30-08:00, 20:30-08:30, 16:00-08:00, 16:00-08:30)
 inside a soft-surface track. Each segment shows only the mono time pair; the
 selected segment takes the rose border and soft-rose fill. The heading status
 explains the mapping once ("เลือก 1 ช่วง · เมื่อวาน → วันนี้", steel) and
-switches to "เลือกแล้ว" (green) after a choice. The preview line spells out the
-actual window in Thai/BE, e.g. "ดึงข้อมูล ศ. 23 ต.ค. 2569 20:30 → ส. 24 ต.ค.
-2569 08:00". The fetch action stays disabled until one segment is selected.
+switches to "เลือกแล้ว" (green) after a choice. A fixed-width black
+"ดึงข้อมูล" pill sits immediately after the track; it is disabled until a
+segment is selected and performs both the first fetch and any later refresh
+(the separate "ดึงใหม่" action is gone). The preview line spells out the actual
+window in Thai/BE, e.g. "ช่วงข้อมูล: ศ. 23 ต.ค. 2569 20:30 → ส. 24 ต.ค. 2569
+08:00".
 
 ### Signature Components
 
@@ -436,19 +439,19 @@ filter so the 15mm mark stays crisp vector art at the printer's resolution.
   title.
 
 **`command-bar`** - The only control surface; it stacks below 1500px:
-- Left: the read-only `run-date` card beside the `range-picker` (heading +
-  four `range-option` segments + the actual-window preview).
+- Left: the read-only `run-date` card beside the `range-picker` (heading,
+  four `range-option` segments, the inline **ดึงข้อมูล** pill, and the
+  actual-window preview).
 - Right: the document actions - **เพิ่มรายการยา** (secondary, opens the
-  configured-catalog picker) · **ดึงข้อมูลการใช้ยา** (primary when the sheet is
-  empty, secondary "ดึงใหม่" after; disabled until a range is selected) ·
-  **ยืนยันข้อมูลเบิก** (rose accent; replaced by a success `confirm-chip` with
-  the confirmation time) · **พิมพ์ใบเบิก** (black pill, disabled until the sheet
-  is confirmed; any edit disables it again).
-- Action widths are fixed (fetch 196px, confirm/chip 176px, print 148px), so
-  state changes like "ดึงข้อมูลการใช้ยา" → "กำลังดึงข้อมูล..." → "ดึงใหม่" never
-  nudge the neighbouring buttons.
-- There is no date input, no manual window editor, and no summary stat strip:
-  the run context is the fixed date plus the chosen range, nothing else.
+  configured-catalog picker) · **ยืนยันข้อมูลเบิก** (rose accent; replaced by a
+  success `confirm-chip` with the confirmation time) · **พิมพ์ใบเบิก** (black
+  pill, disabled until the sheet is confirmed; any edit disables it again).
+- The inline fetch pill has a fixed 146px footprint, so "ดึงข้อมูล" →
+  "กำลังดึงข้อมูล..." never nudges the range segments; confirm/chip (176px)
+  and print (148px) keep fixed widths too.
+- There is no separate refetch action, date input, manual window editor, or
+  summary stat strip: the run context is the fixed date, the chosen range,
+  and one fetch button.
 - Background `{colors.canvas}`, bottom hairline - chrome, not content.
 
 **`sheet`** - The document itself: the A4 paper staged on the desk.

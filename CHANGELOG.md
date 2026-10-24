@@ -24,6 +24,9 @@ All notable changes to ER-Refill are documented here. The format follows
   segmented control, action buttons have stable widths, the stage reserves its
   scrollbar gutter, and messages now appear as a floating toast so the sheet
   never jumps when a banner appears or dismisses.
+- Moved the usage fetch into the range picker as one inline **ดึงข้อมูล**
+  button; the separate "ดึงใหม่" action is gone, so the same button handles
+  both the first fetch and later refreshes.
 - The fixed run date now rolls over at midnight even when no range is
   selected. Clearing the requisition also invalidates any in-flight fetch, so
   switching A -> B -> A can not restore the old sheet from the first fetch.
