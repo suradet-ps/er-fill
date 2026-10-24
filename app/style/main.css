@@ -397,14 +397,31 @@ button {
     color: var(--success);
 }
 
+.range-picker__controls {
+    display: flex;
+    align-items: stretch;
+    gap: var(--sp-xs);
+}
+
 .range-picker__options {
     display: grid;
+    flex: 1;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 4px;
+    min-width: 0;
     padding: 3px;
     border: 1px solid var(--hairline);
     border-radius: var(--rounded-md);
     background: var(--surface);
+}
+
+.range-picker .range-picker__fetch {
+    flex: 0 0 146px;
+    align-self: stretch;
+    height: auto;
+    padding: 0 14px;
+    font-size: 13px;
+    white-space: nowrap;
 }
 
 .range-option {
@@ -493,12 +510,8 @@ button {
     white-space: nowrap;
 }
 
-/* Stable action widths: labels change with the fetch/confirm state, and the
-   sheet must not shift sideways when they do. */
-.command-bar__fetch {
-    width: 196px;
-}
-
+/* Stable action widths: labels change with the confirm state, and the sheet
+   must not shift sideways when they do. */
 .command-bar__confirm {
     width: 176px;
 }
