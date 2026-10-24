@@ -14,6 +14,7 @@ use tauri::Manager;
 /// Entry point used by `main.rs`.
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             let config_dir = app.path().app_config_dir()?;
             let settings_path = config_dir.join(settings::SETTINGS_FILE_NAME);
@@ -50,6 +51,7 @@ pub fn run() {
             commands::load_settings,
             commands::save_catalog,
             commands::save_report,
+            commands::export_settings_file,
             commands::search_drugs,
             commands::fetch_usage,
         ])

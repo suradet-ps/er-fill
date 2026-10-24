@@ -226,27 +226,43 @@ pub fn SettingsModal(state: AppState) -> impl IntoView {
 fn SettingsFooter(state: AppState) -> impl IntoView {
     let status = RwSignal::new(None::<StatusMessage>);
     let file_input = NodeRef::<leptos::html::Input>::new();
+    let export_busy = RwSignal::new(false);
 
     let on_export = {
         let state = state.clone();
         move |_| {
-            let Some(settings) = state.settings.get() else {
+            if export_busy.get_untracked() {
+                return;
+            }
+            let Some(settings) = state.settings.get_untracked() else {
                 return;
             };
-            match crate::settings_io::export_json(&settings) {
-                Ok(json) => {
-                    match crate::settings_io::download_json(
-                        &json,
-                        &crate::settings_io::export_file_name(),
-                    ) {
-                        Ok(()) => status.set(Some(StatusMessage::ok(
-                            "ส่งออกไฟล์ตั้งค่าแล้ว (ไม่รวมการเชื่อมต่อและรหัสผ่าน)",
-                        ))),
-                        Err(message) => status.set(Some(StatusMessage::error(message))),
-                    }
+            let json = match crate::settings_io::export_json(&settings) {
+                Ok(json) => json,
+                Err(message) => {
+                    status.set(Some(StatusMessage::error(message)));
+                    return;
                 }
-                Err(message) => status.set(Some(StatusMessage::error(message))),
-            }
+            };
+            let file_name = crate::settings_io::export_file_name();
+            export_busy.set(true);
+            status.set(None);
+            let status = status;
+            leptos::task::spawn_local(async move {
+                let message = match crate::api::export_settings_file(&json, &file_name).await {
+                    Ok(result) if result.saved => {
+                        let text = result
+                            .path
+                            .map(|path| format!("บันทึกไฟล์แล้ว: {path}"))
+                            .unwrap_or_else(|| "บันทึกไฟล์แล้ว".to_string());
+                        Some(StatusMessage::ok(text))
+                    }
+                    Ok(_) => None,
+                    Err(err) => Some(StatusMessage::error(err.message)),
+                };
+                status.set(message);
+                export_busy.set(false);
+            });
         }
     };
 
@@ -288,8 +304,18 @@ fn SettingsFooter(state: AppState) -> impl IntoView {
     view! {
         <footer class="settings-modal__footer">
             <div class="settings-modal__io">
-                <button class="button-secondary" on:click=on_export>
-                    "ส่งออกการตั้งค่า"
+                <button
+                    class="button-secondary"
+                    disabled=move || export_busy.get()
+                    on:click=on_export
+                >
+                    {move || {
+                        if export_busy.get() {
+                            "กำลังเปิดหน้าต่างบันทึก..."
+                        } else {
+                            "ส่งออกการตั้งค่า"
+                        }
+                    }}
                 </button>
                 <button class="button-secondary" on:click=open_file_picker>
                     "นำเข้าการตั้งค่า"
@@ -304,7 +330,7 @@ fn SettingsFooter(state: AppState) -> impl IntoView {
                 />
             </div>
             <p class="settings-modal__io-note">
-                "ไฟล์ส่งออกเป็น JSON (รายการยาและหัวใบเบิก) สำหรับใช้กับเครื่องอื่น ส่วนการเชื่อมต่อและรหัสผ่านต้องตั้งค่าในแต่ละเครื่อง"
+                "ไฟล์ส่งออกเป็น JSON (รายการยาและหัวใบเบิก) สำหรับใช้กับเครื่องอื่น เมื่อกดส่งออก ระบบจะเปิดหน้าต่างให้เลือกโฟลเดอร์และชื่อไฟล์เอง ส่วนการเชื่อมต่อและรหัสผ่านต้องตั้งค่าในแต่ละเครื่อง"
             </p>
             <StatusLine message=status />
         </footer>

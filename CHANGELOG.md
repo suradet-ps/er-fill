@@ -40,6 +40,11 @@ All notable changes to ER-Refill are documented here. The format follows
 - The login illustration now uses the master nurse-bear mascot from
   `icon-master.svg` instead of the older hand-drawn bear. The hospital and
   pharmacy footer line was removed from the login panel.
+- Settings export now opens the native Save As dialog so the operator chooses
+  the destination folder and file name; the footer reports the saved path.
+  The backend validates the complete export envelope and writes through a
+  sibling temp file before replacing the target, so a failed write never
+  truncates an existing export. No frontend filesystem scope is granted.
 - ER usage is now scoped to `dep_code = '009'` drug orders (`sub_type = '1'`,
   excluding `item_type = 'A'` automatic charges) and the out-of-hours window
   is computed from `rxdate`/`rxtime` (ER order time) instead of
