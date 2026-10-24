@@ -479,7 +479,9 @@ filter so the 15mm mark stays crisp vector art at the printer's resolution.
 - Signature blocks (ลงชื่อ ผู้เบิก / ผู้จ่าย + date lines) are visible on
   screen too - the preview is the paper, and they render on the **last
   page only**. The ผู้เบิก line prints the signed-in officer's display name
-  in parentheses; the ผู้จ่าย line stays blank for the pharmacy.
+  in parentheses; the ผู้จ่าย line stays blank for the pharmacy. Both date
+  lines are pre-filled with the run day (the window end date) in Buddhist-era
+  `dd / mm / yyyy`, e.g. `24 / 10 / 2569`.
 - **Pagination is explicit**: one `<article class="sheet">` per A4 page,
   at most **40 drug rows per page** (`er-refill-core::ROWS_PER_PAGE`); the
   reason table shares the last page. Every page repeats the header block, the
@@ -495,7 +497,10 @@ filter so the 15mm mark stays crisp vector art at the printer's resolution.
 **`signature-block`** - Always visible at the sheet's foot (the screen
 previews the paper): two columns "ลงชื่อ .................................. ผู้เบิก" /
 "ผู้จ่าย", with the signed-in officer's name in the requester's parentheses,
-a blank payer line, and a date line under each, `{typography.body-md}`.
+a blank payer line, and a date line under each, `{typography.body-md}`. Both
+dates are auto-filled from the requisition window's end date in Buddhist-era
+numeric form (`24 / 10 / 2569`); the dotted form is only a fallback when no
+window exists.
 
 **`@media print`** - The rule that keeps the preview honest: chrome
 (`.top-bar`, `.command-bar`, `.banner`, modal) hides with

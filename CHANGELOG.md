@@ -36,6 +36,8 @@ All notable changes to ER-Refill are documented here. The format follows
 - The printed sheet header now sits left-aligned beside the bear mark, with a
   large bordered box on the right showing the selected time range
   (e.g. 20:30–08:30).
+- The printed ผู้เบิก/ผู้จ่าย date lines now pre-fill with the run day (the
+  window end date) in Buddhist-era `dd / mm / yyyy`.
 - Simplified the top bar: settings now opens by clicking the bear mark, the
   connection state is a compact green/red dot with a readable tooltip beside
   the subtitle, and the right side shows only the signed-in name and a

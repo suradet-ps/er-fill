@@ -27,7 +27,8 @@ pub use report::{DrugItem, ReportMeta, ReportRow, ReportSection, UsageRow};
 pub use settings::AppSettings;
 pub use thai::{
     be_year, format_qty, format_thai_date, format_thai_date_abbr, format_thai_date_full,
-    format_thai_datetime_abbr, format_thai_datetime_full, format_thai_datetime_short,
-    format_time_hm, thai_month_abbr, thai_month_full, thai_weekday_abbr, thai_weekday_full,
+    format_thai_date_slash, format_thai_datetime_abbr, format_thai_datetime_full,
+    format_thai_datetime_short, format_time_hm, thai_month_abbr, thai_month_full,
+    thai_weekday_abbr, thai_weekday_full,
 };
 pub use window::{RequisitionWindow, WindowError, WindowPreset};
