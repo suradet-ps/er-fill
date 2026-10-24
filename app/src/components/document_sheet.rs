@@ -11,7 +11,7 @@
 use std::time::Duration;
 
 use er_refill_core::{ROWS_PER_PAGE, SheetPage, paginate_sections};
-use er_refill_models::{ReportSection, format_qty, format_thai_datetime_full};
+use er_refill_models::{ReportSection, format_qty, format_thai_datetime_full, format_time_hm};
 use leptos::prelude::*;
 
 use crate::components::icons::IconX;
@@ -89,13 +89,33 @@ fn SheetPageView(
     view! {
         <article class="sheet">
             <header class="sheet__header">
-                <div class="sheet__logo">
-                    <BrandMark />
+                <div class="sheet__identity">
+                    <div class="sheet__logo">
+                        <BrandMark />
+                    </div>
+                    <div class="sheet__heading">
+                        <h1 class="sheet__hospital">{meta.hospital_name.clone()}</h1>
+                        <h2 class="sheet__title">{meta.document_title.clone()}</h2>
+                        <p class="sheet__department">{meta.department_name.clone()}</p>
+                    </div>
                 </div>
-                <div class="sheet__heading">
-                    <h1 class="sheet__hospital">{meta.hospital_name.clone()}</h1>
-                    <h2 class="sheet__title">{meta.document_title.clone()}</h2>
-                    <p class="sheet__department">{meta.department_name.clone()}</p>
+                <div class="sheet__window-box">
+                    <span class="sheet__window-label">"ช่วงเวลาเบิก"</span>
+                    <span class="sheet__window-range">
+                        {move || {
+                            state
+                                .window
+                                .get()
+                                .map(|window| {
+                                    format!(
+                                        "{} – {}",
+                                        format_time_hm(window.start.time()),
+                                        format_time_hm(window.end.time()),
+                                    )
+                                })
+                                .unwrap_or_default()
+                        }}
+                    </span>
                 </div>
             </header>
             <p class="sheet__window">

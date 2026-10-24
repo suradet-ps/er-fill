@@ -217,8 +217,9 @@ the logout action beside the connection status.
 │ STAGE (desk surface, scrollable)                                     │
 │                                                                      │
 │        ┌─────────────────────────────┐  ← THE SHEET (A4 preview)    │
-│        │ [bear] โรงพยาบาลสระโบสถ์      │    = the printed output:      │
+│        │ [bear] โรงพยาบาลสระโบสถ์  [20:30–08:30] │    = the printed output: │
 │        │  ใบเบิกยาประจำห้องฉุกเฉินรายวัน │      one DOM, one CSS        │
+│        │  กลุ่มงานอุบัติเหตุฉุกเฉิน      │                               │
 │        │  ช่วงเวลาเบิก: ...            │                               │
 │        │  [table: ลำดับ ชื่อยา+ความแรง │                               │
 │        │   จำนวน/Stock จำนวนใช้ จำนวนเบิก]│                             │
@@ -433,9 +434,12 @@ filter so the 15mm mark stays crisp vector art at the printer's resolution.
 - Background `{colors.canvas}`, bottom hairline - chrome, not content.
 
 **`sheet`** - The document itself: the A4 paper staged on the desk.
-- Header: the bear `BrandMark` at the top-left (15mm), hospital name
-  (`{typography.heading-2}` centered), document title, and department line -
-  the text comes from `ReportMeta`.
+- Header: a left-aligned identity block - the bear `BrandMark` (15mm) with the
+  hospital name (`{typography.heading-2}`), document title, and department line
+  immediately beside it - plus a large `sheet__window-box` on the right. The
+  box is a square-cornered 58mm panel with a 1.5px ink border, a small
+  "ช่วงเวลาเบิก" label, and the selected time pair (e.g. `20:30 – 08:30`) in
+  18px mono; it prints as a black border.
 - Window sentence in full Thai, then the table. Only drugs with usage in the
   window are present; configured drugs with no usage stay hidden unless the
   operator adds them (usage 0).
