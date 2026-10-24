@@ -65,7 +65,7 @@ four clearly labelled overnight ranges before fetching.
 | Marketing scale (16px body, 72px hero) | Tool scale (15px body, 28px display) | This is a once-a-day work tool, not a landing page; density wins. The display scale exists **only** on the login brand headline (34px at desktop). |
 | Testimonial orange | **Dropped** | No testimonial/marketing surfaces exist. The warm slot is filled by amber, which carries clinical meaning (attention), not emotion. |
 | `rgba(0,212,164,.08) 0 8px 24px` featured glow | Kept, retinted | The rose glow marks exactly one thing: the single accent CTA on an empty state. |
-| Photography/clouds/rockets | None | No photography or illustration sets. The login brand panel carries one custom nurse-bear illustration (`app/assets/login-illustration.svg`); the app mark is the same bear from `icon-master.svg`. |
+| Photography/clouds/rockets | None | No photography or illustration sets. The login brand panel carries one custom requisition illustration (`app/assets/login-illustration.svg`) built around the same nurse-bear mascot from `icon-master.svg`. |
 
 ## Colors
 
@@ -404,9 +404,9 @@ actual window in Thai/BE, e.g. "ดึงข้อมูล ศ. 23 ต.ค. 256
 
 **`login-gate`** - Full-height split surface before the document exists:
 - Left brand panel: the blush hero gradient, the nurse-bear mark, the
-  "ใบเบิกยาห้องฉุกเฉิน" headline, and a custom bear-and-requisition
-  illustration (`app/assets/login-illustration.svg`) - no marketing copy or
-  proof points.
+  "ใบเบิกยาห้องฉุกเฉิน" headline, and a custom requisition illustration
+  (`app/assets/login-illustration.svg`) using the master bear mascot - no
+  marketing copy or proof points.
 - Right panel: a single `rounded.lg` card focused on the `officer`
   username/password, with a "ตั้งค่า" button in the page toolbar. Until a
   connection is configured, a warn-toned notice inside the card points at the
