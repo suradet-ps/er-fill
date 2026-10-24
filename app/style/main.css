@@ -417,7 +417,8 @@ button {
 
 .range-picker .range-picker__fetch {
     flex: 0 0 146px;
-    height: 40px;
+    align-self: stretch;
+    height: auto;
     padding: 0 14px;
     font-size: 13px;
     white-space: nowrap;

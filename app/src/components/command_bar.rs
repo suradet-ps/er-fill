@@ -205,18 +205,15 @@ pub fn CommandBar(state: AppState) -> impl IntoView {
                             "เพิ่มรายการยา"
                         </button>
                         {move || {
-                            state.sections.get()?;
                             if let Some(confirmed) = state.confirmed.get() {
-                                Some(
-                                    view! {
-                                        <span class="confirm-chip" title="ยืนยันข้อมูลเบิกแล้ว">
-                                            <IconCheck class="icon" />
-                                            "ยืนยันแล้ว "
-                                            {confirmed.confirmed_at.format("%H:%M").to_string()}
-                                        </span>
-                                    }
-                                        .into_any(),
-                                )
+                                view! {
+                                    <span class="confirm-chip" title="ยืนยันข้อมูลเบิกแล้ว">
+                                        <IconCheck class="icon" />
+                                        "ยืนยันแล้ว "
+                                        {confirmed.confirmed_at.format("%H:%M").to_string()}
+                                    </span>
+                                }
+                                    .into_any()
                             } else {
                                 let has_rows = state
                                     .sections
@@ -225,19 +222,17 @@ pub fn CommandBar(state: AppState) -> impl IntoView {
                                         sections.iter().any(|section| !section.rows.is_empty())
                                     });
                                 let busy = state.loading.get();
-                                Some(
-                                    view! {
-                                        <button
-                                            class="button-accent command-bar__confirm"
-                                            disabled=!has_rows || busy
-                                            on:click=on_open_confirm
-                                        >
-                                            <IconCheck class="icon" />
-                                            "ยืนยันข้อมูลเบิก"
-                                        </button>
-                                    }
-                                        .into_any(),
-                                )
+                                view! {
+                                    <button
+                                        class="button-accent command-bar__confirm"
+                                        disabled=!has_rows || busy
+                                        on:click=on_open_confirm
+                                    >
+                                        <IconCheck class="icon" />
+                                        "ยืนยันข้อมูลเบิก"
+                                    </button>
+                                }
+                                    .into_any()
                             }
                         }}
                         <button

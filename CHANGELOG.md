@@ -27,6 +27,9 @@ All notable changes to ER-Refill are documented here. The format follows
 - Moved the usage fetch into the range picker as one inline **ดึงข้อมูล**
   button; the separate "ดึงใหม่" action is gone, so the same button handles
   both the first fetch and later refreshes.
+- The confirm action now keeps its slot from the start (disabled until the
+  sheet has rows), and the inline fetch pill stretches to the range track, so
+  the command bar does not jump when data arrives or the fetch label changes.
 - The fixed run date now rolls over at midnight even when no range is
   selected. Clearing the requisition also invalidates any in-flight fetch, so
   switching A -> B -> A can not restore the old sheet from the first fetch.
