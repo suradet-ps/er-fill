@@ -5,6 +5,11 @@ All notable changes to ER-Refill are documented here. The format follows
 
 ## [Unreleased]
 
+### Security
+
+- Updated `ctutils` to 0.4.5, fixing RUSTSEC-2026-0385 (non-constant-time
+  mask generation in AES-GCM's polyval path).
+
 ### Changed
 
 - The requisition date is now fixed to today (read-only) and the configurable
