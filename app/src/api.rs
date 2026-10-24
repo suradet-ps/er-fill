@@ -12,8 +12,8 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 
 use er_refill_models::{
-    AppSettings, BusinessSchedule, Catalog, ConnectionSummary, DrugItem, ReportMeta,
-    RequisitionWindow, SessionUser, UsageRow,
+    AppSettings, Catalog, ConnectionSummary, DrugItem, ReportMeta, RequisitionWindow, SessionUser,
+    UsageRow,
 };
 use js_sys::{Object, Reflect};
 use serde_wasm_bindgen::{from_value, to_value};
@@ -262,14 +262,9 @@ pub async fn current_session() -> Result<Option<SessionUser>, ApiError> {
     call_empty("current_session").await
 }
 
-/// Schedule + catalog + report header.
+/// Catalog + report header.
 pub async fn load_settings() -> Result<AppSettings, ApiError> {
     call_empty("load_settings").await
-}
-
-/// Persists new business hours.
-pub async fn save_schedule(schedule: &BusinessSchedule) -> Result<(), ApiError> {
-    call_struct_arg("save_schedule", "schedule", schedule).await
 }
 
 /// Persists the ER drug catalog.

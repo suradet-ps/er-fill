@@ -1,17 +1,14 @@
-//! Settings modal: a four-panel dialog (connection, schedule, catalog,
-//! report) with a vertical navigation rail, per DESIGN.md "settings-modal".
-//! Panels live in their own modules; this file owns the shell, the nav, and
-//! the shared status line.
+//! Settings modal: a three-panel dialog (connection, catalog, report) with a
+//! vertical navigation rail, per DESIGN.md "settings-modal". Panels live in
+//! their own modules; this file owns the shell, the nav, and the shared
+//! status line.
 
 use leptos::prelude::*;
 
 use crate::components::catalog_panel::CatalogPanel;
 use crate::components::connection_panel::ConnectionPanel;
-use crate::components::icons::{
-    IconCalendar, IconClipboardList, IconDatabase, IconFileText, IconX,
-};
+use crate::components::icons::{IconClipboardList, IconDatabase, IconFileText, IconX};
 use crate::components::report_panel::ReportPanel;
-use crate::components::schedule_panel::SchedulePanel;
 use crate::state::{AppState, SettingsTab};
 
 /// A success/failure line under a panel's actions.
@@ -60,9 +57,8 @@ pub fn StatusLine(message: RwSignal<Option<StatusMessage>>) -> impl IntoView {
     }
 }
 
-const TABS: [(SettingsTab, &str); 4] = [
+const TABS: [(SettingsTab, &str); 3] = [
     (SettingsTab::Connection, "การเชื่อมต่อ"),
-    (SettingsTab::Schedule, "เวลาทำการ"),
     (SettingsTab::Catalog, "รายการยา"),
     (SettingsTab::Report, "หัวใบเบิก"),
 ];
@@ -71,7 +67,6 @@ const TABS: [(SettingsTab, &str); 4] = [
 fn tab_icon(tab: SettingsTab) -> AnyView {
     match tab {
         SettingsTab::Connection => view! { <IconDatabase class="icon" /> }.into_any(),
-        SettingsTab::Schedule => view! { <IconCalendar class="icon" /> }.into_any(),
         SettingsTab::Catalog => view! { <IconClipboardList class="icon" /> }.into_any(),
         SettingsTab::Report => view! { <IconFileText class="icon" /> }.into_any(),
     }
@@ -192,10 +187,6 @@ pub fn SettingsModal(state: AppState) -> impl IntoView {
                                                 view! { <ConnectionPanel state=body_state.clone() /> }
                                                     .into_any()
                                             }
-                                            SettingsTab::Schedule => {
-                                                view! { <SchedulePanel state=body_state.clone() /> }
-                                                    .into_any()
-                                            }
                                             SettingsTab::Catalog => {
                                                 view! { <CatalogPanel state=body_state.clone() /> }
                                                     .into_any()
@@ -228,10 +219,9 @@ pub fn SettingsModal(state: AppState) -> impl IntoView {
 /// Modal footer: portable settings export/import. Recreated on every open,
 /// so its status line never lingers across sessions.
 ///
-/// The exported JSON carries the schedule, catalog, and report header.
-/// Connection credentials are deliberately excluded: they are encrypted
-/// with this machine's OS-keychain key (AGENTS.md section 10), so they can
-/// not travel.
+/// The exported JSON carries the catalog and report header. Connection
+/// credentials are deliberately excluded: they are encrypted with this
+/// machine's OS-keychain key (AGENTS.md section 10), so they can not travel.
 #[component]
 fn SettingsFooter(state: AppState) -> impl IntoView {
     let status = RwSignal::new(None::<StatusMessage>);
@@ -314,7 +304,7 @@ fn SettingsFooter(state: AppState) -> impl IntoView {
                 />
             </div>
             <p class="settings-modal__io-note">
-                "ไฟล์ส่งออกเป็น JSON (เวลาทำการ รายการยา และหัวใบเบิก) สำหรับใช้กับเครื่องอื่น ส่วนการเชื่อมต่อและรหัสผ่านต้องตั้งค่าในแต่ละเครื่อง"
+                "ไฟล์ส่งออกเป็น JSON (รายการยาและหัวใบเบิก) สำหรับใช้กับเครื่องอื่น ส่วนการเชื่อมต่อและรหัสผ่านต้องตั้งค่าในแต่ละเครื่อง"
             </p>
             <StatusLine message=status />
         </footer>
@@ -327,9 +317,6 @@ async fn persist_import(
     state: &AppState,
     settings: &er_refill_models::AppSettings,
 ) -> Result<String, String> {
-    crate::api::save_schedule(&settings.schedule)
-        .await
-        .map_err(|err| err.message)?;
     crate::api::save_catalog(&settings.catalog)
         .await
         .map_err(|err| err.message)?;
@@ -337,7 +324,6 @@ async fn persist_import(
         .await
         .map_err(|err| err.message)?;
     state.settings.set(Some(settings.clone()));
-    state.recompute_window();
     state.clear_requisition();
     Ok(format!(
         "นำเข้าการตั้งค่าแล้ว: {} หมวด, {} รายการยา",

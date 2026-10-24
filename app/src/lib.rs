@@ -45,8 +45,8 @@ pub fn run() {
 fn App() -> impl IntoView {
     let state = AppState::new();
 
-    // Initial load: connection status + settings, then the window and the
-    // first fetch (opening the app is the morning request).
+    // Initial load: connection status + settings + session. The operator
+    // then chooses one of the four ranges before the first fetch.
     let load_state = state.clone();
     leptos::task::spawn_local(async move {
         load_initial_state(load_state).await;
@@ -66,9 +66,11 @@ fn App() -> impl IntoView {
     // Self-scheduling loop: `poll_loop` holds the trigger, which schedules
     // itself again via the timer (one pending timer at a time, no leak).
     let poll_loop: PollLoop = Rc::new(RefCell::new(None));
+    let date_state = state.clone();
     let trigger = {
         let poll_loop = Rc::clone(&poll_loop);
         Rc::new(move || {
+            date_state.refresh_date_for_today();
             poll_health();
             if let Some(next) = poll_loop.borrow().as_ref().map(Rc::clone) {
                 let _ = set_timeout_with_handle(move || next(), HEALTH_POLL_INTERVAL);
@@ -161,8 +163,6 @@ async fn load_initial_state(state: AppState) {
         state.connection_error.set(None);
         state.health.set(state::ConnectionHealth::Unconfigured);
     }
-
-    state.recompute_window();
 
     if let Ok(Some(user)) = api::current_session().await {
         state.finish_login(user);

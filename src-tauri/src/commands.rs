@@ -10,8 +10,7 @@ use er_refill_core::{HosxRepository, RepositoryError, verify_password};
 use er_refill_hosxp_connector::config::{HosxConfig, load_vault};
 use er_refill_hosxp_connector::{ConnectorRepository, MySqlPool, connect as connect_hosxp};
 use er_refill_models::{
-    BusinessSchedule, Catalog, ConnectionSummary, DrugItem, ReportMeta, RequisitionWindow,
-    SessionUser, UsageRow,
+    Catalog, ConnectionSummary, DrugItem, ReportMeta, RequisitionWindow, SessionUser, UsageRow,
 };
 use secrecy::{ExposeSecret, SecretBox, SecretString};
 use serde::{Deserialize, Serialize};
@@ -308,21 +307,10 @@ pub async fn test_connection(input: ConnectionInput) -> Result<ConnectionTestRes
     })
 }
 
-/// Returns the schedule + catalog + report header.
+/// Returns the catalog + report header.
 #[tauri::command]
 pub async fn load_settings(state: State<'_, AppState>) -> Result<AppSettings, CommandError> {
     Ok(state.settings.lock().await.clone())
-}
-
-/// Persists new business hours.
-#[tauri::command]
-pub async fn save_schedule(
-    schedule: BusinessSchedule,
-    state: State<'_, AppState>,
-) -> Result<(), CommandError> {
-    require_session(&state).await?;
-    validate_schedule(&schedule)?;
-    update_settings(&state, |settings| settings.schedule = schedule).await
 }
 
 /// Persists the ER drug catalog (categories + drugs).
@@ -503,21 +491,6 @@ async fn note_query_outcome(state: &AppState, err: &RepositoryError) {
     }
 }
 
-/// Rejects reversed weekday/weekend ranges before persisting.
-fn validate_schedule(schedule: &BusinessSchedule) -> Result<(), CommandError> {
-    if schedule.weekday.start >= schedule.weekday.end {
-        return Err(CommandError::validation(
-            "เวลาทำการวันจันทร์-ศุกร์: เวลาเริ่มต้องก่อนเวลาเลิก",
-        ));
-    }
-    if schedule.weekend.start >= schedule.weekend.end {
-        return Err(CommandError::validation(
-            "เวลาทำการเสาร์-อาทิตย์: เวลาเริ่มต้องก่อนเวลาเลิก",
-        ));
-    }
-    Ok(())
-}
-
 /// Rejects a reversed requisition window before touching the database.
 fn validate_window(window: &RequisitionWindow) -> Result<(), CommandError> {
     RequisitionWindow::new(window.start, window.end)
@@ -567,20 +540,6 @@ mod tests {
         assert_eq!(config.host, "10.0.0.1");
         assert_eq!(config.database, "hos");
         assert_eq!(config.user, "errefill_ro");
-    }
-
-    #[test]
-    fn validate_schedule_rejects_reversed_ranges() -> Result<(), Box<dyn std::error::Error>> {
-        let mut schedule = BusinessSchedule::default();
-        schedule.weekday.start = chrono::NaiveTime::from_hms_opt(21, 0, 0).ok_or("valid")?;
-        assert!(validate_schedule(&schedule).is_err());
-
-        let mut schedule = BusinessSchedule::default();
-        schedule.weekend.end = chrono::NaiveTime::from_hms_opt(7, 0, 0).ok_or("valid")?;
-        assert!(validate_schedule(&schedule).is_err());
-
-        assert!(validate_schedule(&BusinessSchedule::default()).is_ok());
-        Ok(())
     }
 
     #[tokio::test]

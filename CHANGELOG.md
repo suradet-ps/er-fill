@@ -5,8 +5,28 @@ All notable changes to ER-Refill are documented here. The format follows
 
 ## [Unreleased]
 
+### Security
+
+- Updated `ctutils` to 0.4.5, fixing RUSTSEC-2026-0385 (non-constant-time
+  mask generation in AES-GCM's polyval path).
+
 ### Changed
 
+- The requisition date is now fixed to today (read-only) and the configurable
+  business-hours schedule was removed. The operator must choose one of four
+  fixed overnight ranges before fetching: 20:30-08:00, 20:30-08:30,
+  16:00-08:00, or 16:00-08:30 (previous day to run day). The command-bar date
+  input, manual window editor, and summary stat cards were removed.
+- Settings now hold only the catalog and report header (settings file and
+  export version 3); legacy files with a `schedule` block still load.
+- Polished the command bar: the locked-date caption is gone, the run date is
+  now a larger card with a rose calendar mark, the four ranges are a compact
+  segmented control, action buttons have stable widths, the stage reserves its
+  scrollbar gutter, and messages now appear as a floating toast so the sheet
+  never jumps when a banner appears or dismisses.
+- The fixed run date now rolls over at midnight even when no range is
+  selected. Clearing the requisition also invalidates any in-flight fetch, so
+  switching A -> B -> A can not restore the old sheet from the first fetch.
 - ER usage is now scoped to `dep_code = '009'` drug orders (`sub_type = '1'`,
   excluding `item_type = 'A'` automatic charges) and the out-of-hours window
   is computed from `rxdate`/`rxtime` (ER order time) instead of

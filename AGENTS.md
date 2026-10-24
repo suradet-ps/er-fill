@@ -4,9 +4,9 @@ This file gives coding agents (and future contributors) the context needed to wo
 
 ## 1. What this project is
 
-ER-Refill ("ยาห้องฉุกเฉิน") is a desktop app for the pharmacy department of a community hospital. It generates the **daily emergency-room drug requisition form** (ใบเบิกยาประจำห้องฉุกเฉินรายวัน): it sums how much of each configured ER drug was used in HOSxP during the **out-of-hours window** since the last requisition, then prints the form for the ER to sign and the pharmacy to fill. The login gate is the first screen and handles only the HOSxP **`officer`** credentials; connection setup lives in the settings dialog. The session is in-memory only.
+ER-Refill ("ยาห้องฉุกเฉิน") is a desktop app for the pharmacy department of a community hospital. It generates the **daily emergency-room drug requisition form** (ใบเบิกยาประจำห้องฉุกเฉินรายวัน): it sums how much of each configured ER drug was used in HOSxP during an **overnight window**, then prints the form for the ER to sign and the pharmacy to fill. The run date is always **today** (read-only), and the operator must choose one of four fixed ranges before fetching: 20:30-08:00, 20:30-08:30, 16:00-08:00, or 16:00-08:30 (previous day to run day). The login gate is the first screen and handles only the HOSxP **`officer`** credentials; connection setup lives in the settings dialog. The session is in-memory only.
 
-**Design goals:** simple, no unnecessary features; read-only against HOSxP (hospital MySQL/MariaDB); the requisition window is computed for the operator but always overridable; the printed A4 sheet must look like the hospital's real paper form.
+**Design goals:** simple, no unnecessary features; read-only against HOSxP (hospital MySQL/MariaDB); the date is fixed and the range choice explicit, so a fetch can never silently cover the wrong hours; the printed A4 sheet must look like the hospital's real paper form.
 
 **Non-goals:**
 - Not a system for writing/editing/deleting anything in HOSxP.
@@ -41,8 +41,8 @@ Dependency direction: `app` → `er-refill-core` → `er-refill-models`, and `er
 
 ## 4. Domain model (`crates/models`)
 
-- `BusinessSchedule { weekday: TimeRange, weekend: TimeRange }` - `TimeRange { start, end }`; defaults: weekday 08:30-20:30, weekend (Sat-Sun) 08:00-16:00. Serialized on the wire with `"HH:MM"` times. The requisition window always ends at the opening time of the run day; there is no separate cutoff.
-- `RequisitionWindow { start: NaiveDateTime, end: NaiveDateTime }` - the half-open window `[start, end)`.
+- `WindowPreset` - the four fixed overnight ranges: 20:30-08:00, 20:30-08:30, 16:00-08:00, 16:00-08:30. Every preset starts on the previous day and ends on the run day; Thai labels live in `app/`.
+- `RequisitionWindow { start: NaiveDateTime, end: NaiveDateTime }` - the half-open window `[start, end)`, always computed from today and the chosen preset (not user-editable).
 - `Catalog { categories: Vec<DrugCategory>, drugs: Vec<ErDrug> }` - `DrugCategory { id, name, sort_order }`, `ErDrug { icode, name, strength_text, stock_text, category_id, sort_order }`. Seeded with the six categories of the approved ER list (see `docs/reference/er-drug-list.md`); drugs are added from HOSxP `drugitems` search, which prefills `strength_text` from `strength`/`units` (e.g. "500 mg") so same-name drugs stay distinguishable. The printed sheet hides the Thai unit suffix. `stock_text` is `units-per-pack/stock-packs` ("10/20" = 10 tablets per pack, 20 packs on hand); leading numbers are parsed, units after them are ignored.
 - `DrugItem { icode, name, strength, units }` - a `drugitems` search hit.
 - `UsageRow { icode, qty }` - one grouped usage result from HOSxP.
@@ -105,29 +105,23 @@ Same layered approach as the sibling AllerX project:
 
 ## 7. Requisition window algorithm
 
-Out-of-hours only. The window for a morning run on day `D` is
-`[closing(day before D), opening(D))`:
+The run date is **always today** and is not editable. The operator chooses one
+of four fixed ranges; each starts on the previous day and ends on the run day,
+window `[start, end)`:
 
-- `closing(day)` = that day's end of business hours (Mon-Fri 20:30, Sat-Sun 16:00).
-- `opening(day)` = that day's start of business hours (Mon-Fri 08:30, Sat-Sun 08:00).
-- There is no separate cutoff: the window ends exactly when the run day's
-  business hours open, so all out-of-hours usage is covered.
+| Preset | Example: run on Sat 24 Oct 2026 |
+|---|---|
+| 20:30-08:00 | Fri 23 Oct 20:30 → Sat 24 Oct 08:00 |
+| 20:30-08:30 | Fri 23 Oct 20:30 → Sat 24 Oct 08:30 |
+| 16:00-08:00 | Fri 23 Oct 16:00 → Sat 24 Oct 08:00 |
+| 16:00-08:30 | Fri 23 Oct 16:00 → Sat 24 Oct 08:30 |
 
-Examples (defaults, week of Mon 2026-10-19):
-
-| Run morning | Window starts (previous closing) | Window ends (run-day opening) |
-|---|---|---|
-| Monday 19 Oct | Sunday 18 Oct 16:00 | Monday 19 Oct 08:30 |
-| Tuesday 20 Oct | Monday 19 Oct 20:30 | Tuesday 20 Oct 08:30 |
-| Wednesday 21 Oct | Tuesday 20 Oct 20:30 | Wednesday 21 Oct 08:30 |
-| Thursday 22 Oct | Wednesday 21 Oct 20:30 | Thursday 22 Oct 08:30 |
-| Friday 23 Oct | Thursday 22 Oct 20:30 | Friday 23 Oct 08:30 |
-| Saturday 24 Oct | Friday 23 Oct 20:30 | Saturday 24 Oct 08:00 |
-| Sunday 25 Oct | Saturday 24 Oct 16:00 | Sunday 25 Oct 08:00 |
-
-The operator can always override both endpoints in the UI (`window_custom`
-state); the printed form always shows the window actually used, and the UI
-marks an overridden window in amber so it is never mistaken for the default.
+There are no custom hours, no manual date picker, and no override: fetching
+stays disabled until a range is selected. Changing the selected range clears
+the current sheet and the print confirmation. A 30-second UI timer also rolls
+the date over at midnight: without a selected range only the date changes;
+with one, the window is recomputed and the old sheet is cleared. The printed
+form always shows the actual window it was built from.
 
 ## 8. Report flow
 
@@ -138,11 +132,11 @@ by screen and print.
 1. Operator opens the app on the login gate and verifies the `officer`
    username/password (the saved HOSxP connection is re-probed at startup;
    connection setup lives in the settings dialog, not on the login card).
-   After sign-in the window is computed, and - the morning ritual - usage
-   **auto-fetches once** when the catalog is ready (the command bar can
-   refetch any time).
+   After sign-in the command bar shows **today's date (read-only)** and the
+   four range options; no fetch happens until the operator selects one.
 2. "ดึงข้อมูล" reads usage for **all configured icodes at once** (one grouped
-   query) for the window.
+   query) for the selected window. Switching the range clears the sheet and
+   the confirmation, and a stale in-flight response is discarded.
 3. `er-refill-core::build_report` joins catalog + usage into category sections;
    **only drugs with `usage > 0` appear** (items that were not used do not
    clutter the paper); each row carries the drug's `strength_text` beside its
@@ -183,8 +177,9 @@ by screen and print.
   (service name `er-refill`). Password is `secrecy::SecretString` end to end in
   Rust, zeroized on drop, `Debug`-redacted. Documented residuals: the webview
   JS heap while typing, and sqlx's internal pool copy (needed for reconnects).
-- The plain settings file (`er-refill.settings.json`) holds the schedule, catalog,
-  and report header only - never credentials.
+- The plain settings file (`er-refill.settings.json`) holds the catalog and
+  report header only - never credentials. The run date and range are UI state,
+  not settings.
 - Login passwords are sent to the Rust backend, moved into a `SecretString`
   for the MD5 check, and dropped; they are never stored or logged. The
   backend session is memory-only and cleared on logout, restart, or a
@@ -201,7 +196,7 @@ by screen and print.
 | **M0** | Workspace setup, AGENTS-RUST.md, Tauri 2 + Leptos 0.8 CSR scaffold, connection smoke test (`SELECT 1`) |
 | **M1** | Schema verification with the DBA (docs/database.md section B), remove `SCHEMA-UNVERIFIED` markers |
 | **M2** | Catalog management (categories + drug picker from `drugitems`) end-to-end |
-| **M3** | Window computation + usage fetch + requisition table (+ overrides) |
+| **M3** | Fixed-date range picker + usage fetch + requisition table |
 | **M4** | Print sheet (A4) reviewed against the real paper form (ใบเบิกยา xlsx) |
 | **M5** | Packaging (Tauri bundle), internal pilot with the pharmacy department, feedback |
 
@@ -216,7 +211,7 @@ by screen and print.
 ## 13. Testing expectations
 
 - `er-refill-core` + `er-refill-models`: the default suite (`cargo test` at root) -
-  window algorithm (all seven example days + custom hours + invalid input),
+  window algorithm (all four presets, previous-day start, date-too-early),
   catalog operations, report building (usage-only rows, catalog-order additions,
   required reasons, stock caps), Thai formatting, MD5 verification.
   No DB required.
@@ -232,7 +227,7 @@ by screen and print.
 
 - Rust style/error handling: follow `AGENTS-RUST.md`.
 - **Error handling:** one typed `thiserror` error per crate boundary -
-  `models::ScheduleError`, `core::CatalogOpsError`, `core::RepositoryError`,
+  `models::WindowError`, `core::CatalogOpsError`, `core::RepositoryError`,
   connector `Error`, and the Tauri `CommandError` (kind + Thai message).
   Conversion happens only at each boundary (`impl From`), and Thai user-facing
   translation happens **only** in `src-tauri/commands.rs`.

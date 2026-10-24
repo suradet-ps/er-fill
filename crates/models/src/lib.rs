@@ -8,17 +8,15 @@
 //! Module map:
 //! - `auth`: [`OfficerAccount`], [`SessionUser`], [`ConnectionSummary`].
 //! - `thai`: Thai / Buddhist-era date, time, and quantity formatting.
-//! - `schedule`: [`BusinessSchedule`], [`TimeRange`], [`ScheduleError`].
-//! - `window`: [`RequisitionWindow`] (half-open `[start, end)`).
+//! - `window`: [`WindowPreset`], [`RequisitionWindow`] (half-open `[start, end)`).
 //! - `catalog`: [`Catalog`], [`DrugCategory`], [`ErDrug`], [`PackStock`] (the ER drug list).
 //! - `report`: [`DrugItem`], [`UsageRow`], [`ReportRow`], [`ReportSection`],
 //!   [`ReportMeta`].
-//! - `settings`: [`AppSettings`] (schedule + catalog + report header).
+//! - `settings`: [`AppSettings`] (catalog + report header).
 
 mod auth;
 mod catalog;
 mod report;
-mod schedule;
 mod settings;
 mod thai;
 mod window;
@@ -26,11 +24,10 @@ mod window;
 pub use auth::{ConnectionSummary, OfficerAccount, SessionUser};
 pub use catalog::{Catalog, DrugCategory, ErDrug, PackStock};
 pub use report::{DrugItem, ReportMeta, ReportRow, ReportSection, UsageRow};
-pub use schedule::{BusinessSchedule, ScheduleError, TimeRange};
 pub use settings::AppSettings;
 pub use thai::{
     be_year, format_qty, format_thai_date, format_thai_date_abbr, format_thai_date_full,
     format_thai_datetime_abbr, format_thai_datetime_full, format_thai_datetime_short,
     format_time_hm, thai_month_abbr, thai_month_full, thai_weekday_abbr, thai_weekday_full,
 };
-pub use window::RequisitionWindow;
+pub use window::{RequisitionWindow, WindowError, WindowPreset};

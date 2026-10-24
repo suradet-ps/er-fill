@@ -1,6 +1,6 @@
-//! Portable settings export/import: a plain JSON file carrying the
-//! schedule, catalog, and report header so one machine can be configured
-//! and the rest imported from it.
+//! Portable settings export/import: a plain JSON file carrying the catalog
+//! and report header so one machine can be configured and the rest imported
+//! from it.
 //!
 //! Connection credentials are deliberately **not** part of the export: every
 //! field is encrypted with a key held in this machine's OS keychain
@@ -15,10 +15,10 @@ pub const EXPORT_FORMAT: &str = "er-refill-settings";
 
 /// Version of the export envelope; bump if the layout changes.
 ///
-/// Version 2 removed the obsolete `schedule.cutoff` field (the requisition
-/// window now ends at opening time). Version 1 files still import: serde
-/// ignores the unknown field.
-pub const EXPORT_VERSION: u32 = 2;
+/// Version 3 removed the old configurable `schedule` block: the run date is
+/// always today and the range is one of four fixed presets. Older files still
+/// import because serde ignores the unknown `schedule` field.
+pub const EXPORT_VERSION: u32 = 3;
 
 /// The exported file: marker + version + the settings themselves.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -30,7 +30,7 @@ pub struct SettingsExport {
     pub version: u32,
     /// Human-readable export time (CE), for operators, not machines.
     pub exported_at: String,
-    /// The schedule + catalog + report header.
+    /// The catalog + report header.
     pub settings: AppSettings,
 }
 
@@ -128,7 +128,7 @@ mod tests {
     }
 
     #[test]
-    fn parse_import_accepts_a_v1_file_with_the_removed_cutoff_field()
+    fn parse_import_accepts_a_legacy_file_with_the_removed_schedule_block()
     -> Result<(), Box<dyn std::error::Error>> {
         let json = r#"{
             "format": "er-refill-settings",
@@ -149,7 +149,8 @@ mod tests {
             }
         }"#;
         let settings = parse_import(json)?;
-        assert_eq!(settings.schedule, AppSettings::default().schedule);
+        assert_eq!(settings.catalog.categories.len(), 1);
+        assert_eq!(settings.report, AppSettings::default().report);
         Ok(())
     }
 
