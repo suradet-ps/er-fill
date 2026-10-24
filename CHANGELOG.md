@@ -24,6 +24,9 @@ All notable changes to ER-Refill are documented here. The format follows
   segmented control, action buttons have stable widths, the stage reserves its
   scrollbar gutter, and messages now appear as a floating toast so the sheet
   never jumps when a banner appears or dismisses.
+- The fixed run date now rolls over at midnight even when no range is
+  selected. Clearing the requisition also invalidates any in-flight fetch, so
+  switching A -> B -> A can not restore the old sheet from the first fetch.
 - ER usage is now scoped to `dep_code = '009'` drug orders (`sub_type = '1'`,
   excluding `item_type = 'A'` automatic charges) and the out-of-hours window
   is computed from `rxdate`/`rxtime` (ER order time) instead of

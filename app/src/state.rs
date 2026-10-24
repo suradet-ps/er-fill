@@ -160,6 +160,9 @@ pub struct AppState {
     pub window_preset: RwSignal<Option<WindowPreset>>,
     /// The effective requisition window (`None` until a preset is chosen).
     pub window: RwSignal<Option<RequisitionWindow>>,
+    /// Monotonic token that invalidates in-flight fetches whenever the
+    /// requisition is cleared (range switch, date rollover, logout, import).
+    pub fetch_generation: RwSignal<u64>,
     /// Built report sections (`None` before the first fetch / after edits
     /// that invalidate them).
     pub sections: RwSignal<Option<Vec<ReportSection>>>,
@@ -201,6 +204,7 @@ impl AppState {
             run_date: RwSignal::new(Local::now().date_naive()),
             window_preset: RwSignal::new(None),
             window: RwSignal::new(None),
+            fetch_generation: RwSignal::new(0),
             sections: RwSignal::new(None),
             confirmed: RwSignal::new(None),
             pending_edit: RwSignal::new(None),
@@ -234,6 +238,32 @@ impl AppState {
         self.clear_requisition();
     }
 
+    /// Rolls the fixed run date over at midnight, even when no range has
+    /// been chosen yet. Called from the recurring health timer.
+    ///
+    /// With a preset selected the window is recomputed for the new date and
+    /// the current sheet is cleared, because it covers the previous day. If
+    /// window computation fails (practically impossible), the old date and
+    /// window are kept so the UI never shows a mismatched pair.
+    pub fn refresh_date_for_today(&self) {
+        let today = Local::now().date_naive();
+        if self.run_date.get_untracked() == today {
+            return;
+        }
+        let Some(preset) = self.window_preset.get_untracked() else {
+            self.run_date.set(today);
+            return;
+        };
+        let Ok(window) = er_refill_core::window_for(preset, today) else {
+            self.banner
+                .set(Some(Banner::error("คำนวณช่วงเวลาเบิกไม่สำเร็จ")));
+            return;
+        };
+        self.run_date.set(today);
+        self.window.set(Some(window));
+        self.clear_requisition();
+    }
+
     /// Completes a successful login. The range is not chosen yet, so the
     /// operator selects one before fetching (AGENTS.md section 8).
     pub fn finish_login(&self, user: SessionUser) {
@@ -253,7 +283,10 @@ impl AppState {
 
     /// Drops the current document (rows, print confirmation, dialogs) because
     /// the date, window, or catalog changed and a new fetch is required.
+    /// Bumps [`Self::fetch_generation`] so any in-flight response is discarded
+    /// even if the selected window later returns to the same value.
     pub fn clear_requisition(&self) {
+        self.fetch_generation.update(|generation| *generation += 1);
         self.sections.set(None);
         self.confirmed.set(None);
         self.pending_edit.set(None);
@@ -377,6 +410,7 @@ impl AppState {
             return;
         };
         let state = self.clone();
+        let generation = state.fetch_generation.get_untracked();
         state.loading.set(true);
         state.banner.set(None);
         state.confirmed.set(None);
@@ -385,8 +419,11 @@ impl AppState {
             let result = crate::api::fetch_usage(&window).await;
             // The operator may have switched ranges while this query ran;
             // a stale response must not replace the newly chosen window's
-            // sheet.
-            if state.window.get_untracked() != Some(window) {
+            // sheet. The generation guard also covers A -> B -> A, where the
+            // window matches again but an intervening clear invalidated it.
+            if state.fetch_generation.get_untracked() != generation
+                || state.window.get_untracked() != Some(window)
+            {
                 state.loading.set(false);
                 return;
             }
@@ -485,6 +522,41 @@ mod tests {
         state.sections.set(Some(Vec::new()));
         state.select_window_preset(WindowPreset::TwentyThirtyToEightThirty);
         assert!(state.sections.get_untracked().is_some());
+    }
+
+    #[test]
+    fn date_rollover_refreshes_the_date_and_invalidates_the_sheet() {
+        let state = AppState::new();
+        let today = Local::now().date_naive();
+        let yesterday = today
+            .checked_sub_days(chrono::Days::new(1))
+            .expect("today has a previous day");
+
+        // Without a preset the date still rolls over; nothing else changes.
+        state.run_date.set(yesterday);
+        state.refresh_date_for_today();
+        assert_eq!(state.run_date.get_untracked(), today);
+        assert!(state.window.get_untracked().is_none());
+
+        // With a preset the window follows the new date and the old sheet
+        // plus any in-flight fetch are invalidated.
+        state.select_window_preset(WindowPreset::SixteenToEight);
+        state.sections.set(Some(Vec::new()));
+        let generation = state.fetch_generation.get_untracked();
+        state.run_date.set(yesterday);
+        state.refresh_date_for_today();
+        assert_eq!(state.run_date.get_untracked(), today);
+        assert_eq!(
+            state
+                .window
+                .get_untracked()
+                .expect("window recomputed")
+                .end
+                .date(),
+            today
+        );
+        assert!(state.sections.get_untracked().is_none());
+        assert_eq!(state.fetch_generation.get_untracked(), generation + 1);
     }
 
     #[test]

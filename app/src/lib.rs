@@ -66,9 +66,11 @@ fn App() -> impl IntoView {
     // Self-scheduling loop: `poll_loop` holds the trigger, which schedules
     // itself again via the timer (one pending timer at a time, no leak).
     let poll_loop: PollLoop = Rc::new(RefCell::new(None));
+    let date_state = state.clone();
     let trigger = {
         let poll_loop = Rc::clone(&poll_loop);
         Rc::new(move || {
+            date_state.refresh_date_for_today();
             poll_health();
             if let Some(next) = poll_loop.borrow().as_ref().map(Rc::clone) {
                 let _ = set_timeout_with_handle(move || next(), HEALTH_POLL_INTERVAL);

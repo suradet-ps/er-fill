@@ -118,8 +118,10 @@ window `[start, end)`:
 
 There are no custom hours, no manual date picker, and no override: fetching
 stays disabled until a range is selected. Changing the selected range clears
-the current sheet and the print confirmation. The printed form always shows
-the actual window it was built from.
+the current sheet and the print confirmation. A 30-second UI timer also rolls
+the date over at midnight: without a selected range only the date changes;
+with one, the window is recomputed and the old sheet is cleared. The printed
+form always shows the actual window it was built from.
 
 ## 8. Report flow
 
